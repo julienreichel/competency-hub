@@ -25,6 +25,10 @@ yarn-error.log*
 # Test coverage
 coverage/
 
+# Mutation testing
+reports/
+.stryker-tmp/
+
 # Editor directories and files
 .idea
 *.suo
