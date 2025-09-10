@@ -32,6 +32,9 @@ export class CompetencyRepository
    */
   async create(data: CreateCompetencyData): Promise<Competency> {
     const rawCompetency = await graphQLClient.createCompetency(data);
+    if (!rawCompetency) {
+      throw new Error('Failed to create competency');
+    }
     return new Competency(rawCompetency as CompetencyGraphQLData);
   }
 
@@ -52,9 +55,10 @@ export class CompetencyRepository
    */
   async findAll(filter?: CompetencyFilter): Promise<Competency[]> {
     const rawCompetencies = await graphQLClient.listCompetencies(filter);
-    return rawCompetencies.map(
-      (rawCompetency) => new Competency(rawCompetency as CompetencyGraphQLData),
-    );
+    if (!rawCompetencies) return [];
+    return rawCompetencies
+      .filter(rawCompetency => rawCompetency !== null && rawCompetency !== undefined)
+      .map((rawCompetency) => new Competency(rawCompetency as CompetencyGraphQLData));
   }
 
   /**
@@ -65,6 +69,9 @@ export class CompetencyRepository
    */
   async update(id: string, data: UpdateCompetencyData): Promise<Competency> {
     const rawCompetency = await graphQLClient.updateCompetency(id, data);
+    if (!rawCompetency) {
+      throw new Error(`Failed to update competency ${id}`);
+    }
     return new Competency(rawCompetency as CompetencyGraphQLData);
   }
 
@@ -75,6 +82,9 @@ export class CompetencyRepository
    */
   async delete(id: string): Promise<Competency> {
     const rawCompetency = await graphQLClient.deleteCompetency(id);
+    if (!rawCompetency) {
+      throw new Error(`Failed to delete competency ${id}`);
+    }
     return new Competency(rawCompetency as CompetencyGraphQLData);
   }
 

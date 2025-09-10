@@ -128,6 +128,7 @@ export class User extends BaseModel {
   getInitials(): string {
     return this.name
       .split(' ')
+      .filter(word => word.trim().length > 0)
       .map((word) => word.charAt(0).toUpperCase())
       .slice(0, 2)
       .join('');
