@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   test:
     name: Test & Coverage
@@ -115,6 +120,25 @@ jobs:
       - name: Check coverage thresholds
         run: npm run test:coverage
 
+      - name: Extract coverage data
+        id: coverage
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            LINES=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
+            FUNCTIONS=$(jq -r '.total.functions.pct' coverage/coverage-summary.json)
+            BRANCHES=$(jq -r '.total.branches.pct' coverage/coverage-summary.json)
+            STATEMENTS=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)
+            echo "lines=${LINES}" >> $GITHUB_OUTPUT
+            echo "functions=${FUNCTIONS}" >> $GITHUB_OUTPUT
+            echo "branches=${BRANCHES}" >> $GITHUB_OUTPUT
+            echo "statements=${STATEMENTS}" >> $GITHUB_OUTPUT
+          else
+            echo "lines=N/A" >> $GITHUB_OUTPUT
+            echo "functions=N/A" >> $GITHUB_OUTPUT
+            echo "branches=N/A" >> $GITHUB_OUTPUT
+            echo "statements=N/A" >> $GITHUB_OUTPUT
+          fi
+
       - name: Comment coverage on PR
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request'
@@ -125,11 +149,11 @@ jobs:
 
             Coverage results from the latest commit:
 
-            | Metric | Coverage |
-            |--------|----------|
-            | Lines | ![Coverage](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.head_ref }}/coverage/coverage-summary.json&label=Lines&query=$.total.lines.pct&suffix=%&color=brightgreen) |
-            | Functions | ![Coverage](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.head_ref }}/coverage/coverage-summary.json&label=Functions&query=$.total.functions.pct&suffix=%&color=brightgreen) |
-            | Branches | ![Coverage](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.head_ref }}/coverage/coverage-summary.json&label=Branches&query=$.total.branches.pct&suffix=%&color=brightgreen) |
-            | Statements | ![Coverage](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.head_ref }}/coverage/coverage-summary.json&label=Statements&query=$.total.statements.pct&suffix=%&color=brightgreen) |
+            | Metric | Value |
+            |--------|-------|
+            | Lines | ${{ steps.coverage.outputs.lines }}% |
+            | Functions | ${{ steps.coverage.outputs.functions }}% |
+            | Branches | ${{ steps.coverage.outputs.branches }}% |
+            | Statements | ${{ steps.coverage.outputs.statements }}% |
 
             ✅ All quality gates passed!
