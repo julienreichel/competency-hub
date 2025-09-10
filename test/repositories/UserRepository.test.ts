@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { UserRepository } from '../../src/models/repositories/UserRepository';
 import { User, UserRole } from '../../src/models/User';
-import { graphQLClient } from '../../src/models/base/GraphQLClient';
 
 // Mock the GraphQL client
 vi.mock('../../src/models/base/GraphQLClient', () => ({
@@ -157,7 +157,9 @@ describe('UserRepository', () => {
       const error = new Error('GraphQL error');
       mockGraphQLClient.updateUser.mockRejectedValue(error);
 
-      await expect(userRepository.update('user-1', { name: 'Updated Name' })).rejects.toThrow('GraphQL error');
+      await expect(userRepository.update('user-1', { name: 'Updated Name' })).rejects.toThrow(
+        'GraphQL error',
+      );
     });
   });
 
@@ -208,7 +210,9 @@ describe('UserRepository', () => {
 
       const result = await userRepository.findByEmail('john@example.com');
 
-      expect(mockGraphQLClient.listUsers).toHaveBeenCalledWith({ email: { eq: 'john@example.com' } });
+      expect(mockGraphQLClient.listUsers).toHaveBeenCalledWith({
+        email: { eq: 'john@example.com' },
+      });
       expect(result).toBeInstanceOf(User);
       expect(result?.email).toBe('john@example.com');
     });
@@ -224,7 +228,7 @@ describe('UserRepository', () => {
     it('should return first user when multiple users found (edge case)', async () => {
       const usersData = [
         validUserData,
-        { ...validUserData, id: 'user-2', name: 'Duplicate Email User' }
+        { ...validUserData, id: 'user-2', name: 'Duplicate Email User' },
       ];
       mockGraphQLClient.listUsers.mockResolvedValue(usersData);
 

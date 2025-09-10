@@ -2,10 +2,10 @@ import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
 import {
   Competency,
+  CompetencyStatus,
   type CompetencyGraphQLData,
   type CreateCompetencyData,
   type UpdateCompetencyData,
-  CompetencyStatus,
 } from '../Competency';
 
 /**
@@ -57,7 +57,7 @@ export class CompetencyRepository
     const rawCompetencies = await graphQLClient.listCompetencies(filter);
     if (!rawCompetencies) return [];
     return rawCompetencies
-      .filter(rawCompetency => rawCompetency !== null && rawCompetency !== undefined)
+      .filter((rawCompetency) => rawCompetency !== null && rawCompetency !== undefined)
       .map((rawCompetency) => new Competency(rawCompetency as CompetencyGraphQLData));
   }
 

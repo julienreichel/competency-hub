@@ -6,14 +6,16 @@ import type { Schema } from '../../../amplify/data/resource';
  * Provides type-safe CRUD operations and error handling
  */
 export class GraphQLClient {
-  private client = generateClient<Schema>();
+  private readonly client = generateClient<Schema>({
+    authMode: 'identityPool',
+  });
 
   /**
    * Create a new User record
    * @param data - The user data to create
    * @returns Promise with the created record
    */
-  async createUser(data: Record<string, unknown>) {
+  async createUser(data: Record<string, unknown>): Promise<Schema['User']['type'] | null> {
     try {
       const result = await this.client.models.User.create(data, {
         authMode: 'identityPool',
@@ -33,7 +35,7 @@ export class GraphQLClient {
    * @param id - The record ID
    * @returns Promise with the record or null
    */
-  async getUser(id: string) {
+  async getUser(id: string): Promise<Schema['User']['type'] | null> {
     try {
       const result = await this.client.models.User.get(
         { id },
@@ -52,11 +54,11 @@ export class GraphQLClient {
   }
 
   /**
-   * List all User records
+   * List User records with optional filtering
    * @param filter - Optional filter criteria
    * @returns Promise with array of records
    */
-  async listUsers(filter?: Record<string, unknown>) {
+  async listUsers(filter?: Record<string, unknown>): Promise<Schema['User']['type'][]> {
     try {
       const options: { authMode: 'identityPool'; filter?: Record<string, unknown> } = {
         authMode: 'identityPool',
@@ -81,7 +83,10 @@ export class GraphQLClient {
    * @param data - The data to update
    * @returns Promise with the updated record
    */
-  async updateUser(id: string, data: Record<string, unknown>) {
+  async updateUser(
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<Schema['User']['type'] | null> {
     try {
       const result = await this.client.models.User.update(
         { id, ...data },
@@ -104,7 +109,7 @@ export class GraphQLClient {
    * @param id - The record ID
    * @returns Promise with the deleted record
    */
-  async deleteUser(id: string) {
+  async deleteUser(id: string): Promise<Schema['User']['type'] | null> {
     try {
       const result = await this.client.models.User.delete(
         { id },
@@ -127,7 +132,9 @@ export class GraphQLClient {
    * @param data - The competency data to create
    * @returns Promise with the created record
    */
-  async createCompetency(data: Record<string, unknown>) {
+  async createCompetency(
+    data: Record<string, unknown>,
+  ): Promise<Schema['Competency']['type'] | null> {
     try {
       const result = await this.client.models.Competency.create(data, {
         authMode: 'identityPool',
@@ -147,7 +154,7 @@ export class GraphQLClient {
    * @param id - The record ID
    * @returns Promise with the record or null
    */
-  async getCompetency(id: string) {
+  async getCompetency(id: string): Promise<Schema['Competency']['type'] | null> {
     try {
       const result = await this.client.models.Competency.get(
         { id },
@@ -170,7 +177,9 @@ export class GraphQLClient {
    * @param filter - Optional filter criteria
    * @returns Promise with array of records
    */
-  async listCompetencies(filter?: Record<string, unknown>) {
+  async listCompetencies(
+    filter?: Record<string, unknown>,
+  ): Promise<Schema['Competency']['type'][]> {
     try {
       const options: { authMode: 'identityPool'; filter?: Record<string, unknown> } = {
         authMode: 'identityPool',
@@ -195,7 +204,10 @@ export class GraphQLClient {
    * @param data - The data to update
    * @returns Promise with the updated record
    */
-  async updateCompetency(id: string, data: Record<string, unknown>) {
+  async updateCompetency(
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<Schema['Competency']['type'] | null> {
     try {
       const result = await this.client.models.Competency.update(
         { id, ...data },
@@ -218,7 +230,7 @@ export class GraphQLClient {
    * @param id - The record ID
    * @returns Promise with the deleted record
    */
-  async deleteCompetency(id: string) {
+  async deleteCompetency(id: string): Promise<Schema['Competency']['type'] | null> {
     try {
       const result = await this.client.models.Competency.delete(
         { id },

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CompetencyRepository } from '../../src/models/repositories/CompetencyRepository';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Competency, CompetencyStatus } from '../../src/models/Competency';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
+import { CompetencyRepository } from '../../src/models/repositories/CompetencyRepository';
 
 // Mock the GraphQL client
 vi.mock('../../src/models/base/GraphQLClient', () => ({
@@ -63,14 +63,18 @@ describe('CompetencyRepository', () => {
     it('should return null when creation fails', async () => {
       mockGraphQLClient.createCompetency.mockResolvedValue(null);
 
-      await expect(competencyRepository.create(createCompetencyData)).rejects.toThrow('Failed to create competency');
+      await expect(competencyRepository.create(createCompetencyData)).rejects.toThrow(
+        'Failed to create competency',
+      );
     });
 
     it('should handle creation errors', async () => {
       const error = new Error('Creation failed');
       mockGraphQLClient.createCompetency.mockRejectedValue(error);
 
-      await expect(competencyRepository.create(createCompetencyData)).rejects.toThrow('Creation failed');
+      await expect(competencyRepository.create(createCompetencyData)).rejects.toThrow(
+        'Creation failed',
+      );
     });
   });
 
@@ -104,7 +108,10 @@ describe('CompetencyRepository', () => {
 
   describe('findAll', () => {
     it('should find all competencies and return Competency instances', async () => {
-      const competenciesData = [validCompetencyData, { ...validCompetencyData, id: 'comp-2', domain: 'Science' }];
+      const competenciesData = [
+        validCompetencyData,
+        { ...validCompetencyData, id: 'comp-2', domain: 'Science' },
+      ];
       mockGraphQLClient.listCompetencies.mockResolvedValue(competenciesData);
 
       const result = await competencyRepository.findAll();
@@ -154,7 +161,9 @@ describe('CompetencyRepository', () => {
       expect(result).toHaveLength(2);
       expect(result[0]?.id).toBe('comp-1');
       expect(result[1]?.id).toBe('comp-2');
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({ domain: { eq: 'Mathematics' } });
+      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+        domain: { eq: 'Mathematics' },
+      });
     });
 
     it('should return empty array when no competencies found for domain', async () => {
@@ -163,7 +172,9 @@ describe('CompetencyRepository', () => {
       const result = await competencyRepository.findByDomain('Physics');
 
       expect(result).toEqual([]);
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({ domain: { eq: 'Physics' } });
+      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+        domain: { eq: 'Physics' },
+      });
     });
   });
 
@@ -176,7 +187,9 @@ describe('CompetencyRepository', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]?.status).toBe(CompetencyStatus.UNLOCKED);
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({ status: { eq: CompetencyStatus.UNLOCKED } });
+      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+        status: { eq: CompetencyStatus.UNLOCKED },
+      });
     });
 
     it('should find acquired competencies', async () => {
@@ -199,7 +212,9 @@ describe('CompetencyRepository', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]?.stage).toBe('Elementary');
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({ stage: { eq: 'Elementary' } });
+      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+        stage: { eq: 'Elementary' },
+      });
     });
   });
 
@@ -208,9 +223,13 @@ describe('CompetencyRepository', () => {
       const updatedData = { ...validCompetencyData, description: 'Advanced algebraic operations' };
       mockGraphQLClient.updateCompetency.mockResolvedValue(updatedData);
 
-      const result = await competencyRepository.update('comp-1', { description: 'Advanced algebraic operations' });
+      const result = await competencyRepository.update('comp-1', {
+        description: 'Advanced algebraic operations',
+      });
 
-      expect(mockGraphQLClient.updateCompetency).toHaveBeenCalledWith('comp-1', { description: 'Advanced algebraic operations' });
+      expect(mockGraphQLClient.updateCompetency).toHaveBeenCalledWith('comp-1', {
+        description: 'Advanced algebraic operations',
+      });
       expect(result).toBeInstanceOf(Competency);
       expect(result?.description).toBe('Advanced algebraic operations');
     });
@@ -218,14 +237,18 @@ describe('CompetencyRepository', () => {
     it('should return null when update fails', async () => {
       mockGraphQLClient.updateCompetency.mockResolvedValue(null);
 
-      await expect(competencyRepository.update('comp-1', { description: 'New description' })).rejects.toThrow('Failed to update competency comp-1');
+      await expect(
+        competencyRepository.update('comp-1', { description: 'New description' }),
+      ).rejects.toThrow('Failed to update competency comp-1');
     });
 
     it('should handle update errors', async () => {
       const error = new Error('Update failed');
       mockGraphQLClient.updateCompetency.mockRejectedValue(error);
 
-      await expect(competencyRepository.update('comp-1', { description: 'New description' })).rejects.toThrow('Update failed');
+      await expect(
+        competencyRepository.update('comp-1', { description: 'New description' }),
+      ).rejects.toThrow('Update failed');
     });
   });
 
@@ -243,7 +266,9 @@ describe('CompetencyRepository', () => {
     it('should return false when deletion fails', async () => {
       mockGraphQLClient.deleteCompetency.mockResolvedValue(null);
 
-      await expect(competencyRepository.delete('comp-1')).rejects.toThrow('Failed to delete competency comp-1');
+      await expect(competencyRepository.delete('comp-1')).rejects.toThrow(
+        'Failed to delete competency comp-1',
+      );
     });
 
     it('should handle deletion errors', async () => {
@@ -287,7 +312,7 @@ describe('CompetencyRepository', () => {
     it('should work with competency status transitions', async () => {
       const lockedCompetency = { ...validCompetencyData, status: CompetencyStatus.LOCKED };
       const unlockedCompetency = { ...validCompetencyData, status: CompetencyStatus.UNLOCKED };
-      
+
       mockGraphQLClient.getCompetency.mockResolvedValue(lockedCompetency);
       mockGraphQLClient.updateCompetency.mockResolvedValue(unlockedCompetency);
 
@@ -295,21 +320,27 @@ describe('CompetencyRepository', () => {
       expect(competency?.status).toBe(CompetencyStatus.LOCKED);
 
       // Simulate unlocking
-      const updated = await competencyRepository.update('comp-1', { status: CompetencyStatus.UNLOCKED });
+      const updated = await competencyRepository.update('comp-1', {
+        status: CompetencyStatus.UNLOCKED,
+      });
       expect(updated?.status).toBe(CompetencyStatus.UNLOCKED);
     });
 
     it('should support domain-based competency hierarchies', async () => {
       const mathBasic = { ...validCompetencyData, id: 'math-basic', subDomain: 'Basic Math' };
-      const mathAdvanced = { ...validCompetencyData, id: 'math-advanced', subDomain: 'Advanced Math' };
-      
+      const mathAdvanced = {
+        ...validCompetencyData,
+        id: 'math-advanced',
+        subDomain: 'Advanced Math',
+      };
+
       mockGraphQLClient.listCompetencies.mockResolvedValue([mathBasic, mathAdvanced]);
 
       const mathCompetencies = await competencyRepository.findByDomain('Mathematics');
-      
+
       expect(mathCompetencies).toHaveLength(2);
-      expect(mathCompetencies.some(c => c.subDomain === 'Basic Math')).toBe(true);
-      expect(mathCompetencies.some(c => c.subDomain === 'Advanced Math')).toBe(true);
+      expect(mathCompetencies.some((c) => c.subDomain === 'Basic Math')).toBe(true);
+      expect(mathCompetencies.some((c) => c.subDomain === 'Advanced Math')).toBe(true);
     });
   });
 });

@@ -1,0 +1,16 @@
+# Run comprehensive quality checks before push
+echo "🔍 Running comprehensive quality checks..."
+
+# Check if build passes
+echo "📦 Checking build..."
+npm run build
+
+# Run full test suite with coverage
+echo "🧪 Running full test suite with coverage..."
+npm run test:coverage:check
+
+# Check TypeScript compilation
+echo "🔧 Checking TypeScript compilation..."
+npx tsc --noEmit
+
+echo "✅ All pre-push checks passed!"

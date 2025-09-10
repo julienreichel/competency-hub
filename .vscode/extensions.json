@@ -4,7 +4,13 @@
     "esbenp.prettier-vscode",
     "editorconfig.editorconfig",
     "vue.volar",
-    "wayou.vscode-todo-highlight"
+    "vitest.explorer",
+    "ms-vscode.vscode-typescript-next",
+    "wayou.vscode-todo-highlight",
+    "christian-kohler.path-intellisense",
+    "streetsidesoftware.code-spell-checker",
+    "github.copilot",
+    "github.copilot-chat"
   ],
   "unwantedRecommendations": [
     "octref.vetur",

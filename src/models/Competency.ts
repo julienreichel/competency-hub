@@ -10,6 +10,12 @@ export enum CompetencyStatus {
   IN_PROGRESS = 'IN_PROGRESS',
 }
 
+// Progress calculation constants
+const PROGRESS_LOCKED = 0;
+const PROGRESS_UNLOCKED = 25;
+const PROGRESS_IN_PROGRESS = 50;
+const PROGRESS_ACQUIRED = 100;
+
 /**
  * Competency data interface for creation
  */
@@ -149,15 +155,15 @@ export class Competency extends BaseModel {
   getProgressPercentage(): number {
     switch (this.status) {
       case CompetencyStatus.LOCKED:
-        return 0;
+        return PROGRESS_LOCKED;
       case CompetencyStatus.UNLOCKED:
-        return 25;
+        return PROGRESS_UNLOCKED;
       case CompetencyStatus.IN_PROGRESS:
-        return 50;
+        return PROGRESS_IN_PROGRESS;
       case CompetencyStatus.ACQUIRED:
-        return 100;
+        return PROGRESS_ACQUIRED;
       default:
-        return 0;
+        return PROGRESS_LOCKED;
     }
   }
 

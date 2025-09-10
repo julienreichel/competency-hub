@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { Todo, Meta } from './models';
+import type { Meta, Todo } from './models';
 
 interface Props {
   title: string;
@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const clickCount = ref(0);
-function increment() {
+function increment(): number {
   clickCount.value += 1;
   return clickCount.value;
 }
