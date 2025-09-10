@@ -15,7 +15,9 @@ export class GraphQLClient {
    */
   async createUser(data: Record<string, unknown>) {
     try {
-      const result = await this.client.models.User.create(data);
+      const result = await this.client.models.User.create(data, {
+        authMode: 'identityPool',
+      });
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -33,7 +35,12 @@ export class GraphQLClient {
    */
   async getUser(id: string) {
     try {
-      const result = await this.client.models.User.get({ id });
+      const result = await this.client.models.User.get(
+        { id },
+        {
+          authMode: 'identityPool',
+        },
+      );
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -51,7 +58,13 @@ export class GraphQLClient {
    */
   async listUsers(filter?: Record<string, unknown>) {
     try {
-      const result = await this.client.models.User.list(filter);
+      const options: { authMode: 'identityPool'; filter?: Record<string, unknown> } = {
+        authMode: 'identityPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.User.list(options);
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -70,7 +83,12 @@ export class GraphQLClient {
    */
   async updateUser(id: string, data: Record<string, unknown>) {
     try {
-      const result = await this.client.models.User.update({ id, ...data });
+      const result = await this.client.models.User.update(
+        { id, ...data },
+        {
+          authMode: 'identityPool',
+        },
+      );
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -88,7 +106,12 @@ export class GraphQLClient {
    */
   async deleteUser(id: string) {
     try {
-      const result = await this.client.models.User.delete({ id });
+      const result = await this.client.models.User.delete(
+        { id },
+        {
+          authMode: 'identityPool',
+        },
+      );
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -106,7 +129,9 @@ export class GraphQLClient {
    */
   async createCompetency(data: Record<string, unknown>) {
     try {
-      const result = await this.client.models.Competency.create(data);
+      const result = await this.client.models.Competency.create(data, {
+        authMode: 'identityPool',
+      });
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -124,7 +149,12 @@ export class GraphQLClient {
    */
   async getCompetency(id: string) {
     try {
-      const result = await this.client.models.Competency.get({ id });
+      const result = await this.client.models.Competency.get(
+        { id },
+        {
+          authMode: 'identityPool',
+        },
+      );
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -142,7 +172,13 @@ export class GraphQLClient {
    */
   async listCompetencies(filter?: Record<string, unknown>) {
     try {
-      const result = await this.client.models.Competency.list(filter);
+      const options: { authMode: 'identityPool'; filter?: Record<string, unknown> } = {
+        authMode: 'identityPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.Competency.list(options);
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -161,7 +197,12 @@ export class GraphQLClient {
    */
   async updateCompetency(id: string, data: Record<string, unknown>) {
     try {
-      const result = await this.client.models.Competency.update({ id, ...data });
+      const result = await this.client.models.Competency.update(
+        { id, ...data },
+        {
+          authMode: 'identityPool',
+        },
+      );
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
@@ -179,7 +220,12 @@ export class GraphQLClient {
    */
   async deleteCompetency(id: string) {
     try {
-      const result = await this.client.models.Competency.delete({ id });
+      const result = await this.client.models.Competency.delete(
+        { id },
+        {
+          authMode: 'identityPool',
+        },
+      );
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
