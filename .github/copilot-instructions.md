@@ -186,6 +186,35 @@ type(scope): description
 [optional footer]
 ```
 
+### Formatting Rules (CRITICAL - Enforced by commitlint)
+
+- **Subject MUST be sentence-case**: First word capitalized, rest lowercase unless proper nouns
+- **Description MUST start with capital letter**: "Add feature" not "add feature"
+- **Body lines MUST be sentence-case**: Each line starts with capital letter
+- **Use imperative mood**: "Add" not "Added" or "Adds"
+
+### Examples
+
+✅ **Correct:**
+
+```
+feat(auth): Add user authentication system
+
+- Add login and logout functionality
+- Implement JWT token validation
+- Create user session management
+```
+
+❌ **Incorrect (will fail commitlint):**
+
+```
+feat(auth): add user authentication system
+
+- add login and logout functionality
+- implement JWT token validation
+- create user session management
+```
+
 ### Types
 
 - `feat`: New feature
@@ -195,6 +224,7 @@ type(scope): description
 - `refactor`: Code change that neither fixes bug nor adds feature
 - `test`: Adding missing tests
 - `chore`: Changes to build process or auxiliary tools
+- `ci`: Changes to CI configuration files and scripts
 
 ## 🔍 Code Review Checklist
 
