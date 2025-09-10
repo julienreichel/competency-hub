@@ -87,8 +87,11 @@ export default route((/* { store, ssrContext } */) => {
     const authenticated = await isAuthenticated();
 
     if (!authenticated) {
-      // Redirect to login if not authenticated
-      next({ path: '/login', query: { redirect: to.fullPath } });
+      // Redirect to login if not authenticated, preserving the target route
+      next({
+        path: '/login',
+        query: to.path !== '/' ? { redirect: to.fullPath } : {},
+      });
       return;
     }
 

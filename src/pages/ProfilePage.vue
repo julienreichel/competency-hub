@@ -99,8 +99,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
+import { onMounted, reactive, ref } from 'vue';
 import { useAuth } from '../composables/useAuth';
 
 const $q = useQuasar();

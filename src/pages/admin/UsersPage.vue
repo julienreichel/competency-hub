@@ -245,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface User {
   id: string;

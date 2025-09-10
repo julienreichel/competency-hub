@@ -13,7 +13,6 @@
           :login-mechanisms="['email']"
           :sign-up-attributes="signUpAttributes"
           :form-fields="formFields"
-          @authenticated="onAuthenticated"
         >
           <template #header>
             <div class="text-center q-mb-md">
@@ -94,9 +93,10 @@
 
 <script setup lang="ts">
 import { Authenticator } from '@aws-amplify/ui-vue';
+import { Hub } from 'aws-amplify/utils';
 import { useQuasar } from 'quasar';
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 
 interface Role {
@@ -107,8 +107,15 @@ interface Role {
 }
 
 const router = useRouter();
+const route = useRoute();
 const { initAuth, isAuthenticated, userRole } = useAuth();
 const $q = useQuasar();
+
+// Auth listener cleanup function
+let hubUnsubscribe: (() => void) | null = null;
+
+// Constants
+const REDIRECT_DELAY_MS = 500; // Small delay to prevent race conditions with router guards
 
 // Role selection state
 const showRoleSelection = ref(false);
@@ -192,9 +199,24 @@ const formFields = {
 };
 
 /**
- * Handle successful authentication
+ * Redirect user after successful authentication
+ * Handles redirect query parameter and role-based routing
  */
-async function onAuthenticated(): Promise<void> {
+function redirectAfterLogin(): void {
+  const targetRoute = (route.query.redirect as string) || '/';
+
+  // Small delay to ensure authentication state is fully settled
+  // and prevent race conditions with router guards
+  setTimeout(() => {
+    void router.push(targetRoute);
+  }, REDIRECT_DELAY_MS);
+}
+
+/**
+ * Handle successful authentication
+ * This function is called when authentication state changes to authenticated
+ */
+async function handleAuthenticated(): Promise<void> {
   try {
     await initAuth();
 
@@ -202,8 +224,8 @@ async function onAuthenticated(): Promise<void> {
     if (!userRole.value || userRole.value === 'Student') {
       showRoleSelection.value = true;
     } else {
-      // Redirect to dashboard
-      await redirectToDashboard();
+      // Redirect to target route or dashboard
+      redirectAfterLogin();
     }
   } catch {
     $q.notify({
@@ -217,7 +239,7 @@ async function onAuthenticated(): Promise<void> {
 /**
  * Handle role selection confirmation
  */
-async function handleRoleConfirm(): Promise<void> {
+function handleRoleConfirm(): void {
   if (!selectedRole.value) return;
 
   try {
@@ -226,7 +248,7 @@ async function handleRoleConfirm(): Promise<void> {
     // TODO: Implement group assignment API call
 
     showRoleSelection.value = false;
-    await redirectToDashboard();
+    redirectAfterLogin();
 
     $q.notify({
       type: 'positive',
@@ -249,16 +271,7 @@ function handleRoleCancel(): void {
   showRoleSelection.value = false;
   // For now, assign default Student role
   selectedRole.value = 'Student';
-  void redirectToDashboard();
-}
-
-/**
- * Redirect to appropriate dashboard based on user role
- */
-async function redirectToDashboard(): Promise<void> {
-  // Redirect to main dashboard for now
-  // TODO: Implement role-based routing
-  await router.push('/');
+  redirectAfterLogin();
 }
 
 /**
@@ -268,7 +281,26 @@ onMounted(async () => {
   // Check if user is already authenticated
   await initAuth();
   if (isAuthenticated.value) {
-    await redirectToDashboard();
+    redirectAfterLogin();
+  }
+
+  // Listen for authentication state changes using AWS Amplify Hub
+  hubUnsubscribe = Hub.listen('auth', (data) => {
+    const { payload } = data;
+    console.log('Auth event:', payload.event);
+
+    if (payload.event === 'signedIn') {
+      void handleAuthenticated();
+    }
+  });
+});
+
+/**
+ * Cleanup listeners on unmount
+ */
+onUnmounted(() => {
+  if (hubUnsubscribe) {
+    hubUnsubscribe();
   }
 });
 </script>

@@ -252,10 +252,6 @@ async function handleSignOut(): Promise<void> {
  */
 onMounted(async () => {
   await initAuth();
-
-  // Redirect to login if not authenticated
-  if (!isAuthenticated.value && router.currentRoute.value.path !== '/login') {
-    await router.push('/login');
-  }
+  // Router guard already handles authentication redirects
 });
 </script>

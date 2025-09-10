@@ -86,7 +86,7 @@ export default defineConfig((ctx) => {
           {
             vueTsc: true,
             eslint: {
-              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
+              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,cjs,mjs,vue}"',
               useFlatConfig: true,
             },
           },
@@ -116,7 +116,7 @@ export default defineConfig((ctx) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: [],
+      plugins: ['Notify', 'Dialog'],
     },
 
     // animations: 'all', // --- includes all animations
