@@ -2,4 +2,4 @@
 npx lint-staged
 
 # Run all tests to ensure they pass
-npm run test:run
+npm test

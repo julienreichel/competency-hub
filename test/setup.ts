@@ -38,7 +38,7 @@ vi.mock('aws-amplify/data', () => ({
 }));
 
 // Mock console methods to reduce noise in tests
-global.console = {
+globalThis.console = {
   ...console,
   error: vi.fn(),
   warn: vi.fn(),

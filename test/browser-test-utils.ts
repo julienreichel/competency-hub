@@ -1,41 +1,76 @@
 import type { ComponentMountingOptions } from '@vue/test-utils';
-import { h, type VNode } from 'vue';
+import {
+  Quasar,
+  QCard,
+  QCardSection,
+  QBadge,
+  QIcon,
+  QBtn,
+  QSpinner,
+  QToggle,
+  QList,
+  QItem,
+  QItemSection,
+  QChip,
+  QTooltip,
+  QLinearProgress,
+  QTable,
+} from 'quasar';
+
+export const quasarOptions = {
+  config: {},
+  plugins: {},
+  components: {
+    QCard,
+    QCardSection,
+    QBadge,
+    QIcon,
+    QBtn,
+    QSpinner,
+    QToggle,
+    QList,
+    QItem,
+    QItemSection,
+    QChip,
+    QTooltip,
+    QLinearProgress,
+    QTable,
+  },
+};
 
 /**
- * Provides Quasar configuration for browser testing
- * Simplified version to avoid plugin duplication issues
- * @param options - Vue Test Utils mount options
+ * Provides Quasar configuration for testing with real components
+ * @param component - Vue Test Utils mount options
  * @returns Modified options with Quasar global configuration
  */
 export function withQuasarBrowser<T>(
-  options: ComponentMountingOptions<T> = {},
+  component?: ComponentMountingOptions<T>,
 ): ComponentMountingOptions<T> {
-  return {
-    ...options,
+  const baseConfig: ComponentMountingOptions<T> = {
     global: {
-      ...options.global,
-      stubs: {
-        // Stub Quasar components for browser testing using render functions
-        QChip: {
-          props: ['color', 'textColor', 'size'],
-          render(): VNode {
-            return h('span', { class: 'q-chip' }, this.$slots.default?.());
-          },
-        },
-        QBtn: {
-          props: ['color', 'size', 'flat', 'round'],
-          render(): VNode {
-            return h('button', { class: 'q-btn' }, this.$slots.default?.());
-          },
-        },
-        QIcon: {
-          props: ['name', 'color', 'size'],
-          render(): VNode {
-            return h('i', { class: 'q-icon' }, this.$slots.default?.());
-          },
-        },
-        ...options.global?.stubs,
-      },
+      plugins: [[Quasar, quasarOptions] as const],
     },
+  };
+
+  if (!component) {
+    return baseConfig;
+  }
+
+  // If component has global config, we need to merge carefully
+  if (component.global) {
+    return {
+      ...component,
+      global: {
+        ...baseConfig.global,
+        ...component.global,
+        plugins: [...(baseConfig.global?.plugins || []), ...(component.global.plugins || [])],
+      },
+    };
+  }
+
+  // If no global config, use the simple spread
+  return {
+    ...baseConfig,
+    ...component,
   };
 }

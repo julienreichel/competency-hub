@@ -2,11 +2,22 @@ import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { defineConfig } from 'vitest/config';
 
+const CI_RETRY_COUNT = 2;
+
 export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
-    environment: 'jsdom',
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: 'playwright',
+      instances: [{ browser: 'chromium' }],
+      // CI-friendly configuration
+      screenshotFailures: false,
+    },
+    // Retry tests in CI environments
+    retry: process.env.CI ? CI_RETRY_COUNT : 0,
     setupFiles: ['./test/setup.ts'],
     coverage: {
       provider: 'v8',
@@ -42,6 +53,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
+      src: resolve(__dirname, './src'),
     },
   },
 });
