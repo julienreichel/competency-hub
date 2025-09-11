@@ -24,6 +24,34 @@ This is a Vue 3 + Quasar project with comprehensive testing using Vitest. The co
 - Separate concerns: UI logic, business logic, data access
 - Use TypeScript
 
+### Internationalization (i18n)
+
+- **NEVER use hardcoded strings** directly in Vue components
+- **ALWAYS use i18n** for all user-facing text
+- Use `$t()` function for translations in templates
+- Use `useI18n()` composable for translations in script setup
+
+```vue
+<!-- ❌ Avoid: Hardcoded strings -->
+<template>
+  <q-btn>Submit Form</q-btn>
+  <p>Please enter your name</p>
+</template>
+
+<!-- ✅ Correct: Use i18n -->
+<template>
+  <q-btn>{{ $t('common.submit') }}</q-btn>
+  <p>{{ $t('forms.enterName') }}</p>
+</template>
+
+<script setup>
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+const message = t('validation.required');
+</script>
+```
+
 ### ESLint Compliance
 
 #### Magic Numbers Rule
@@ -268,7 +296,8 @@ Before suggesting code, ensure:
 - [ ] Variables and functions have descriptive names
 - [ ] Edge cases are considered
 - [ ] Tests are included for new functionality
-- [ ] No magic numbers or strings
+- [ ] No magic numbers or hardcoded strings
+- [ ] Uses i18n for all user-facing text
 - [ ] Proper separation of concerns
 
 ## 🚫 Anti-Patterns to Avoid
@@ -292,6 +321,10 @@ if (user) {
 setTimeout(callback, 300000); // What is 300000?
 const items = data.slice(0, 20); // Why 20?
 const threshold = value > 0.85; // What does 0.85 represent?
+
+// Avoid: Hardcoded strings (use i18n)
+<q-btn>Submit Form</q-btn>;
+const errorMessage = 'Please enter a valid email';
 
 // Avoid: Mutating props
 props.user.name = 'New Name';
@@ -318,6 +351,11 @@ const SUCCESS_THRESHOLD = 0.85; // 85% success rate
 setTimeout(callback, CACHE_TIMEOUT);
 const items = data.slice(0, MAX_ITEMS_PER_PAGE);
 const isSuccessful = value > SUCCESS_THRESHOLD;
+
+// Good: Use i18n for all user-facing text
+<q-btn>{{ $t('common.submit') }}</q-btn>
+const { t } = useI18n();
+const errorMessage = t('validation.emailInvalid');
 
 // Good: Immutable updates
 const updatedUser = { ...user, name: 'New Name' };
