@@ -6,8 +6,8 @@ import {
   createWebHistory,
 } from 'vue-router';
 
-import { fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
 import routes from './routes';
+import { useAuth } from 'src/composables/useAuth';
 
 /*
  * If not building with SSR mode, you can
@@ -35,45 +35,18 @@ export default route((/* { store, ssrContext } */) => {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
-  /**
-   * Check if user is authenticated
-   */
-  async function isAuthenticated(): Promise<boolean> {
-    try {
-      await getCurrentUser();
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Get user roles from attributes
-   */
-  async function getUserRoles(): Promise<string[]> {
-    try {
-      const attributes = await fetchUserAttributes();
-      const groups = attributes['cognito:groups'];
-      return Array.isArray(groups) ? groups : ['Student'];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Check if user has required role
-   */
-  function hasRequiredRole(userRoles: string[], requiredRoles?: string[]): boolean {
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true; // No specific roles required
-    }
-    return requiredRoles.some((role) => userRoles.includes(role));
-  }
+  // Initialize auth composable for router guards
+  const auth = useAuth();
 
   /**
    * Navigation guard for authentication and authorization
    */
   Router.beforeEach(async (to, from, next) => {
+    // Initialize auth state if needed
+    if (!auth.user.value && !auth.isLoading.value) {
+      await auth.initAuth();
+    }
+
     // Check if route requires authentication
     const requiresAuth = to.meta.requiresAuth !== false; // Default to true unless explicitly false
 
@@ -84,9 +57,7 @@ export default route((/* { store, ssrContext } */) => {
     }
 
     // Check authentication status
-    const authenticated = await isAuthenticated();
-
-    if (!authenticated) {
+    if (!auth.isAuthenticated.value) {
       // Redirect to login if not authenticated, preserving the target route
       next({
         path: '/login',
@@ -98,9 +69,7 @@ export default route((/* { store, ssrContext } */) => {
     // Check role-based access
     const requiredRoles = to.meta.roles as string[] | undefined;
     if (requiredRoles && requiredRoles.length > 0) {
-      const userRoles = await getUserRoles();
-
-      if (!hasRequiredRole(userRoles, requiredRoles)) {
+      if (!auth.hasAnyRole(requiredRoles)) {
         // User doesn't have required role, redirect to dashboard
         next({ path: '/', replace: true });
         return;
