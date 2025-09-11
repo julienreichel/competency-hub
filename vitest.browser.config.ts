@@ -9,10 +9,14 @@ export default defineConfig({
     browser: {
       enabled: true,
       provider: 'playwright',
-      name: 'chromium',
       headless: true,
       // Support for component testing
       fileParallelism: false,
+      instances: [
+        {
+          browser: 'chromium',
+        },
+      ],
     },
     globals: true,
     // Use a different setup file for browser tests

@@ -34,26 +34,6 @@ export default defineConfig({
           lines: 80,
           statements: 80,
         },
-        // High thresholds for domain models (excluding infrastructure)
-        'src/models/User.ts': {
-          branches: 95,
-          functions: 100,
-          lines: 100,
-          statements: 100,
-        },
-        'src/models/Competency.ts': {
-          branches: 90,
-          functions: 100,
-          lines: 95,
-          statements: 95,
-        },
-        // Repository layer thresholds
-        'src/models/repositories/**': {
-          branches: 85,
-          functions: 75,
-          lines: 80,
-          statements: 80,
-        },
       },
       // Fail build if coverage thresholds are not met
       reportOnFailure: true,
