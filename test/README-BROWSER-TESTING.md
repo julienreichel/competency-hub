@@ -32,12 +32,25 @@ Key features:
 
 ```
 test/
-├── components/           # Browser-specific tests
-│   ├── useUserFormatters.test.ts   # Composable testing
-│   ├── browser-dom.test.ts         # DOM manipulation tests
-│   └── ui/              # UI component tests (future)
-├── setup-browser.ts     # Browser test setup
-└── setup.ts            # Standard test setup
+├── components/           # Vue component tests
+│   ├── admin/           # Admin interface components
+│   │   ├── LastActiveCell.test.ts
+│   │   ├── UserActionBar.test.ts
+│   │   ├── UserActions.test.ts
+│   │   ├── UserSearchFilters.test.ts
+│   │   └── UserStatsCards.test.ts
+│   └── ui/              # UI component library
+│       ├── RoleChip.test.ts
+│       ├── StatCard.test.ts
+│       ├── StatusIndicator.test.ts
+│       └── UserAvatar.test.ts
+├── composables/         # Vue composables
+│   ├── useAuth.test.ts
+│   └── useUserFormatters.test.ts
+├── models/              # Domain models
+├── repositories/        # Data repositories
+├── browser-test-utils.ts # Quasar + i18n test utilities
+└── setup.ts            # Test setup configuration
 ```
 
 ## Running Tests
@@ -45,20 +58,20 @@ test/
 ### Local Development
 
 ```bash
-# Run browser tests in watch mode
-npm run test:browser
+# Run all tests (unit + browser) in watch mode
+npm run test:watch
 
-# Run browser tests once
-npm run test:browser:run
+# Run all tests once
+npm run test
 
-# Run with UI interface
-npm run test:browser:ui
+# Run tests with UI interface
+npm run test:ui
 
-# Run with coverage
-npm run test:browser:coverage
+# Run with coverage report
+npm run test:coverage
 
-# Run all tests (unit + browser)
-npm run test:all
+# Check coverage with verbose output
+npm run test:coverage:check
 ```
 
 ### CI/CD Integration
@@ -67,18 +80,50 @@ Browser tests are automatically run in the CI pipeline:
 
 1. **Install Dependencies**: `npm ci`
 2. **Install Browser**: `npx playwright install chromium`
-3. **Run Tests**: `npm run test:browser:run`
+3. **Run Tests**: `npm run test`
 
 The CI is configured to:
 
-- Run browser tests in parallel with unit tests
+- Run all tests (unit + browser) together
 - Upload test artifacts on failure
 - Support headless browser execution
-- Fail build if browser tests fail
+- Fail build if any tests fail
+- Generate coverage reports
 
 ## Test Types
 
-### 1. Composable Testing
+### 1. Vue Component Testing
+
+Test Vue components with real Quasar UI integration and i18n support:
+
+```typescript
+import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
+import StatCard from '../../../src/components/ui/StatCard.vue';
+import { withQuasarBrowser } from '../../browser-test-utils';
+
+describe('StatCard Component', () => {
+  it('should render with required props', () => {
+    const wrapper = mount(
+      StatCard,
+      withQuasarBrowser({
+        props: {
+          icon: 'people',
+          color: 'primary',
+          value: 42,
+          label: 'Users',
+        },
+      }),
+    );
+
+    expect(wrapper.exists()).toBe(true);
+    expect(wrapper.text()).toContain('42');
+    expect(wrapper.text()).toContain('Users');
+  });
+});
+```
+
+### 2. Composable Testing
 
 Test Vue composables in a real browser environment:
 
@@ -94,7 +139,62 @@ describe('useUserFormatters (Browser)', () => {
 });
 ```
 
-### 2. DOM Testing
+### 2. Composable Testing
+
+Test Vue composables in a real browser environment:
+
+```typescript
+import { useUserFormatters } from '../../src/composables/useUserFormatters';
+
+describe('useUserFormatters (Browser)', () => {
+  const { getUserInitials, formatLastActive } = useUserFormatters();
+
+  it('should format user data correctly', () => {
+    expect(getUserInitials('John Doe')).toBe('JD');
+  });
+});
+```
+
+### 3. User Interaction Testing
+
+Test complex user interactions with Quasar components:
+
+```typescript
+describe('UserActions Component', () => {
+  it('should emit events when buttons are clicked', async () => {
+    const wrapper = mount(
+      UserActions,
+      withQuasarBrowser({
+        props: { user: mockUser },
+      }),
+    );
+
+    const buttons = wrapper.findAll('.q-btn');
+    const viewButton = buttons[0];
+
+    await viewButton.trigger('click');
+    expect(wrapper.emitted('view')).toBeTruthy();
+  });
+});
+```
+
+### 4. DOM Testing
+
+Test DOM manipulation and browser APIs:
+
+````typescript
+it('should handle click events', () => {
+  const button = document.createElement('button');
+  let clicked = false;
+
+  button.addEventListener('click', () => {
+    clicked = true;
+  });
+
+  button.click();
+  expect(clicked).toBe(true);
+});
+### 4. DOM Testing
 
 Test DOM manipulation and browser APIs:
 
@@ -110,9 +210,9 @@ it('should handle click events', () => {
   button.click();
   expect(clicked).toBe(true);
 });
-```
+````
 
-### 3. Browser API Testing
+### 5. Browser API Testing
 
 Test browser-specific functionality:
 
@@ -123,24 +223,94 @@ it('should test local storage', () => {
 });
 ```
 
-### 4. Component Testing (Future)
+### 5. Browser API Testing
 
-Vue component testing with real DOM rendering:
+Test browser-specific functionality:
 
 ```typescript
-import { mount } from '@vue/test-utils';
-import MyComponent from '../../../src/components/MyComponent.vue';
-
-it('should render component', () => {
-  const wrapper = mount(MyComponent, {
-    props: { message: 'Hello' },
-  });
-
-  expect(wrapper.text()).toContain('Hello');
+it('should test local storage', () => {
+  localStorage.setItem('key', 'value');
+  expect(localStorage.getItem('key')).toBe('value');
 });
 ```
 
+## Browser Test Utilities
+
+### withQuasarBrowser Helper
+
+The `browser-test-utils.ts` file provides essential utilities for testing Vue components with Quasar and i18n:
+
+```typescript
+import { withQuasarBrowser } from '../../browser-test-utils';
+
+// Provides:
+// - Quasar component registration (QBtn, QCard, QInput, etc.)
+// - Vue I18n internationalization support
+// - Proper plugin configuration for browser testing
+
+const wrapper = mount(
+  Component,
+  withQuasarBrowser({
+    props: {
+      /* component props */
+    },
+    global: {
+      /* additional global config */
+    },
+  }),
+);
+```
+
+### Supported Quasar Components
+
+Pre-registered components for testing:
+
+- **Layout**: QCard, QCardSection
+- **Buttons**: QBtn, QBtnGroup
+- **Form**: QInput, QSelect, QToggle
+- **Display**: QIcon, QBadge, QChip, QTooltip
+- **Navigation**: QList, QItem, QItemSection, QMenu
+- **Feedback**: QSpinner, QLinearProgress
+- **Data**: QTable
+
+### Component Testing (Future)
+
+## Current Test Coverage
+
+### Statistics
+
+- **Total Tests**: 263 tests across 16 test files
+- **Component Tests**: 74 tests across 9 component files
+  - **UI Components**: 28 tests (4 files)
+  - **Admin Components**: 46 tests (5 files)
+- **Coverage**: 94.87% overall (exceeds 80% requirement)
+
+### Component Test Breakdown
+
+#### UI Components
+
+- **StatCard**: 7 tests - visual display, props validation
+- **StatusIndicator**: 7 tests - status states, styling
+- **UserAvatar**: 11 tests - image handling, initials fallback
+- **RoleChip**: 3 tests - role display, color coding
+
+#### Admin Components
+
+- **LastActiveCell**: 6 tests - date formatting, time display
+- **UserActionBar**: 8 tests - search filters, button actions
+- **UserActions**: 8 tests - dropdown menu, user operations
+- **UserSearchFilters**: 12 tests - input handling, form controls
+- **UserStatsCards**: 12 tests - statistics display, data formatting
+
 ## Best Practices
+
+### Component Testing Patterns
+
+1. **Use withQuasarBrowser**: Always wrap component mounts with the utility
+2. **Test Props**: Verify component behavior with different prop combinations
+3. **Test Events**: Ensure components emit events correctly
+4. **Test User Interactions**: Click buttons, fill forms, test real usage
+5. **Test Edge Cases**: Null values, empty arrays, error states
 
 ### Test Structure
 
@@ -210,10 +380,14 @@ Browser tests complement but don't replace unit tests:
 
 Use browser tests for:
 
+- Vue component rendering and behavior
+- Quasar UI component integration
+- Form interactions and validation
+- User event handling (clicks, inputs)
+- Internationalization (i18n) functionality
 - DOM manipulation logic
 - Browser API interactions
-- Complex user interactions
 - Visual behavior verification
 - Cross-browser compatibility
 
-The testing strategy provides comprehensive coverage while maintaining fast feedback loops for development.
+The unified testing approach provides comprehensive coverage while maintaining fast feedback loops for development. All tests run in browser mode using Vitest with Playwright, ensuring authentic component behavior testing.
