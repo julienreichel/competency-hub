@@ -2,50 +2,22 @@
   <q-page class="q-pa-lg">
     <div class="text-h4 q-mb-lg">
       <q-icon name="admin_panel_settings" class="q-mr-sm" />
-      User Management
+      {{ $t('admin.userManagement') }}
     </div>
 
     <!-- Action Bar -->
-    <div class="row justify-between items-center q-mb-lg">
-      <div class="row q-gutter-md">
-        <q-input
-          v-model="searchQuery"
-          filled
-          placeholder="Search users..."
-          debounce="300"
-          style="width: 300px"
-        >
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
-        <q-select
-          v-model="roleFilter"
-          filled
-          :options="roleOptions"
-          label="Role"
-          clearable
-          style="width: 150px"
-        />
-        <q-select
-          v-model="statusFilter"
-          filled
-          :options="statusOptions"
-          label="Status"
-          clearable
-          style="width: 150px"
-        />
-      </div>
-      <q-btn-group>
-        <q-btn
-          color="primary"
-          icon="person_add"
-          label="Add User"
-          @click="showAddUserDialog = true"
-        />
-        <q-btn outline color="primary" icon="file_upload" label="Bulk Import" @click="bulkImport" />
-      </q-btn-group>
-    </div>
+    <user-action-bar
+      :search="searchQuery"
+      :role-filter="roleFilter"
+      :status-filter="statusFilter"
+      :role-options="roleOptions"
+      :status-options="statusOptions"
+      @update:search="searchQuery = $event"
+      @update:role-filter="roleFilter = $event"
+      @update:status-filter="statusFilter = $event"
+      @add-user="showAddUserDialog = true"
+      @bulk-import="bulkImport"
+    />
 
     <!-- Users Table -->
     <q-table
@@ -60,71 +32,39 @@
     >
       <template v-slot:body-cell-avatar="props">
         <q-td :props="props">
-          <q-avatar size="40px">
-            <q-img v-if="props.row.avatar" :src="props.row.avatar" :alt="props.row.name" />
-            <span v-else>{{ getInitials(props.row.name) }}</span>
-          </q-avatar>
+          <user-avatar :user="props.row" />
         </q-td>
       </template>
 
       <template v-slot:body-cell-role="props">
         <q-td :props="props">
-          <q-chip :color="getRoleColor(props.value)" text-color="white" size="sm">
-            {{ props.value }}
-          </q-chip>
+          <role-chip :role="props.value" />
         </q-td>
       </template>
 
       <template v-slot:body-cell-status="props">
         <q-td :props="props">
-          <q-icon
-            :name="getStatusIcon(props.value)"
-            :color="getStatusColor(props.value)"
-            size="sm"
-          />
-          {{ props.value }}
+          <status-indicator :status="props.value" />
         </q-td>
       </template>
 
       <template v-slot:body-cell-lastActive="props">
         <q-td :props="props">
-          <span :class="getLastActiveClass(props.value)">
-            {{ formatLastActive(props.value) }}
-          </span>
+          <last-active-cell :last-active="props.value" />
         </q-td>
       </template>
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <q-btn-group flat>
-            <q-btn flat icon="visibility" size="sm" @click="viewUser(props.row)">
-              <q-tooltip>View Profile</q-tooltip>
-            </q-btn>
-            <q-btn flat icon="edit" size="sm" @click="editUser(props.row)">
-              <q-tooltip>Edit User</q-tooltip>
-            </q-btn>
-            <q-btn flat icon="more_vert" size="sm">
-              <q-menu>
-                <q-list>
-                  <q-item clickable @click="resetPassword(props.row)">
-                    <q-item-section>Reset Password</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="toggleUserStatus(props.row)">
-                    <q-item-section>
-                      {{ props.row.status === 'Active' ? 'Deactivate' : 'Activate' }}
-                    </q-item-section>
-                  </q-item>
-                  <q-item clickable @click="viewActivity(props.row)">
-                    <q-item-section>View Activity</q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <q-item clickable @click="deleteUser(props.row)">
-                    <q-item-section>Delete User</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-          </q-btn-group>
+          <user-actions
+            :user="props.row"
+            @view="viewUser"
+            @edit="editUser"
+            @reset-password="resetPassword"
+            @toggle-status="toggleUserStatus"
+            @view-activity="viewActivity"
+            @delete="deleteUser"
+          />
         </q-td>
       </template>
 
@@ -134,59 +74,28 @@
             outline
             color="negative"
             icon="delete"
-            :label="`Delete (${selectedUsers.length})`"
+            :label="`${$t('common.delete')} (${selectedUsers.length})`"
             @click="bulkDelete"
           />
-          <q-btn outline color="primary" icon="group" label="Change Role" @click="bulkChangeRole" />
+          <q-btn
+            outline
+            color="primary"
+            icon="group"
+            :label="$t('admin.changeRole')"
+            @click="bulkChangeRole"
+          />
         </q-btn-group>
       </template>
     </q-table>
 
     <!-- Statistics Cards -->
-    <div class="row q-gutter-md q-mt-lg">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="people" size="2em" color="blue" />
-            <div class="text-h5 q-mt-sm">{{ userStats.total }}</div>
-            <div class="text-subtitle2">Total Users</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="check_circle" size="2em" color="green" />
-            <div class="text-h5 q-mt-sm">{{ userStats.active }}</div>
-            <div class="text-subtitle2">Active Users</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="person_add" size="2em" color="purple" />
-            <div class="text-h5 q-mt-sm">{{ userStats.newThisMonth }}</div>
-            <div class="text-subtitle2">New This Month</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="schedule" size="2em" color="orange" />
-            <div class="text-h5 q-mt-sm">{{ userStats.onlineNow }}</div>
-            <div class="text-subtitle2">Online Now</div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
+    <user-stats-cards :stats="userStats" />
 
     <!-- Add User Dialog -->
     <q-dialog v-model="showAddUserDialog">
       <q-card style="min-width: 500px">
         <q-card-section>
-          <div class="text-h6">Add New User</div>
+          <div class="text-h6">{{ $t('admin.addNewUser') }}</div>
         </q-card-section>
 
         <q-card-section>
@@ -196,16 +105,16 @@
                 <q-input
                   v-model="newUser.firstName"
                   filled
-                  label="First Name *"
-                  :rules="[(val) => !!val || 'First name is required']"
+                  :label="`${$t('common.firstName')} *`"
+                  :rules="[(val) => !!val || $t('validation.firstNameRequired')]"
                 />
               </div>
               <div class="col">
                 <q-input
                   v-model="newUser.lastName"
                   filled
-                  label="Last Name *"
-                  :rules="[(val) => !!val || 'Last name is required']"
+                  :label="`${$t('common.lastName')} *`"
+                  :rules="[(val) => !!val || $t('validation.lastNameRequired')]"
                 />
               </div>
             </div>
@@ -214,30 +123,35 @@
               v-model="newUser.email"
               filled
               type="email"
-              label="Email *"
-              :rules="[(val) => !!val || 'Email is required']"
+              :label="`${$t('common.email')} *`"
+              :rules="[(val) => !!val || $t('validation.emailRequired')]"
             />
 
             <q-select
               v-model="newUser.role"
               filled
               :options="roleOptions"
-              label="Role *"
-              :rules="[(val) => !!val || 'Role is required']"
+              :label="`${$t('common.role')} *`"
+              :rules="[(val) => !!val || $t('validation.roleRequired')]"
             />
 
             <q-input
               v-model="newUser.username"
               filled
-              label="Username"
-              hint="If left blank, will use email prefix"
+              :label="$t('common.username')"
+              :hint="$t('admin.usernameHint')"
             />
           </q-form>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="showAddUserDialog = false" />
-          <q-btn color="primary" label="Add User" @click="addUser" :disable="!isNewUserValid" />
+          <q-btn flat :label="$t('common.cancel')" @click="showAddUserDialog = false" />
+          <q-btn
+            color="primary"
+            :label="$t('admin.addUser')"
+            @click="addUser"
+            :disable="!isNewUserValid"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -245,6 +159,13 @@
 </template>
 
 <script setup lang="ts">
+import LastActiveCell from 'src/components/admin/LastActiveCell.vue';
+import UserActionBar from 'src/components/admin/UserActionBar.vue';
+import UserActions from 'src/components/admin/UserActions.vue';
+import UserStatsCards from 'src/components/admin/UserStatsCards.vue';
+import RoleChip from 'src/components/ui/RoleChip.vue';
+import StatusIndicator from 'src/components/ui/StatusIndicator.vue';
+import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { computed, ref } from 'vue';
 
 interface User {
@@ -368,91 +289,6 @@ const isNewUserValid = computed(() => {
     newUser.value.firstName && newUser.value.lastName && newUser.value.email && newUser.value.role
   );
 });
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
-}
-
-function getRoleColor(role: string): string {
-  switch (role) {
-    case 'Admin':
-      return 'red';
-    case 'Educator':
-      return 'blue';
-    case 'Parent':
-      return 'green';
-    case 'Student':
-      return 'purple';
-    default:
-      return 'grey';
-  }
-}
-
-function getStatusIcon(status: string): string {
-  switch (status) {
-    case 'Active':
-      return 'check_circle';
-    case 'Inactive':
-      return 'radio_button_unchecked';
-    case 'Suspended':
-      return 'block';
-    default:
-      return 'help';
-  }
-}
-
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'Active':
-      return 'green';
-    case 'Inactive':
-      return 'grey';
-    case 'Suspended':
-      return 'red';
-    default:
-      return 'grey';
-  }
-}
-
-// Constants for time calculations
-const TIME_CONSTANTS = {
-  MILLISECONDS_PER_SECOND: 1000,
-  SECONDS_PER_HOUR: 3600,
-  HOURS_PER_DAY: 24,
-  DAYS_PER_WEEK: 7,
-  ONE_HOUR: 1,
-} as const;
-
-function getLastActiveClass(lastActive: string): string {
-  const now = new Date();
-  const lastActiveDate = new Date(lastActive);
-  const hoursDiff =
-    (now.getTime() - lastActiveDate.getTime()) /
-    (TIME_CONSTANTS.MILLISECONDS_PER_SECOND * TIME_CONSTANTS.SECONDS_PER_HOUR);
-
-  if (hoursDiff < TIME_CONSTANTS.ONE_HOUR) return 'text-green';
-  if (hoursDiff < TIME_CONSTANTS.HOURS_PER_DAY) return 'text-orange';
-  return 'text-grey';
-}
-
-function formatLastActive(lastActive: string): string {
-  const now = new Date();
-  const lastActiveDate = new Date(lastActive);
-  const diff = now.getTime() - lastActiveDate.getTime();
-  const hours = Math.floor(
-    diff / (TIME_CONSTANTS.MILLISECONDS_PER_SECOND * TIME_CONSTANTS.SECONDS_PER_HOUR),
-  );
-  const days = Math.floor(hours / TIME_CONSTANTS.HOURS_PER_DAY);
-
-  if (hours < TIME_CONSTANTS.ONE_HOUR) return 'Just now';
-  if (hours < TIME_CONSTANTS.HOURS_PER_DAY) return `${hours}h ago`;
-  if (days < TIME_CONSTANTS.DAYS_PER_WEEK) return `${days}d ago`;
-  return lastActiveDate.toLocaleDateString();
-}
 
 function viewUser(user: User): void {
   console.log('Viewing user:', user.name);

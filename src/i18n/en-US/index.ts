@@ -1,7 +1,47 @@
-// This is just an example,
-// so you can safely delete all default props below
+// Translation keys for competency hub application
 
 export default {
-  failed: 'Action failed',
-  success: 'Action was successful',
+  // Common terms
+  common: {
+    view: 'View',
+    edit: 'Edit',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    submit: 'Submit',
+    save: 'Save',
+    user: 'User',
+    users: 'Users',
+    profile: 'Profile',
+    role: 'Role',
+    status: 'Status',
+    email: 'Email',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    username: 'Username',
+  },
+
+  // Admin section
+  admin: {
+    userManagement: 'User Management',
+    addUser: 'Add User',
+    addNewUser: 'Add New User',
+    bulkImport: 'Bulk Import',
+    searchUsers: 'Search users...',
+    resetPassword: 'Reset Password',
+    activate: 'Activate',
+    deactivate: 'Deactivate',
+    viewActivity: 'View Activity',
+    changeRole: 'Change Role',
+    usernameHint: 'Leave blank to auto-generate',
+  },
+
+  // Validation messages
+  validation: {
+    required: 'This field is required',
+    emailRequired: 'Email is required',
+    emailInvalid: 'Please enter a valid email address',
+    firstNameRequired: 'First name is required',
+    lastNameRequired: 'Last name is required',
+    roleRequired: 'Role is required',
+  },
 };
