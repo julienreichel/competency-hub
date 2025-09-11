@@ -42,4 +42,5 @@ reports/
 # amplify
 .amplify
 amplify_outputs*
+public/amplify_outputs*
 amplifyconfiguration*

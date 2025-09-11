@@ -1,29 +1,65 @@
 import { Amplify } from 'aws-amplify';
 
-// Import fallback CI configuration
-import ciConfig from '../../amplify_outputs.ci.json';
+// Fallback CI configuration embedded directly to avoid import issues
+const CI_CONFIG = {
+  version: '1',
+  auth: {
+    aws_region: 'us-east-1',
+    user_pool_id: 'CI_PLACEHOLDER',
+    user_pool_client_id: 'CI_PLACEHOLDER',
+  },
+} as const;
+
+/**
+ * Safely load Amplify configuration with fallbacks
+ */
+async function loadAmplifyConfig(): Promise<Record<string, unknown>> {
+  // In CI/test environments, use embedded config
+  if (process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
+    console.info('Using embedded CI Amplify configuration');
+    return CI_CONFIG;
+  }
+
+  // In development/production, try to load real config
+  try {
+    // Use dynamic import to avoid compile-time resolution issues
+    const response = await fetch('/amplify_outputs.json');
+    if (response.ok) {
+      const config = await response.json();
+      console.info('Using real Amplify configuration');
+      return config;
+    }
+  } catch {
+    // Fetch failed, try dynamic import as fallback
+    try {
+      const module = await import('../../amplify_outputs.json');
+      const config = module.default || module;
+      console.info('Using imported Amplify configuration');
+      return config;
+    } catch {
+      console.warn('No real Amplify config found, using CI fallback');
+    }
+  }
+
+  // Final fallback to CI config
+  return CI_CONFIG;
+}
 
 /**
  * Initialize AWS Amplify configuration
- * In development, this will use the local amplify_outputs.json
- * In CI/CD, this will use the fallback CI configuration
  */
-export function configureAmplify(): void {
-  // Check if we have a real amplify_outputs.json available
-  if (process.env.NODE_ENV === 'development') {
-    // In development, try to dynamically import the real config
-    import('../../amplify_outputs.json')
-      .then((config) => {
-        Amplify.configure(config.default || config);
-      })
-      .catch(() => {
-        // Fallback to CI config if real config not available
-        console.warn('Using CI Amplify configuration - some features may not work');
-        Amplify.configure(ciConfig);
-      });
-  } else {
-    // In CI/test environments, use the CI config
-    console.info('Using CI Amplify configuration for build/test environment');
-    Amplify.configure(ciConfig);
+async function configureAmplify(): Promise<void> {
+  try {
+    const config = await loadAmplifyConfig();
+    Amplify.configure(config);
+  } catch (error) {
+    console.error('Failed to configure Amplify:', error);
+    // Use CI config as last resort
+    Amplify.configure(CI_CONFIG);
   }
 }
+
+/**
+ * Quasar boot function - runs before the Vue app is created
+ */
+export default configureAmplify;
