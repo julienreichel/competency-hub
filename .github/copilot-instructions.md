@@ -16,6 +16,51 @@ This is a Vue 3 + Quasar project with comprehensive testing using Vitest. The co
 - **DRY**: Don't Repeat Yourself - extract common patterns
 - **YAGNI**: You Aren't Gonna Need It - don't add premature features
 
+### 🚨 DRY Principle Enforcement (CRITICAL)
+
+**BEFORE writing ANY code, ask these questions:**
+
+1. **Am I duplicating template structures?** → Use `v-bind` with computed properties
+2. **Am I copying similar logic?** → Extract to composables or utility functions
+3. **Are there repeated patterns?** → Create reusable components or abstractions
+4. **Can conditional rendering be parameterized?** → Use dynamic attributes instead
+
+#### ❌ **Common DRY Violations to AVOID**
+
+```vue
+<!-- WRONG: Duplicated template structures -->
+<template>
+  <q-item v-if="isInternal" clickable :to="link">
+    <q-item-section>{{ title }}</q-item-section>
+  </q-item>
+  <q-item v-else clickable tag="a" :href="link">
+    <q-item-section>{{ title }}</q-item-section>
+  </q-item>
+</template>
+```
+
+#### ✅ **Correct DRY Implementation**
+
+```vue
+<!-- CORRECT: Single template with dynamic attributes -->
+<template>
+  <q-item clickable v-bind="linkAttributes">
+    <q-item-section>{{ title }}</q-item-section>
+  </q-item>
+</template>
+
+<script setup>
+const linkAttributes = computed(() => (isInternal ? { to: link } : { tag: 'a', href: link }));
+</script>
+```
+
+#### **DRY Checklist Before Submitting Code**
+
+- [ ] No duplicated template blocks
+- [ ] No repeated logic in methods
+- [ ] Common patterns extracted to reusable functions
+- [ ] Conditional rendering uses parameterization, not duplication
+
 ### Code Organization
 
 - Use Vue 3 Composition API with `<script setup>`
@@ -328,6 +373,18 @@ const errorMessage = 'Please enter a valid email';
 
 // Avoid: Mutating props
 props.user.name = 'New Name';
+
+// Avoid: Template duplication (violates DRY)
+<template>
+  <div v-if="isActive" class="card active">
+    <h3>{{ title }}</h3>
+    <p>{{ content }}</p>
+  </div>
+  <div v-else class="card inactive">
+    <h3>{{ title }}</h3>
+    <p>{{ content }}</p>
+  </div>
+</template>;
 ```
 
 ### Do
@@ -359,6 +416,14 @@ const errorMessage = t('validation.emailInvalid');
 
 // Good: Immutable updates
 const updatedUser = { ...user, name: 'New Name' };
+
+// Good: DRY template with computed attributes
+<template>
+  <div :class="['card', { active: isActive, inactive: !isActive }]">
+    <h3>{{ title }}</h3>
+    <p>{{ content }}</p>
+  </div>
+</template>
 ```
 
 ## 🎮 Projet-Specific Patterns
@@ -408,13 +473,21 @@ When updating documentation:
 
 ### When I Ask for Code:
 
-1. **Ask for clarification** if requirements are unclear
-2. **Suggest architecture** before implementing
-3. **Include tests** with the implementation
-4. **Explain design decisions** and trade-offs
-5. **Follow the established patterns** in the codebase
-6. **Consider edge cases** and error scenarios
-7. **Optimize for readability** over clever solutions
+1. **Check for DRY violations FIRST** - never duplicate templates, logic, or patterns
+2. **Ask for clarification** if requirements are unclear
+3. **Suggest architecture** before implementing
+4. **Include tests** with the implementation
+5. **Explain design decisions** and trade-offs
+6. **Follow the established patterns** in the codebase
+7. **Consider edge cases** and error scenarios
+8. **Optimize for readability** over clever solutions
+
+**MANDATORY DRY CHECK**: Before submitting any Vue component code, verify:
+
+- ✅ No duplicated template blocks (use `v-bind` with computed properties)
+- ✅ No repeated logic in methods (extract to composables)
+- ✅ Conditional rendering is parameterized, not duplicated
+- ✅ Common patterns are abstracted into reusable functions
 
 ### When I Ask for Refactoring:
 
