@@ -1,21 +1,27 @@
 import type { ComponentMountingOptions } from '@vue/test-utils';
 import {
-  Quasar,
+  QBadge,
+  QBtn,
+  QBtnGroup,
   QCard,
   QCardSection,
-  QBadge,
+  QChip,
   QIcon,
-  QBtn,
-  QSpinner,
-  QToggle,
-  QList,
+  QInput,
   QItem,
   QItemSection,
-  QChip,
-  QTooltip,
   QLinearProgress,
+  QList,
+  QMenu,
+  QSelect,
+  QSpinner,
   QTable,
+  QToggle,
+  QTooltip,
+  Quasar,
 } from 'quasar';
+import { createI18n } from 'vue-i18n';
+import messages from '../src/i18n';
 
 export const quasarOptions = {
   config: {},
@@ -26,6 +32,7 @@ export const quasarOptions = {
     QBadge,
     QIcon,
     QBtn,
+    QBtnGroup,
     QSpinner,
     QToggle,
     QList,
@@ -35,8 +42,18 @@ export const quasarOptions = {
     QTooltip,
     QLinearProgress,
     QTable,
+    QInput,
+    QSelect,
+    QMenu,
   },
 };
+
+// Create i18n instance for tests
+const i18n = createI18n({
+  locale: 'en-US',
+  legacy: false,
+  messages,
+});
 
 /**
  * Provides Quasar configuration for testing with real components
@@ -48,7 +65,7 @@ export function withQuasarBrowser<T>(
 ): ComponentMountingOptions<T> {
   const baseConfig: ComponentMountingOptions<T> = {
     global: {
-      plugins: [[Quasar, quasarOptions] as const],
+      plugins: [[Quasar, quasarOptions] as const, i18n],
     },
   };
 
