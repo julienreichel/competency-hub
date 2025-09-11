@@ -1,7 +1,7 @@
 # Competency Hub
 
 [![CI](https://github.com/julienreichel/competency-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/julienreichel/competency-hub/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/julienreichel/competency-hub/branch/main/graph/badge.svg)](https://codecov.io/gh/julienreichel/competency-hub)
+[![codecov](https://codecov.io/github/julienreichel/competency-hub/coverage.svg?branch=main)](https://codecov.io/github/julienreichel/competency-hub?branch=main)
 [![Quality Gate Status](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](https://github.com/julienreichel/competency-hub)
 [![Mutation Score](https://img.shields.io/badge/mutation%20score-90.06%25-brightgreen)](https://github.com/julienreichel/competency-hub)
 
