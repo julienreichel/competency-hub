@@ -1,21 +1,23 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { nextTick } from 'vue';
 import type { AuthUser } from 'aws-amplify/auth';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTick } from 'vue';
 import { useAuth } from '../../src/composables/useAuth';
 
 // Mock AWS Amplify auth functions
 vi.mock('aws-amplify/auth', () => ({
   getCurrentUser: vi.fn(),
   fetchUserAttributes: vi.fn(),
+  fetchAuthSession: vi.fn(),
   signOut: vi.fn(),
 }));
 
 // Import mocked functions after the mock is set up
-import { getCurrentUser, fetchUserAttributes, signOut } from 'aws-amplify/auth';
+import { fetchAuthSession, fetchUserAttributes, getCurrentUser, signOut } from 'aws-amplify/auth';
 
 // Cast to mocked functions for testing
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockFetchUserAttributes = vi.mocked(fetchUserAttributes);
+const mockFetchAuthSession = vi.mocked(fetchAuthSession);
 const mockSignOut = vi.mocked(signOut);
 
 describe('useAuth Composable', () => {
@@ -32,7 +34,16 @@ describe('useAuth Composable', () => {
     given_name: 'John',
     family_name: 'Doe',
     preferred_username: 'johndoe',
-    'cognito:groups': ['Educator', 'Admin'],
+  };
+
+  const MOCK_AUTH_SESSION = {
+    tokens: {
+      accessToken: {
+        payload: {
+          'cognito:groups': ['Educator', 'Admin'],
+        },
+      },
+    },
   };
 
   // Use type assertion to bypass AWS Amplify typing issues in tests
@@ -40,6 +51,11 @@ describe('useAuth Composable', () => {
     attrs: Record<string, unknown>,
   ): Parameters<typeof mockFetchUserAttributes.mockResolvedValue>[0] =>
     attrs as Parameters<typeof mockFetchUserAttributes.mockResolvedValue>[0];
+
+  const createMockAuthSession = (
+    session: Record<string, unknown>,
+  ): Parameters<typeof mockFetchAuthSession.mockResolvedValue>[0] =>
+    session as Parameters<typeof mockFetchAuthSession.mockResolvedValue>[0];
 
   beforeEach(() => {
     // Reset all mocks before each test
@@ -67,7 +83,10 @@ describe('useAuth Composable', () => {
     beforeEach(() => {
       // Set up authenticated state
       authComposable.user.value = MOCK_USER;
-      authComposable.userAttributes.value = MOCK_ATTRIBUTES;
+      authComposable.userAttributes.value = {
+        ...MOCK_ATTRIBUTES,
+        'cognito:groups': ['Educator', 'Admin'],
+      };
     });
 
     it('should compute isAuthenticated correctly when user exists', () => {
@@ -147,11 +166,15 @@ describe('useAuth Composable', () => {
     it('should successfully initialize authenticated user', async () => {
       mockGetCurrentUser.mockResolvedValue(MOCK_USER);
       mockFetchUserAttributes.mockResolvedValue(createMockAttributes(MOCK_ATTRIBUTES));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
 
       await authComposable.initAuth();
 
       expect(authComposable.user.value).toEqual(MOCK_USER);
-      expect(authComposable.userAttributes.value).toEqual(MOCK_ATTRIBUTES);
+      expect(authComposable.userAttributes.value).toEqual({
+        ...MOCK_ATTRIBUTES,
+        'cognito:groups': ['Educator', 'Admin'],
+      });
       expect(authComposable.error.value).toBeNull();
       expect(authComposable.isLoading.value).toBe(false);
     });
@@ -176,6 +199,7 @@ describe('useAuth Composable', () => {
 
       mockGetCurrentUser.mockReturnValue(getUserPromise);
       mockFetchUserAttributes.mockResolvedValue(createMockAttributes(MOCK_ATTRIBUTES));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
 
       const initPromise = authComposable.initAuth();
 
@@ -257,11 +281,15 @@ describe('useAuth Composable', () => {
       authComposable.user.value = MOCK_USER;
       const updatedAttributes = { ...MOCK_ATTRIBUTES, email: 'updated@example.com' };
       mockFetchUserAttributes.mockResolvedValue(createMockAttributes(updatedAttributes));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
 
       await authComposable.refreshUserAttributes();
 
       expect(mockFetchUserAttributes).toHaveBeenCalledOnce();
-      expect(authComposable.userAttributes.value).toEqual(updatedAttributes);
+      expect(authComposable.userAttributes.value).toEqual({
+        ...updatedAttributes,
+        'cognito:groups': ['Educator', 'Admin'],
+      });
       expect(authComposable.error.value).toBeNull();
     });
 
@@ -360,6 +388,7 @@ describe('useAuth Composable', () => {
 
       mockGetCurrentUser.mockResolvedValue(MOCK_USER);
       mockFetchUserAttributes.mockResolvedValue(createMockAttributes(MOCK_ATTRIBUTES));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
 
       await authComposable.initAuth();
 
@@ -395,7 +424,10 @@ describe('useAuth Composable', () => {
     });
 
     it('should maintain reactivity when user attributes change', async () => {
-      authComposable.userAttributes.value = MOCK_ATTRIBUTES;
+      authComposable.userAttributes.value = {
+        ...MOCK_ATTRIBUTES,
+        'cognito:groups': ['Educator', 'Admin'],
+      };
       await nextTick();
 
       expect(authComposable.userFullName.value).toBe('John Doe');

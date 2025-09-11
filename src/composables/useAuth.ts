@@ -1,5 +1,5 @@
 import type { AuthUser } from 'aws-amplify/auth';
-import { fetchUserAttributes, getCurrentUser, signOut } from 'aws-amplify/auth';
+import { fetchAuthSession, fetchUserAttributes, getCurrentUser, signOut } from 'aws-amplify/auth';
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 
 /**
@@ -33,6 +33,23 @@ interface UseAuthReturn {
   refreshUserAttributes: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
+}
+
+/**
+ * Helper function to fetch user attributes including groups from auth session
+ */
+async function fetchUserAttributesWithGroups(): Promise<UserAttributes> {
+  // Fetch user attributes and auth session for groups
+  const [attributes, authSession] = await Promise.all([fetchUserAttributes(), fetchAuthSession()]);
+
+  // Extract groups from access token payload
+  const groups = authSession.tokens?.accessToken?.payload['cognito:groups'] || [];
+
+  // Combine attributes with groups
+  return {
+    ...attributes,
+    'cognito:groups': Array.isArray(groups) ? groups : [],
+  } as UserAttributes;
 }
 
 /**
@@ -94,8 +111,7 @@ export function useAuth(): UseAuthReturn {
       const currentUser = await getCurrentUser();
       user.value = currentUser;
 
-      const attributes = await fetchUserAttributes();
-      userAttributes.value = attributes as UserAttributes;
+      userAttributes.value = await fetchUserAttributesWithGroups();
     } catch {
       // User is not authenticated, which is fine
       user.value = null;
@@ -132,8 +148,7 @@ export function useAuth(): UseAuthReturn {
     if (!user.value) return;
 
     try {
-      const attributes = await fetchUserAttributes();
-      userAttributes.value = attributes as UserAttributes;
+      userAttributes.value = await fetchUserAttributesWithGroups();
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to refresh user attributes';
     }
