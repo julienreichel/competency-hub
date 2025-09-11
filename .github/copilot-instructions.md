@@ -24,6 +24,37 @@ This is a Vue 3 + Quasar project with comprehensive testing using Vitest. The co
 - Separate concerns: UI logic, business logic, data access
 - Use TypeScript
 
+### ESLint Compliance
+
+#### Magic Numbers Rule
+
+- **ALWAYS use named constants** instead of magic numbers to avoid `no-magic-numbers` ESLint errors
+- **Exceptions**: Only `-1`, `0`, `1`, and `2` are allowed as literal numbers
+- **Constants naming**: Use SCREAMING_SNAKE_CASE for module-level constants
+
+```javascript
+// ❌ Avoid: Magic numbers
+setTimeout(callback, 5000);
+const users = data.slice(0, 10);
+const percentage = (value / 100) * rate;
+
+// ✅ Correct: Named constants
+const TIMEOUT_DURATION = 5000; // 5 seconds
+const MAX_USERS_DISPLAY = 10;
+const PERCENTAGE_DIVISOR = 100;
+
+setTimeout(callback, TIMEOUT_DURATION);
+const users = data.slice(0, MAX_USERS_DISPLAY);
+const percentage = (value / PERCENTAGE_DIVISOR) * rate;
+```
+
+#### Other ESLint Rules
+
+- Use `const` for values that don't change, `let` for mutable variables
+- Prefer template literals over string concatenation
+- Use destructuring for object and array access
+- Follow import ordering: external libraries first, then internal modules
+
 ### Naming Conventions
 
 - Components: PascalCase (`GameBoard.vue`)
@@ -257,8 +288,10 @@ if (user) {
   }
 }
 
-// Avoid: Magic numbers
+// Avoid: Magic numbers (ESLint no-magic-numbers rule)
 setTimeout(callback, 300000); // What is 300000?
+const items = data.slice(0, 20); // Why 20?
+const threshold = value > 0.85; // What does 0.85 represent?
 
 // Avoid: Mutating props
 props.user.name = 'New Name';
@@ -277,9 +310,14 @@ function canUserEdit(user) {
   return user.permissions.canEdit;
 }
 
-// Good: Named constants
+// Good: Named constants for magic numbers
 const CACHE_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const MAX_ITEMS_PER_PAGE = 20;
+const SUCCESS_THRESHOLD = 0.85; // 85% success rate
+
 setTimeout(callback, CACHE_TIMEOUT);
+const items = data.slice(0, MAX_ITEMS_PER_PAGE);
+const isSuccessful = value > SUCCESS_THRESHOLD;
 
 // Good: Immutable updates
 const updatedUser = { ...user, name: 'New Name' };
