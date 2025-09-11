@@ -8,20 +8,22 @@ const CI_CONFIG = {
     user_pool_id: 'CI_PLACEHOLDER',
     user_pool_client_id: 'CI_PLACEHOLDER',
   },
-} as const;
+};
 
 /**
  * Safely load Amplify configuration with fallbacks
+ * @returns {Promise<Record<string, unknown>>} Amplify configuration object
  */
-async function loadAmplifyConfig(): Promise<Record<string, unknown>> {
+async function loadAmplifyConfig() {
   // In CI/test environments, use embedded config
   if (process.env.CI === 'true' || process.env.NODE_ENV === 'test') {
     console.info('Using embedded CI Amplify configuration');
     return CI_CONFIG;
   }
 
-  // In development/production, try to load real config via fetch
+  // In development/production, try to load real config
   try {
+    // Use fetch to avoid compile-time resolution issues
     const response = await fetch('/amplify_outputs.json');
     if (response.ok) {
       const config = await response.json();
@@ -29,17 +31,18 @@ async function loadAmplifyConfig(): Promise<Record<string, unknown>> {
       return config;
     }
   } catch {
-    console.warn('Failed to load Amplify config, using CI fallback');
+    console.warn('Fetch failed, using CI fallback configuration');
   }
 
-  // Final fallback to CI config
+  // Fallback to CI config
   return CI_CONFIG;
 }
 
 /**
  * Initialize AWS Amplify configuration
+ * @returns {Promise<void>}
  */
-async function configureAmplify(): Promise<void> {
+async function configureAmplify() {
   try {
     const config = await loadAmplifyConfig();
     Amplify.configure(config);
