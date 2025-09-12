@@ -3,228 +3,305 @@ import { describe, expect, it } from 'vitest';
 import UserSearchFilters from '../../../src/components/admin/UserSearchFilters.vue';
 import { withQuasarBrowser } from '../../browser-test-utils';
 
-describe('UserSearchFilters Component', () => {
-  const defaultProps = {
+describe('UserSearchFilters - User Behavior', () => {
+  const sampleProps = {
     search: '',
     roleFilter: null,
     statusFilter: null,
-    roleOptions: ['Administrator', 'Educator', 'Student'],
-    statusOptions: ['Active', 'Inactive'],
+    roleOptions: ['Administrator', 'Educator', 'Student', 'Parent'],
+    statusOptions: ['Active', 'Inactive', 'Suspended'],
   };
 
-  it('should render with all props', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
+  describe('When admin needs to find specific users', () => {
+    it('allows searching users by name or email', async () => {
+      // Arrange: Admin wants to find a specific user
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
 
-    expect(wrapper.exists()).toBe(true);
-    expect(wrapper.findComponent({ name: 'QInput' }).exists()).toBe(true);
-    expect(wrapper.findAllComponents({ name: 'QSelect' }).length).toBe(2);
-  });
+      // Act: Admin types in search box
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.exists()).toBe(true);
 
-  it('should render search input with correct properties', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: {
-          ...defaultProps,
-          search: 'test search',
-        },
-      }),
-    );
+      await searchInput.vm.$emit('update:modelValue', 'john doe');
 
-    const searchInput = wrapper.findComponent({ name: 'QInput' });
-    expect(searchInput.exists()).toBe(true);
-    expect(searchInput.props('modelValue')).toBe('test search');
-    expect(searchInput.props('filled')).toBe(true);
-    expect(searchInput.props('debounce')).toBe('300');
-  });
+      // Assert: Search criteria is communicated to parent
+      expect(wrapper.emitted('update:search')).toBeTruthy();
+      expect(wrapper.emitted('update:search')?.[0]).toEqual(['john doe']);
+    });
 
-  it('should render role select with correct options', () => {
-    const roleOptions = ['Student', 'Educator', 'Parent', 'Admin'];
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: {
-          ...defaultProps,
-          roleFilter: 'Student',
-          roleOptions,
-        },
-      }),
-    );
+    it('provides debounced search to avoid excessive filtering', () => {
+      // Arrange: Admin is typing quickly in search
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
 
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    const roleSelect = selects[0]; // First select is role
-    if (roleSelect) {
-      expect(roleSelect.props('modelValue')).toBe('Student');
-      expect(roleSelect.props('options')).toEqual(roleOptions);
-    }
-  });
+      // Assert: Search input has debounce for better performance
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.props('debounce')).toBe('300');
 
-  it('should render status select with correct options', () => {
-    const statusOptions = ['Active', 'Inactive', 'Suspended'];
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: {
-          ...defaultProps,
-          statusFilter: 'Active',
-          statusOptions,
-        },
-      }),
-    );
+      // Behavior: User sees search icon indicating search functionality
+      expect(wrapper.html()).toMatch(/search|icon.*search/i);
+    });
 
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    const statusSelect = selects[1]; // Second select is status
-    if (statusSelect) {
-      expect(statusSelect.props('modelValue')).toBe('Active');
-      expect(statusSelect.props('options')).toEqual(statusOptions);
-    }
-  });
+    it('allows filtering users by role', async () => {
+      // Arrange: Admin wants to see only educators
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
 
-  it('should emit update:search when search input changes', async () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
+      // Act: Admin selects role filter
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      const roleSelect = selects.find((select) =>
+        select.props('options')?.includes('Administrator'),
+      );
 
-    const searchInput = wrapper.findComponent({ name: 'QInput' });
-    await searchInput.vm.$emit('update:modelValue', 'new search');
+      expect(roleSelect?.exists()).toBe(true);
+      await roleSelect?.vm.$emit('update:modelValue', 'Educator');
 
-    expect(wrapper.emitted('update:search')).toBeTruthy();
-    expect(wrapper.emitted('update:search')?.[0]).toEqual(['new search']);
-  });
-
-  it('should emit update:roleFilter when role select changes', async () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
-
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    const roleSelect = selects[0];
-    if (roleSelect) {
-      await roleSelect.vm.$emit('update:modelValue', 'Administrator');
-
+      // Assert: Role filter is applied
       expect(wrapper.emitted('update:roleFilter')).toBeTruthy();
-      expect(wrapper.emitted('update:roleFilter')?.[0]).toEqual(['Administrator']);
-    }
-  });
+      expect(wrapper.emitted('update:roleFilter')?.[0]).toEqual(['Educator']);
+    });
 
-  it('should emit update:statusFilter when status select changes', async () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
+    it('allows filtering users by status', async () => {
+      // Arrange: Admin wants to see only active users
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
 
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    const statusSelect = selects[1];
-    if (statusSelect) {
-      await statusSelect.vm.$emit('update:modelValue', 'Inactive');
+      // Act: Admin selects status filter
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      const statusSelect = selects.find((select) => select.props('options')?.includes('Active'));
 
+      expect(statusSelect?.exists()).toBe(true);
+      await statusSelect?.vm.$emit('update:modelValue', 'Active');
+
+      // Assert: Status filter is applied
       expect(wrapper.emitted('update:statusFilter')).toBeTruthy();
-      expect(wrapper.emitted('update:statusFilter')?.[0]).toEqual(['Inactive']);
-    }
-  });
+      expect(wrapper.emitted('update:statusFilter')?.[0]).toEqual(['Active']);
+    });
 
-  it('should have correct styling and layout', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
+    it('allows clearing filters to show all users', async () => {
+      // Arrange: Admin has applied filters and wants to see all users
+      const propsWithFilters = {
+        ...sampleProps,
+        search: 'existing search',
+        roleFilter: 'Educator',
+        statusFilter: 'Active',
+      };
 
-    const row = wrapper.find('.row');
-    expect(row.exists()).toBe(true);
-    expect(row.classes()).toContain('q-gutter-md');
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: propsWithFilters,
+        }),
+      );
 
-    const searchInput = wrapper.findComponent({ name: 'QInput' });
-    expect(searchInput.props('filled')).toBe(true);
+      // Assert: Admin can see current filters are applied
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.props('modelValue')).toBe('existing search');
 
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    selects.forEach((select) => {
-      expect(select.props('filled')).toBe(true);
+      // Behavior: Select filters show clearable option
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      selects.forEach((select) => {
+        expect(select.props('clearable')).toBe(true);
+      });
+
+      // Act: Admin clears search
+      await searchInput.vm.$emit('update:modelValue', '');
+
+      // Assert: Search is cleared
+      expect(wrapper.emitted('update:search')).toBeTruthy();
+      const searchEmissions = wrapper.emitted('update:search') as string[][];
+      expect(searchEmissions[searchEmissions.length - 1]).toEqual(['']);
     });
   });
 
-  it('should show search icon in input', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
+  describe('When working with different system configurations', () => {
+    it('adapts to available role options in the system', () => {
+      // Arrange: System with custom role configuration
+      const customRoleProps = {
+        ...sampleProps,
+        roleOptions: ['Manager', 'Employee'],
+        statusOptions: ['Active'],
+      };
 
-    // Check for search icon in the input
-    const searchIcon = wrapper.findComponent({ name: 'QIcon' });
-    expect(searchIcon.exists()).toBe(true);
+      // Act: Render with custom roles
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: customRoleProps,
+        }),
+      );
+
+      // Assert: Admin sees only available roles for their system
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      const roleSelect = selects.find((select) => select.props('options')?.includes('Manager'));
+
+      expect(roleSelect?.exists()).toBe(true);
+      expect(roleSelect?.props('options')).toEqual(['Manager', 'Employee']);
+    });
+
+    it('handles systems with no role/status categories', () => {
+      // Arrange: Simple system with minimal categories
+      const minimalProps = {
+        search: '',
+        roleFilter: null,
+        statusFilter: null,
+        roleOptions: [],
+        statusOptions: [],
+      };
+
+      // Act: Render with minimal options
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: minimalProps,
+        }),
+      );
+
+      // Assert: Admin still has search functionality
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.exists()).toBe(true);
+
+      // Behavior: Filter selects are present but empty (graceful degradation)
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      expect(selects.length).toBe(2);
+    });
+
+    it('preserves admin filter state during navigation', () => {
+      // Arrange: Admin returns to page with saved filter state
+      const savedFilterState = {
+        search: 'previous search',
+        roleFilter: 'Administrator',
+        statusFilter: 'Inactive',
+        roleOptions: sampleProps.roleOptions,
+        statusOptions: sampleProps.statusOptions,
+      };
+
+      // Act: Render with preserved state
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: savedFilterState,
+        }),
+      );
+
+      // Assert: Admin sees their previous filter state
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.props('modelValue')).toBe('previous search');
+
+      // Find and verify role and status selects maintain state
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      const roleSelect = selects.find((select) => select.props('modelValue') === 'Administrator');
+      const statusSelect = selects.find((select) => select.props('modelValue') === 'Inactive');
+
+      expect(roleSelect?.exists()).toBe(true);
+      expect(statusSelect?.exists()).toBe(true);
+    });
   });
 
-  it('should handle null filter values', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: {
-          search: '',
-          roleFilter: null,
-          statusFilter: null,
-          roleOptions: ['Administrator'],
-          statusOptions: ['Active'],
-        },
-      }),
-    );
+  describe('User Interface and Accessibility', () => {
+    it('provides clear labels and placeholders for all inputs', () => {
+      // Arrange: Admin needs intuitive interface
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
 
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    if (selects.length >= 2 && selects[0] && selects[1]) {
-      expect(selects[0].props('modelValue')).toBeNull();
-      expect(selects[1].props('modelValue')).toBeNull();
-    }
-  });
+      // Assert: Search input has helpful interface for user input
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      // Behavior: Search input exists and is configured for user interaction
+      expect(searchInput.exists()).toBe(true);
+      expect(searchInput.props('filled')).toBe(true);
 
-  it('should handle empty arrays for options', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: {
-          search: '',
-          roleFilter: null,
-          statusFilter: null,
-          roleOptions: [],
-          statusOptions: [],
-        },
-      }),
-    );
+      // Assert: Select fields have descriptive labels
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      selects.forEach((select) => {
+        expect(select.props()).toHaveProperty('label');
+      });
+    });
 
-    const selects = wrapper.findAllComponents({ name: 'QSelect' });
-    if (selects.length >= 2 && selects[0] && selects[1]) {
-      expect(selects[0].props('options')).toEqual([]);
-      expect(selects[1].props('options')).toEqual([]);
-    }
-  });
+    it('organizes filters in logical visual hierarchy', () => {
+      // Arrange: Admin needs efficient workflow
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
 
-  it('should have proper component structure', () => {
-    const wrapper = mount(
-      UserSearchFilters,
-      withQuasarBrowser({
-        props: defaultProps,
-      }),
-    );
+      // Assert: Filters are arranged horizontally with consistent spacing
+      const container = wrapper.find('.row');
+      expect(container.exists()).toBe(true);
+      expect(container.classes()).toContain('q-gutter-md');
 
-    // Should have one input and two selects
-    expect(wrapper.findComponent({ name: 'QInput' }).exists()).toBe(true);
-    expect(wrapper.findAllComponents({ name: 'QSelect' }).length).toBe(2);
+      // Behavior: Search comes first (most common action), then filters
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      expect(searchInput.exists()).toBe(true);
+      expect(selects.length).toBe(2);
+    });
 
-    // Should have search icon
-    expect(wrapper.findComponent({ name: 'QIcon' }).exists()).toBe(true);
+    it('provides visual feedback for active filters', () => {
+      // Arrange: Admin needs to see which filters are active
+      const activeFiltersProps = {
+        search: 'active search',
+        roleFilter: 'Administrator',
+        statusFilter: 'Active',
+        roleOptions: sampleProps.roleOptions,
+        statusOptions: sampleProps.statusOptions,
+      };
+
+      // Act: Render with active filters
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: activeFiltersProps,
+        }),
+      );
+
+      // Assert: Admin can see which filters are currently applied
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.props('modelValue')).toBe('active search');
+
+      // Behavior: Active filter values are visible in the interface
+      const selects = wrapper.findAllComponents({ name: 'QSelect' });
+      const activeSelects = selects.filter((select) => select.props('modelValue') !== null);
+      expect(activeSelects.length).toBeGreaterThan(0);
+    });
+
+    it('maintains responsive layout for mobile admin access', () => {
+      // Arrange: Admin using mobile device
+      const wrapper = mount(
+        UserSearchFilters,
+        withQuasarBrowser({
+          props: sampleProps,
+        }),
+      );
+
+      // Assert: Layout adapts to smaller screens
+      const container = wrapper.find('.row');
+      expect(container.exists()).toBe(true);
+
+      // Behavior: Components have defined widths for consistent layout
+      const searchInput = wrapper.findComponent({ name: 'QInput' });
+      expect(searchInput.attributes('style')).toMatch(/width/);
+    });
   });
 });

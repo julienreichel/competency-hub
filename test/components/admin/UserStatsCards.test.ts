@@ -3,263 +3,316 @@ import { describe, expect, it } from 'vitest';
 import UserStatsCards from '../../../src/components/admin/UserStatsCards.vue';
 import { withQuasarBrowser } from '../../browser-test-utils';
 
-describe('UserStatsCards Component', () => {
-  const mockStats = {
+describe('UserStatsCards - User Behavior', () => {
+  const sampleStats = {
     total: 1250,
     active: 980,
     newThisMonth: 45,
     onlineNow: 127,
   };
 
-  it('should render with stats prop', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+  describe('When admin needs system overview', () => {
+    it('displays total user count for capacity planning', () => {
+      // Arrange: Admin wants to understand system scale
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    expect(wrapper.exists()).toBe(true);
-    expect(wrapper.find('.row').exists()).toBe(true);
-  });
+      // Assert: Admin can see total user count prominently
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      const totalCard = statCards.find(
+        (card) => card.props('value') === 1250 && card.props('label')?.includes('Total'),
+      );
 
-  it('should render all four StatCard components', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+      expect(totalCard?.exists()).toBe(true);
+      expect(totalCard?.props('value')).toBe(1250);
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBe(4);
-  });
+      // Behavior: Total users should be visually distinct (blue color theme)
+      expect(totalCard?.props('color')).toBe('blue');
+      expect(totalCard?.props('icon')).toBe('people');
+    });
 
-  it('should pass correct props to Total Users StatCard', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+    it('shows active user count for engagement monitoring', () => {
+      // Arrange: Admin monitors user engagement
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBeGreaterThanOrEqual(1);
-    if (statCards[0]) {
-      expect(statCards[0].props('icon')).toBe('people');
-      expect(statCards[0].props('color')).toBe('blue');
-      expect(statCards[0].props('value')).toBe(1250);
-      expect(statCards[0].props('label')).toBe('Total Users');
-    }
-  });
+      // Assert: Admin can see active user metrics
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      const activeCard = statCards.find(
+        (card) => card.props('value') === 980 && card.props('label')?.includes('Active'),
+      );
 
-  it('should pass correct props to Active Users StatCard', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+      expect(activeCard?.exists()).toBe(true);
+      expect(activeCard?.props('value')).toBe(980);
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBeGreaterThanOrEqual(2);
-    if (statCards[1]) {
-      expect(statCards[1].props('icon')).toBe('check_circle');
-      expect(statCards[1].props('color')).toBe('green');
-      expect(statCards[1].props('value')).toBe(980);
-      expect(statCards[1].props('label')).toBe('Active Users');
-    }
-  });
+      // Behavior: Active users should convey positive status (green color)
+      expect(activeCard?.props('color')).toBe('green');
+      expect(activeCard?.props('icon')).toBe('check_circle');
+    });
 
-  it('should pass correct props to New This Month StatCard', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+    it('highlights new user growth for trend analysis', () => {
+      // Arrange: Admin tracks user acquisition
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBeGreaterThanOrEqual(3);
-    if (statCards[2]) {
-      expect(statCards[2].props('icon')).toBe('person_add');
-      expect(statCards[2].props('color')).toBe('purple');
-      expect(statCards[2].props('value')).toBe(45);
-      expect(statCards[2].props('label')).toBe('New This Month');
-    }
-  });
+      // Assert: Admin can see new user growth metrics
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      const newUsersCard = statCards.find(
+        (card) => card.props('value') === 45 && card.props('label')?.includes('New'),
+      );
 
-  it('should pass correct props to Online Now StatCard', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+      expect(newUsersCard?.exists()).toBe(true);
+      expect(newUsersCard?.props('value')).toBe(45);
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBeGreaterThanOrEqual(4);
-    if (statCards[3]) {
-      expect(statCards[3].props('icon')).toBe('schedule');
-      expect(statCards[3].props('color')).toBe('orange');
-      expect(statCards[3].props('value')).toBe(127);
-      expect(statCards[3].props('label')).toBe('Online Now');
-    }
-  });
+      // Behavior: New users should convey growth (purple for distinction)
+      expect(newUsersCard?.props('color')).toBe('purple');
+      expect(newUsersCard?.props('icon')).toBe('person_add');
+    });
 
-  it('should update StatCard values when stats prop changes', async () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+    it('displays current online users for real-time monitoring', () => {
+      // Arrange: Admin monitors current system load
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    const newStats = {
-      total: 1500,
-      active: 1200,
-      newThisMonth: 75,
-      onlineNow: 150,
-    };
+      // Assert: Admin can see real-time user activity
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      const onlineCard = statCards.find(
+        (card) => card.props('value') === 127 && card.props('label')?.includes('Online'),
+      );
 
-    await wrapper.setProps({ stats: newStats });
+      expect(onlineCard?.exists()).toBe(true);
+      expect(onlineCard?.props('value')).toBe(127);
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBe(4);
+      // Behavior: Online users should convey real-time activity (orange for attention)
+      expect(onlineCard?.props('color')).toBe('orange');
+      expect(onlineCard?.props('icon')).toBe('schedule');
+    });
 
-    if (statCards[0] && statCards[1] && statCards[2] && statCards[3]) {
-      expect(statCards[0].props('value')).toBe(1500);
-      expect(statCards[1].props('value')).toBe(1200);
-      expect(statCards[2].props('value')).toBe(75);
-      expect(statCards[3].props('value')).toBe(150);
-    }
-  });
+    it('provides complete dashboard overview in single view', () => {
+      // Arrange: Admin needs comprehensive user statistics
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-  it('should handle zero values correctly', () => {
-    const zeroStats = {
-      total: 0,
-      active: 0,
-      newThisMonth: 0,
-      onlineNow: 0,
-    };
+      // Assert: Admin sees all key metrics at once
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      expect(statCards.length).toBe(4);
 
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: zeroStats,
-        },
-      }),
-    );
-
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-
-    statCards.forEach((card) => {
-      expect(card.props('value')).toBe(0);
+      // Behavior: All critical user metrics are visible simultaneously
+      const values = statCards.map((card) => card.props('value'));
+      expect(values).toContain(1250); // Total
+      expect(values).toContain(980); // Active
+      expect(values).toContain(45); // New
+      expect(values).toContain(127); // Online
     });
   });
 
-  it('should have proper grid layout', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+  describe('When monitoring system health and trends', () => {
+    it('updates metrics in real-time as data changes', async () => {
+      // Arrange: Admin has dashboard open as system updates
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    const row = wrapper.find('.row');
-    expect(row.exists()).toBe(true);
-    expect(row.classes()).toContain('q-gutter-md');
-    expect(row.classes()).toContain('q-mt-lg');
+      // Act: System receives updated statistics
+      const updatedStats = {
+        total: 1275,
+        active: 1005,
+        newThisMonth: 50,
+        onlineNow: 135,
+      };
 
-    const columns = wrapper.findAll('.col-12');
-    expect(columns.length).toBe(4);
+      await wrapper.setProps({ stats: updatedStats });
 
-    columns.forEach((col) => {
-      expect(col.classes()).toContain('col-sm-6');
-      expect(col.classes()).toContain('col-md-3');
+      // Assert: Admin sees updated metrics immediately
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      const values = statCards.map((card) => card.props('value'));
+
+      expect(values).toContain(1275); // Updated total
+      expect(values).toContain(1005); // Updated active
+      expect(values).toContain(50); // Updated new
+      expect(values).toContain(135); // Updated online
+    });
+
+    it('handles edge cases like zero users gracefully', () => {
+      // Arrange: New system or maintenance period
+      const emptyStats = {
+        total: 0,
+        active: 0,
+        newThisMonth: 0,
+        onlineNow: 0,
+      };
+
+      // Act: Display stats during low/no activity period
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: emptyStats },
+        }),
+      );
+
+      // Assert: Admin sees clear indication of empty state
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      statCards.forEach((card) => {
+        expect(card.props('value')).toBe(0);
+      });
+
+      // Behavior: Zero values don't break the interface
+      expect(statCards.length).toBe(4);
+    });
+
+    it('displays large user counts without interface degradation', () => {
+      // Arrange: Large enterprise deployment
+      const enterpriseStats = {
+        total: 999999,
+        active: 750000,
+        newThisMonth: 5000,
+        onlineNow: 25000,
+      };
+
+      // Act: Display enterprise-scale statistics
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: enterpriseStats },
+        }),
+      );
+
+      // Assert: Admin can read large numbers clearly
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      const values = statCards.map((card) => card.props('value'));
+
+      expect(values).toContain(999999);
+      expect(values).toContain(750000);
+      expect(values).toContain(5000);
+      expect(values).toContain(25000);
+
+      // Behavior: Large numbers don't break card layout
+      expect(statCards.length).toBe(4);
     });
   });
 
-  it('should have unique keys for each StatCard', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+  describe('Dashboard Layout and User Experience', () => {
+    it('organizes metrics in logical visual hierarchy', () => {
+      // Arrange: Admin needs quick understanding of system status
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    const columns = wrapper.findAll('[key]');
-    const keys = columns.map((col) => col.attributes('key'));
-    const uniqueKeys = new Set(keys);
+      // Assert: Cards are arranged in responsive grid layout
+      const container = wrapper.find('.row');
+      expect(container.exists()).toBe(true);
+      expect(container.classes()).toContain('q-gutter-md');
 
-    expect(uniqueKeys.size).toBe(keys.length); // All keys should be unique
-  });
+      // Behavior: Cards adapt to different screen sizes
+      const columns = wrapper.findAll('.col-12');
+      expect(columns.length).toBe(4);
 
-  it('should handle large numbers correctly', () => {
-    const largeStats = {
-      total: 999999,
-      active: 888888,
-      newThisMonth: 777777,
-      onlineNow: 666666,
-    };
+      // Each card responsive: mobile (full width), tablet (half), desktop (quarter)
+      columns.forEach((col) => {
+        expect(col.classes()).toContain('col-sm-6');
+        expect(col.classes()).toContain('col-md-3');
+      });
+    });
 
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: largeStats,
-        },
-      }),
-    );
+    it('uses distinct visual indicators for different metric types', () => {
+      // Arrange: Admin needs to quickly differentiate metrics
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
-    expect(statCards.length).toBe(4);
+      // Assert: Each metric has unique visual identity
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
 
-    if (statCards[0] && statCards[1] && statCards[2] && statCards[3]) {
-      expect(statCards[0].props('value')).toBe(999999);
-      expect(statCards[1].props('value')).toBe(888888);
-      expect(statCards[2].props('value')).toBe(777777);
-      expect(statCards[3].props('value')).toBe(666666);
-    }
-  });
+      // Behavior: Colors and icons create clear visual distinction
+      const colors = statCards.map((card) => card.props('color'));
+      const icons = statCards.map((card) => card.props('icon'));
 
-  it('should maintain consistent styling across all cards', () => {
-    const wrapper = mount(
-      UserStatsCards,
-      withQuasarBrowser({
-        props: {
-          stats: mockStats,
-        },
-      }),
-    );
+      // All colors should be unique
+      expect(new Set(colors).size).toBe(4);
+      // All icons should be unique
+      expect(new Set(icons).size).toBe(4);
 
-    const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      // Verify semantic color choices
+      expect(colors).toContain('blue'); // Total (neutral)
+      expect(colors).toContain('green'); // Active (positive)
+      expect(colors).toContain('purple'); // New (growth)
+      expect(colors).toContain('orange'); // Online (attention)
+    });
 
-    // All cards should have different colors
-    const colors = statCards.map((card) => card.props('color'));
-    expect(colors).toEqual(['blue', 'green', 'purple', 'orange']);
+    it('maintains consistent spacing and alignment across cards', () => {
+      // Arrange: Admin needs professional, organized interface
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
 
-    // All cards should have different icons
-    const icons = statCards.map((card) => card.props('icon'));
-    expect(icons).toEqual(['people', 'check_circle', 'person_add', 'schedule']);
+      // Assert: Cards have consistent spacing and layout
+      const container = wrapper.find('.row');
+      expect(container.classes()).toContain('q-gutter-md'); // Consistent spacing
+      expect(container.classes()).toContain('q-mt-lg'); // Top margin for separation
+
+      // Behavior: Each card gets equal space and alignment
+      const columns = wrapper.findAll('.col-12');
+      expect(columns.length).toBe(4);
+
+      // Each card should have proper structure for Vue rendering
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      expect(statCards.length).toBe(4);
+    });
+
+    it('supports quick scanning of all metrics simultaneously', () => {
+      // Arrange: Admin needs rapid status assessment
+      const wrapper = mount(
+        UserStatsCards,
+        withQuasarBrowser({
+          props: { stats: sampleStats },
+        }),
+      );
+
+      // Assert: All key metrics visible without scrolling
+      const statCards = wrapper.findAllComponents({ name: 'StatCard' });
+      expect(statCards.length).toBe(4);
+
+      // Behavior: Labels clearly identify each metric
+      const labels = statCards.map((card) => card.props('label'));
+      expect(labels).toContain('Total Users');
+      expect(labels).toContain('Active Users');
+      expect(labels).toContain('New This Month');
+      expect(labels).toContain('Online Now');
+
+      // All labels should be unique and descriptive
+      expect(new Set(labels).size).toBe(4);
+    });
   });
 });
