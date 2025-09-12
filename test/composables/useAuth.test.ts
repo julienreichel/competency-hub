@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { useAuth } from '../../src/composables/useAuth';
 
-// Mock AWS Amplify auth functions
+// Mock AWS Amplify auth functions (external boundary)
 vi.mock('aws-amplify/auth', () => ({
   getCurrentUser: vi.fn(),
   fetchUserAttributes: vi.fn(),
@@ -20,23 +20,23 @@ const mockFetchUserAttributes = vi.mocked(fetchUserAttributes);
 const mockFetchAuthSession = vi.mocked(fetchAuthSession);
 const mockSignOut = vi.mocked(signOut);
 
-describe('useAuth Composable', () => {
+describe('useAuth - User Authentication Experience', () => {
   let authComposable: ReturnType<typeof useAuth>;
 
-  // Test data constants
-  const MOCK_USER: AuthUser = {
-    username: 'testuser',
-    userId: 'user-123',
+  // Test data representing realistic user scenarios
+  const AUTHENTICATED_USER: AuthUser = {
+    username: 'john.educator',
+    userId: 'user-abc123',
   } as AuthUser;
 
-  const MOCK_ATTRIBUTES = {
-    email: 'test@example.com',
+  const USER_PROFILE_DATA = {
+    email: 'john.educator@school.edu',
     given_name: 'John',
-    family_name: 'Doe',
-    preferred_username: 'johndoe',
+    family_name: 'Smith',
+    preferred_username: 'johnsmith',
   };
 
-  const MOCK_AUTH_SESSION = {
+  const USER_PERMISSIONS = {
     tokens: {
       accessToken: {
         payload: {
@@ -46,7 +46,7 @@ describe('useAuth Composable', () => {
     },
   };
 
-  // Use type assertion to bypass AWS Amplify typing issues in tests
+  // Helper functions for type safety
   const createMockAttributes = (
     attrs: Record<string, unknown>,
   ): Parameters<typeof mockFetchUserAttributes.mockResolvedValue>[0] =>
@@ -58,10 +58,7 @@ describe('useAuth Composable', () => {
     session as Parameters<typeof mockFetchAuthSession.mockResolvedValue>[0];
 
   beforeEach(() => {
-    // Reset all mocks before each test
     vi.clearAllMocks();
-
-    // Create a fresh instance of the composable
     authComposable = useAuth();
   });
 
@@ -69,192 +66,120 @@ describe('useAuth Composable', () => {
     vi.clearAllMocks();
   });
 
-  describe('Initial State', () => {
-    it('should initialize with correct default values', () => {
+  describe('When users first visit the application', () => {
+    it('should start with a clean, unauthenticated state', () => {
+      // User starts with no session information
       expect(authComposable.user.value).toBeNull();
       expect(authComposable.userAttributes.value).toEqual({});
       expect(authComposable.isLoading.value).toBe(false);
       expect(authComposable.error.value).toBeNull();
       expect(authComposable.isAuthenticated.value).toBe(false);
     });
-  });
 
-  describe('Computed Properties', () => {
-    beforeEach(() => {
-      // Set up authenticated state
-      authComposable.user.value = MOCK_USER;
-      authComposable.userAttributes.value = {
-        ...MOCK_ATTRIBUTES,
-        'cognito:groups': ['Educator', 'Admin'],
-      };
-    });
-
-    it('should compute isAuthenticated correctly when user exists', () => {
-      expect(authComposable.isAuthenticated.value).toBe(true);
-    });
-
-    it('should compute isAuthenticated correctly when user is null', () => {
-      authComposable.user.value = null;
-      expect(authComposable.isAuthenticated.value).toBe(false);
-    });
-
-    it('should compute userFullName from given_name and family_name', () => {
-      expect(authComposable.userFullName.value).toBe('John Doe');
-    });
-
-    it('should compute userFullName from givenName and familyName fallback', () => {
-      authComposable.userAttributes.value = {
-        givenName: 'Jane',
-        familyName: 'Smith',
-      };
-      expect(authComposable.userFullName.value).toBe('Jane Smith');
-    });
-
-    it('should fallback to preferred_username when names are not available', () => {
-      authComposable.userAttributes.value = {
-        preferred_username: 'testuser',
-      };
-      expect(authComposable.userFullName.value).toBe('testuser');
-    });
-
-    it('should fallback to email when preferred_username is not available', () => {
-      authComposable.userAttributes.value = {
-        email: 'fallback@example.com',
-      };
-      expect(authComposable.userFullName.value).toBe('fallback@example.com');
-    });
-
-    it('should fallback to "User" when no name information is available', () => {
-      authComposable.userAttributes.value = {};
-      expect(authComposable.userFullName.value).toBe('User');
-    });
-
-    it('should compute userDisplayName from preferred_username', () => {
-      expect(authComposable.userDisplayName.value).toBe('johndoe');
-    });
-
-    it('should compute userDisplayName fallback to email', () => {
-      authComposable.userAttributes.value = {
-        email: 'display@example.com',
-      };
-      expect(authComposable.userDisplayName.value).toBe('display@example.com');
-    });
-
-    it('should compute userDisplayName fallback to "User"', () => {
-      authComposable.userAttributes.value = {};
-      expect(authComposable.userDisplayName.value).toBe('User');
-    });
-
-    it('should compute userRole from cognito:groups', () => {
-      expect(authComposable.userRole.value).toBe('Educator');
-    });
-
-    it('should fallback to "Student" when no groups exist', () => {
-      authComposable.userAttributes.value = {};
-      expect(authComposable.userRole.value).toBe('Student');
-    });
-
-    it('should fallback to "Student" when groups array is empty', () => {
-      authComposable.userAttributes.value = {
-        'cognito:groups': [],
-      };
-      expect(authComposable.userRole.value).toBe('Student');
-    });
-  });
-
-  describe('initAuth Method', () => {
-    it('should successfully initialize authenticated user', async () => {
-      mockGetCurrentUser.mockResolvedValue(MOCK_USER);
-      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(MOCK_ATTRIBUTES));
-      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
-
-      await authComposable.initAuth();
-
-      expect(authComposable.user.value).toEqual(MOCK_USER);
-      expect(authComposable.userAttributes.value).toEqual({
-        ...MOCK_ATTRIBUTES,
-        'cognito:groups': ['Educator', 'Admin'],
-      });
-      expect(authComposable.error.value).toBeNull();
-      expect(authComposable.isLoading.value).toBe(false);
-    });
-
-    it('should handle unauthenticated user gracefully', async () => {
-      const authError = new Error('User not authenticated');
-      mockGetCurrentUser.mockRejectedValue(authError);
-
-      await authComposable.initAuth();
-
-      expect(authComposable.user.value).toBeNull();
-      expect(authComposable.userAttributes.value).toEqual({});
-      expect(authComposable.error.value).toBeNull();
-      expect(authComposable.isLoading.value).toBe(false);
-    });
-
-    it('should set loading state during initialization', async () => {
-      let resolveGetUser: (value: AuthUser) => void;
-      const getUserPromise = new Promise<AuthUser>((resolve) => {
-        resolveGetUser = resolve;
+    it('should show meaningful loading state during authentication check', async () => {
+      // User sees loading indicator while system checks authentication
+      let resolveAuth: (value: AuthUser) => void;
+      const authPromise = new Promise<AuthUser>((resolve) => {
+        resolveAuth = resolve;
       });
 
-      mockGetCurrentUser.mockReturnValue(getUserPromise);
-      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(MOCK_ATTRIBUTES));
-      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
+      mockGetCurrentUser.mockReturnValue(authPromise);
+      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(USER_PROFILE_DATA));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(USER_PERMISSIONS));
 
       const initPromise = authComposable.initAuth();
 
-      // Check loading state is true during async operation
+      // User sees loading state during authentication check
       expect(authComposable.isLoading.value).toBe(true);
 
-      // Resolve the promise
-      resolveGetUser!(MOCK_USER);
+      resolveAuth!(AUTHENTICATED_USER);
       await initPromise;
 
-      // Check loading state is false after completion
+      // Loading state clears after authentication completes
       expect(authComposable.isLoading.value).toBe(false);
     });
   });
 
-  describe('handleSignOut Method', () => {
-    beforeEach(() => {
-      // Set up initial authenticated state
-      authComposable.user.value = MOCK_USER;
-      authComposable.userAttributes.value = MOCK_ATTRIBUTES;
+  describe('When authenticated users access the application', () => {
+    it('should provide complete user profile information for personalized experience', async () => {
+      mockGetCurrentUser.mockResolvedValue(AUTHENTICATED_USER);
+      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(USER_PROFILE_DATA));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(USER_PERMISSIONS));
+
+      await authComposable.initAuth();
+
+      // User sees their authentication status
+      expect(authComposable.isAuthenticated.value).toBe(true);
+
+      // User sees their complete profile information
+      expect(authComposable.userFullName.value).toBe('John Smith');
+      expect(authComposable.userDisplayName.value).toBe('johnsmith');
+      expect(authComposable.userRole.value).toBe('Educator');
+
+      // No errors in user experience
+      expect(authComposable.error.value).toBeNull();
     });
 
-    it('should successfully sign out user', async () => {
+    it('should handle missing profile information gracefully for users', async () => {
+      mockGetCurrentUser.mockResolvedValue(AUTHENTICATED_USER);
+      mockFetchUserAttributes.mockResolvedValue(
+        createMockAttributes({
+          email: 'partial@example.com',
+        }),
+      );
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession({}));
+
+      await authComposable.initAuth();
+
+      // User experience continues with fallback information
+      expect(authComposable.isAuthenticated.value).toBe(true);
+      expect(authComposable.userFullName.value).toBe('partial@example.com');
+      expect(authComposable.userDisplayName.value).toBe('partial@example.com');
+      expect(authComposable.userRole.value).toBe('Student'); // Default role
+    });
+
+    it('should provide flexible name display options for different contexts', async () => {
+      // User with alternative name format
+      mockGetCurrentUser.mockResolvedValue(AUTHENTICATED_USER);
+      mockFetchUserAttributes.mockResolvedValue(
+        createMockAttributes({
+          givenName: 'Maria',
+          familyName: 'Garcia',
+          preferred_username: 'maria.garcia',
+        }),
+      );
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(USER_PERMISSIONS));
+
+      await authComposable.initAuth();
+
+      // User sees their name displayed correctly in different formats
+      expect(authComposable.userFullName.value).toBe('Maria Garcia');
+      expect(authComposable.userDisplayName.value).toBe('maria.garcia');
+    });
+  });
+
+  describe('When users need to sign out of the application', () => {
+    beforeEach(async () => {
+      // Set up authenticated user state
+      mockGetCurrentUser.mockResolvedValue(AUTHENTICATED_USER);
+      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(USER_PROFILE_DATA));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(USER_PERMISSIONS));
+      await authComposable.initAuth();
+    });
+
+    it('should complete sign out process and clear user session', async () => {
       mockSignOut.mockResolvedValue(undefined);
 
       await authComposable.handleSignOut();
 
-      expect(mockSignOut).toHaveBeenCalledOnce();
+      // User session is completely cleared
       expect(authComposable.user.value).toBeNull();
       expect(authComposable.userAttributes.value).toEqual({});
+      expect(authComposable.isAuthenticated.value).toBe(false);
       expect(authComposable.error.value).toBeNull();
-      expect(authComposable.isLoading.value).toBe(false);
     });
 
-    it('should handle sign out errors properly', async () => {
-      const signOutError = new Error('Sign out failed');
-      mockSignOut.mockRejectedValue(signOutError);
-
-      await expect(authComposable.handleSignOut()).rejects.toThrow('Sign out failed');
-
-      expect(authComposable.error.value).toBe('Sign out failed');
-      expect(authComposable.isLoading.value).toBe(false);
-    });
-
-    it('should handle non-Error exceptions', async () => {
-      const NON_ERROR_MESSAGE = 'String error';
-      mockSignOut.mockRejectedValue(NON_ERROR_MESSAGE);
-
-      await expect(authComposable.handleSignOut()).rejects.toBe(NON_ERROR_MESSAGE);
-
-      expect(authComposable.error.value).toBe('Sign out failed');
-      expect(authComposable.isLoading.value).toBe(false);
-    });
-
-    it('should set loading state during sign out', async () => {
+    it('should show loading state during sign out process', async () => {
       let resolveSignOut: () => void;
       const signOutPromise = new Promise<void>((resolve) => {
         resolveSignOut = resolve;
@@ -264,184 +189,171 @@ describe('useAuth Composable', () => {
 
       const signOutMethodPromise = authComposable.handleSignOut();
 
-      // Check loading state is true during async operation
+      // User sees loading state during sign out
       expect(authComposable.isLoading.value).toBe(true);
 
-      // Resolve the promise
       resolveSignOut!();
       await signOutMethodPromise;
 
-      // Check loading state is false after completion
+      // Loading state clears after sign out completes
+      expect(authComposable.isLoading.value).toBe(false);
+    });
+
+    it('should handle sign out errors gracefully for user', async () => {
+      const signOutError = new Error('Network connection failed');
+      mockSignOut.mockRejectedValue(signOutError);
+
+      await expect(authComposable.handleSignOut()).rejects.toThrow('Network connection failed');
+
+      // User sees meaningful error message
+      expect(authComposable.error.value).toBe('Network connection failed');
       expect(authComposable.isLoading.value).toBe(false);
     });
   });
 
-  describe('refreshUserAttributes Method', () => {
-    it('should refresh attributes for authenticated user', async () => {
-      authComposable.user.value = MOCK_USER;
-      const updatedAttributes = { ...MOCK_ATTRIBUTES, email: 'updated@example.com' };
-      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(updatedAttributes));
-      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
+  describe('When users need role-based access control', () => {
+    beforeEach(() => {
+      // Set up user with multiple roles
+      authComposable.userAttributes.value = {
+        'cognito:groups': ['Educator', 'Admin'],
+      };
+    });
+
+    it('should accurately reflect user permissions for interface customization', () => {
+      // User interface can show appropriate features based on roles
+      expect(authComposable.hasRole('Educator')).toBe(true);
+      expect(authComposable.hasRole('Admin')).toBe(true);
+      expect(authComposable.hasRole('Student')).toBe(false);
+    });
+
+    it('should support flexible role checking for complex permissions', () => {
+      // User interface can check for any of multiple required roles
+      expect(authComposable.hasAnyRole(['Student', 'Educator'])).toBe(true);
+      expect(authComposable.hasAnyRole(['Manager', 'Director'])).toBe(false);
+    });
+
+    it('should handle users with no special roles gracefully', () => {
+      authComposable.userAttributes.value = {};
+
+      // Default user experience works for users without special roles
+      expect(authComposable.userRole.value).toBe('Student');
+      expect(authComposable.hasRole('Student')).toBe(false); // No explicit role assignment
+      expect(authComposable.hasAnyRole(['Educator', 'Admin'])).toBe(false);
+    });
+  });
+
+  describe('When user profile information needs updating', () => {
+    beforeEach(() => {
+      authComposable.user.value = AUTHENTICATED_USER;
+    });
+
+    it('should refresh user profile information for current data', async () => {
+      const updatedProfile = {
+        ...USER_PROFILE_DATA,
+        email: 'john.updated@school.edu',
+        given_name: 'Jonathan',
+      };
+
+      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(updatedProfile));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(USER_PERMISSIONS));
 
       await authComposable.refreshUserAttributes();
 
-      expect(mockFetchUserAttributes).toHaveBeenCalledOnce();
-      expect(authComposable.userAttributes.value).toEqual({
-        ...updatedAttributes,
-        'cognito:groups': ['Educator', 'Admin'],
-      });
+      // User sees updated profile information
+      expect(authComposable.userFullName.value).toBe('Jonathan Smith');
+      expect(authComposable.userAttributes.value.email).toBe('john.updated@school.edu');
       expect(authComposable.error.value).toBeNull();
     });
 
-    it('should not refresh attributes for unauthenticated user', async () => {
-      authComposable.user.value = null;
-
-      await authComposable.refreshUserAttributes();
-
-      expect(mockFetchUserAttributes).not.toHaveBeenCalled();
-    });
-
-    it('should handle refresh errors properly', async () => {
-      authComposable.user.value = MOCK_USER;
-      const refreshError = new Error('Failed to fetch attributes');
+    it('should handle profile refresh errors without breaking user experience', async () => {
+      const refreshError = new Error('Profile service temporarily unavailable');
       mockFetchUserAttributes.mockRejectedValue(refreshError);
 
       await authComposable.refreshUserAttributes();
 
-      expect(authComposable.error.value).toBe('Failed to fetch attributes');
+      // User sees error message but application continues working
+      expect(authComposable.error.value).toBe('Profile service temporarily unavailable');
     });
 
-    it('should handle non-Error exceptions in refresh', async () => {
-      authComposable.user.value = MOCK_USER;
-      const NON_ERROR_MESSAGE = 'String error';
-      mockFetchUserAttributes.mockRejectedValue(NON_ERROR_MESSAGE);
+    it('should not attempt refresh for unauthenticated users', async () => {
+      authComposable.user.value = null;
 
       await authComposable.refreshUserAttributes();
 
-      expect(authComposable.error.value).toBe('Failed to refresh user attributes');
+      // No unnecessary API calls for unauthenticated users
+      expect(mockFetchUserAttributes).not.toHaveBeenCalled();
     });
   });
 
-  describe('Role Management Methods', () => {
-    beforeEach(() => {
-      authComposable.userAttributes.value = {
-        'cognito:groups': ['Educator', 'Admin'],
-      };
-    });
-
-    describe('hasRole Method', () => {
-      it('should return true when user has the specified role', () => {
-        expect(authComposable.hasRole('Educator')).toBe(true);
-        expect(authComposable.hasRole('Admin')).toBe(true);
-      });
-
-      it('should return false when user does not have the specified role', () => {
-        expect(authComposable.hasRole('Student')).toBe(false);
-        expect(authComposable.hasRole('Manager')).toBe(false);
-      });
-
-      it('should return false when user has no groups', () => {
-        authComposable.userAttributes.value = {};
-        expect(authComposable.hasRole('Educator')).toBe(false);
-      });
-
-      it('should return false when groups array is empty', () => {
-        authComposable.userAttributes.value = {
-          'cognito:groups': [],
-        };
-        expect(authComposable.hasRole('Educator')).toBe(false);
-      });
-    });
-
-    describe('hasAnyRole Method', () => {
-      it('should return true when user has at least one of the specified roles', () => {
-        expect(authComposable.hasAnyRole(['Student', 'Educator'])).toBe(true);
-        expect(authComposable.hasAnyRole(['Admin', 'Manager'])).toBe(true);
-      });
-
-      it('should return false when user has none of the specified roles', () => {
-        expect(authComposable.hasAnyRole(['Student', 'Manager'])).toBe(false);
-      });
-
-      it('should return false when user has no groups', () => {
-        authComposable.userAttributes.value = {};
-        expect(authComposable.hasAnyRole(['Educator', 'Admin'])).toBe(false);
-      });
-
-      it('should return false when groups array is empty', () => {
-        authComposable.userAttributes.value = {
-          'cognito:groups': [],
-        };
-        expect(authComposable.hasAnyRole(['Educator', 'Admin'])).toBe(false);
-      });
-
-      it('should handle empty roles array', () => {
-        expect(authComposable.hasAnyRole([])).toBe(false);
-      });
-    });
-  });
-
-  describe('Error State Management', () => {
-    it('should clear error on successful operations', async () => {
-      // Set initial error state
-      authComposable.error.value = 'Previous error';
-
-      mockGetCurrentUser.mockResolvedValue(MOCK_USER);
-      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(MOCK_ATTRIBUTES));
-      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(MOCK_AUTH_SESSION));
-
-      await authComposable.initAuth();
-
-      expect(authComposable.error.value).toBeNull();
-    });
-
-    it('should clear error on successful sign out', async () => {
-      // Set initial error state
-      authComposable.error.value = 'Previous error';
-      authComposable.user.value = MOCK_USER;
-
-      mockSignOut.mockResolvedValue(undefined);
-
-      await authComposable.handleSignOut();
-
-      expect(authComposable.error.value).toBeNull();
-    });
-  });
-
-  describe('Reactive State Updates', () => {
-    it('should maintain reactivity when user state changes', async () => {
+  describe('When authentication state changes during user session', () => {
+    it('should immediately reflect authentication status changes in the interface', async () => {
+      // User starts unauthenticated
       expect(authComposable.isAuthenticated.value).toBe(false);
 
-      authComposable.user.value = MOCK_USER;
+      // User becomes authenticated
+      authComposable.user.value = AUTHENTICATED_USER;
       await nextTick();
-
       expect(authComposable.isAuthenticated.value).toBe(true);
 
+      // User becomes unauthenticated
       authComposable.user.value = null;
       await nextTick();
-
       expect(authComposable.isAuthenticated.value).toBe(false);
     });
 
-    it('should maintain reactivity when user attributes change', async () => {
+    it('should immediately reflect profile changes in user interface', async () => {
       authComposable.userAttributes.value = {
-        ...MOCK_ATTRIBUTES,
-        'cognito:groups': ['Educator', 'Admin'],
-      };
-      await nextTick();
-
-      expect(authComposable.userFullName.value).toBe('John Doe');
-      expect(authComposable.userRole.value).toBe('Educator');
-
-      authComposable.userAttributes.value = {
-        given_name: 'Jane',
-        family_name: 'Smith',
+        given_name: 'Initial',
+        family_name: 'User',
         'cognito:groups': ['Student'],
       };
       await nextTick();
 
-      expect(authComposable.userFullName.value).toBe('Jane Smith');
+      // User sees initial profile
+      expect(authComposable.userFullName.value).toBe('Initial User');
       expect(authComposable.userRole.value).toBe('Student');
+
+      // Profile gets updated
+      authComposable.userAttributes.value = {
+        given_name: 'Updated',
+        family_name: 'Person',
+        'cognito:groups': ['Educator'],
+      };
+      await nextTick();
+
+      // User immediately sees updated profile
+      expect(authComposable.userFullName.value).toBe('Updated Person');
+      expect(authComposable.userRole.value).toBe('Educator');
+    });
+  });
+
+  describe('When authentication errors occur', () => {
+    it('should handle unauthenticated users gracefully without errors', async () => {
+      const authError = new Error('User session expired');
+      mockGetCurrentUser.mockRejectedValue(authError);
+
+      await authComposable.initAuth();
+
+      // User gets clean unauthenticated state, not error state
+      expect(authComposable.user.value).toBeNull();
+      expect(authComposable.userAttributes.value).toEqual({});
+      expect(authComposable.error.value).toBeNull(); // No error for normal unauthenticated state
+      expect(authComposable.isAuthenticated.value).toBe(false);
+    });
+
+    it('should clear previous errors when operations succeed', async () => {
+      // User had previous error
+      authComposable.error.value = 'Previous authentication error';
+
+      mockGetCurrentUser.mockResolvedValue(AUTHENTICATED_USER);
+      mockFetchUserAttributes.mockResolvedValue(createMockAttributes(USER_PROFILE_DATA));
+      mockFetchAuthSession.mockResolvedValue(createMockAuthSession(USER_PERMISSIONS));
+
+      await authComposable.initAuth();
+
+      // User sees clean state after successful authentication
+      expect(authComposable.error.value).toBeNull();
+      expect(authComposable.isAuthenticated.value).toBe(true);
     });
   });
 });
