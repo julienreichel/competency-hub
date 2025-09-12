@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { useUserFormatters } from '../../src/composables/useUserFormatters';
-import { User, UserRole } from '../../src/models/User';
+import { User, UserRole, UserStatus } from '../../src/models/User';
 
 describe('useUserFormatters - User Experience Helpers', () => {
   const { getUserInitialsFromUser, formatLastActive, getLastActiveClass } = useUserFormatters();
@@ -14,6 +14,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
         email: 'john@example.com',
         avatar: '',
         contactInfo: '',
+        status: UserStatus.ACTIVE,
       });
       expect(getUserInitialsFromUser(user)).toBe('JD');
     });
@@ -26,6 +27,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
         email: 'madonna@example.com',
         avatar: '',
         contactInfo: '',
+        status: UserStatus.ACTIVE,
       });
       expect(getUserInitialsFromUser(user)).toBe('M');
     });
@@ -38,6 +40,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
         email: 'mjw@example.com',
         avatar: '',
         contactInfo: '',
+        status: UserStatus.ACTIVE,
       });
       expect(getUserInitialsFromUser(user)).toBe('MJ');
     });
@@ -50,6 +53,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
         email: 'john2@example.com',
         avatar: '',
         contactInfo: '',
+        status: UserStatus.ACTIVE,
       });
       expect(getUserInitialsFromUser(user)).toBe('JD');
     });
@@ -132,6 +136,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
         email: 'alice@example.com',
         avatar: '',
         contactInfo: '',
+        status: UserStatus.ACTIVE,
       });
       const initials = getUserInitialsFromUser(user);
       expect(initials).toMatch(/^[A-Z]*$/);

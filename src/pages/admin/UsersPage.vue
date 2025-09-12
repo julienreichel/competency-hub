@@ -13,8 +13,8 @@
       :role-options="roleOptions"
       :status-options="statusOptions"
       @update:search="searchQuery = $event"
-      @update:role-filter="roleFilter = $event"
-      @update:status-filter="statusFilter = $event"
+      @update:role-filter="onRoleFilterUpdate"
+      @update:status-filter="onStatusFilterUpdate"
       @add-user="showAddUserDialog = true"
       @bulk-import="bulkImport"
     />
@@ -134,13 +134,6 @@
               :label="`${$t('common.role')} *`"
               :rules="[(val) => !!val || $t('validation.roleRequired')]"
             />
-
-            <q-input
-              v-model="newUser.username"
-              filled
-              :label="$t('common.username')"
-              :hint="$t('admin.usernameHint')"
-            />
           </q-form>
         </q-card-section>
 
@@ -166,31 +159,23 @@ import UserStatsCards from 'src/components/admin/UserStatsCards.vue';
 import RoleChip from 'src/components/ui/RoleChip.vue';
 import StatusIndicator from 'src/components/ui/StatusIndicator.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
-import { computed, ref } from 'vue';
+import { useUsers } from 'src/composables/useUsers';
+import { computed, onMounted, ref } from 'vue';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  username: string;
-  role: 'Student' | 'Educator' | 'Parent' | 'Admin';
-  status: 'Active' | 'Inactive' | 'Suspended';
-  lastActive: string;
-  createdDate: string;
-  avatar?: string;
-}
+import type { User as UserModel } from 'src/models/User';
+import { UserRole, UserStatus } from 'src/models/User';
+type User = UserModel;
 
 interface NewUser {
   firstName: string;
   lastName: string;
   email: string;
-  username: string;
   role: string;
 }
 
 const searchQuery = ref('');
-const roleFilter = ref<string | null>(null);
-const statusFilter = ref<string | null>(null);
+const roleFilter = ref<UserRole | null>(null);
+const statusFilter = ref<UserStatus | null>(null);
 const selectedUsers = ref<User[]>([]);
 const showAddUserDialog = ref(false);
 
@@ -198,24 +183,17 @@ const newUser = ref<NewUser>({
   firstName: '',
   lastName: '',
   email: '',
-  username: '',
   role: '',
 });
 
-const roleOptions = ['Student', 'Educator', 'Parent', 'Admin'];
-const statusOptions = ['Active', 'Inactive', 'Suspended'];
+const roleOptions = [UserRole.STUDENT, UserRole.EDUCATOR, UserRole.PARENT];
+const statusOptions = [UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.SUSPENDED];
 
 const columns = [
   { name: 'avatar', label: '', field: 'avatar', align: 'center' as const },
   { name: 'name', label: 'Name', field: 'name', align: 'left' as const, sortable: true },
   { name: 'email', label: 'Email', field: 'email', align: 'left' as const, sortable: true },
-  {
-    name: 'username',
-    label: 'Username',
-    field: 'username',
-    align: 'left' as const,
-    sortable: true,
-  },
+  // Username column removed
   { name: 'role', label: 'Role', field: 'role', align: 'center' as const, sortable: true },
   { name: 'status', label: 'Status', field: 'status', align: 'center' as const, sortable: true },
   {
@@ -228,39 +206,21 @@ const columns = [
   { name: 'actions', label: 'Actions', field: 'actions', align: 'center' as const },
 ];
 
-// Mock data
-const users = ref<User[]>([
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@school.edu',
-    username: 'jsmith',
-    role: 'Educator',
-    status: 'Active',
-    lastActive: '2024-01-15T10:30:00Z',
-    createdDate: '2023-08-15',
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@parent.com',
-    username: 'sjohnson',
-    role: 'Parent',
-    status: 'Active',
-    lastActive: '2024-01-14T15:45:00Z',
-    createdDate: '2023-09-01',
-  },
-  {
-    id: '3',
-    name: 'Emma Davis',
-    email: 'emma.davis@student.edu',
-    username: 'edavis',
-    role: 'Student',
-    status: 'Active',
-    lastActive: '2024-01-15T09:15:00Z',
-    createdDate: '2023-09-15',
-  },
-]);
+// Real user data
+
+const { users, fetchUsers } = useUsers();
+
+function onRoleFilterUpdate(val: string | null): void {
+  roleFilter.value = (val as UserRole) ?? null;
+}
+
+function onStatusFilterUpdate(val: string | null): void {
+  statusFilter.value = (val as UserStatus) ?? null;
+}
+
+onMounted(() => {
+  void fetchUsers();
+});
 
 const userStats = ref({
   total: 1247,
@@ -274,8 +234,7 @@ const filteredUsers = computed(() => {
     const matchesSearch =
       !searchQuery.value ||
       user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchQuery.value.toLowerCase());
+      user.email.toLowerCase().includes(searchQuery.value.toLowerCase());
 
     const matchesRole = !roleFilter.value || user.role === roleFilter.value;
     const matchesStatus = !statusFilter.value || user.status === statusFilter.value;
@@ -335,7 +294,6 @@ function addUser(): void {
     firstName: '',
     lastName: '',
     email: '',
-    username: '',
     role: '',
   };
   showAddUserDialog.value = false;

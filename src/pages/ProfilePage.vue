@@ -61,13 +61,6 @@
                   disable
                 />
 
-                <q-input
-                  v-model="profileForm.preferredUsername"
-                  label="Username"
-                  outlined
-                  :disable="!editMode"
-                />
-
                 <div class="row q-gutter-md q-mt-md">
                   <div class="col">
                     <q-btn
@@ -113,7 +106,6 @@ const profileForm = reactive({
   givenName: '',
   familyName: '',
   email: '',
-  preferredUsername: '',
 });
 
 /**
@@ -150,7 +142,6 @@ function loadProfile(): void {
   profileForm.familyName =
     userAttributes.value.family_name || userAttributes.value.familyName || '';
   profileForm.email = userAttributes.value.email || '';
-  profileForm.preferredUsername = userAttributes.value.preferred_username || '';
 }
 
 /**
@@ -164,7 +155,6 @@ async function handleSave(): Promise<void> {
     // await updateUserAttributes({
     //   given_name: profileForm.givenName,
     //   family_name: profileForm.familyName,
-    //   preferred_username: profileForm.preferredUsername,
     // });
 
     await refreshUserAttributes();

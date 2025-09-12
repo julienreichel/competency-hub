@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUserFormatters } from 'src/composables/useUserFormatters';
 import { computed } from 'vue';
+import { useUserFormatters } from '../../composables/useUserFormatters';
 
 export interface LastActiveCellProps {
   lastActive: string;

@@ -31,23 +31,9 @@
 </template>
 
 <script setup lang="ts">
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  username: string;
-  role: 'Student' | 'Educator' | 'Parent' | 'Admin';
-  status: 'Active' | 'Inactive' | 'Suspended';
-  lastActive: string;
-  createdDate: string;
-  avatar?: string;
-}
+import type { User } from 'src/models/User';
 
-export interface UserActionsProps {
-  user: User;
-}
-
-defineProps<UserActionsProps>();
+defineProps<{ user: User }>();
 
 defineEmits<{
   view: [user: User];

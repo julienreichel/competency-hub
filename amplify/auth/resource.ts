@@ -25,10 +25,6 @@ export const auth = defineAuth({
       required: true,
       mutable: true,
     },
-    preferredUsername: {
-      required: true,
-      mutable: true,
-    },
   },
   groups: ['Student', 'Educator', 'Parent', 'Admin'],
 });
