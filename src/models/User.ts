@@ -13,6 +13,7 @@ export enum UserStatus {
  * User role enumeration
  */
 export enum UserRole {
+  ADMIN = 'Admin',
   STUDENT = 'Student',
   EDUCATOR = 'Educator',
   PARENT = 'Parent',
@@ -22,12 +23,14 @@ export enum UserRole {
  * User data interface for creation
  */
 export interface CreateUserData extends Record<string, unknown> {
+  id: string;
   name: string;
   role: UserRole;
   email: string;
   avatar: string;
   contactInfo: string;
   status: UserStatus;
+  lastActive?: string;
 }
 
 /**
@@ -40,6 +43,7 @@ export interface UpdateUserData extends Record<string, unknown> {
   avatar?: string;
   contactInfo?: string;
   status?: UserStatus;
+  lastActive?: string;
 }
 
 /**

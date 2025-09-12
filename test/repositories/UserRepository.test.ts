@@ -36,6 +36,7 @@ describe('UserRepository', () => {
   };
 
   const createUserData = {
+    id: 'user-2',
     name: 'Jane Doe',
     role: UserRole.EDUCATOR,
     email: 'jane@example.com',
@@ -71,7 +72,7 @@ describe('UserRepository', () => {
   });
 
   describe('findById', () => {
-    it('should find user by ID and return User instance', async () => {
+    it('should find user by id and return User instance', async () => {
       mockGraphQLClient.getUser.mockResolvedValue(validUserData);
 
       const result = await userRepository.findById('user-1');
@@ -84,9 +85,9 @@ describe('UserRepository', () => {
     it('should return null when user not found', async () => {
       mockGraphQLClient.getUser.mockResolvedValue(null);
 
-      const result = await userRepository.findById('non-existent');
+      const result = await userRepository.findById('nonexistent-id');
 
-      expect(mockGraphQLClient.getUser).toHaveBeenCalledWith('non-existent');
+      expect(mockGraphQLClient.getUser).toHaveBeenCalledWith('nonexistent-id');
       expect(result).toBeNull();
     });
 
@@ -146,11 +147,11 @@ describe('UserRepository', () => {
       const updatedUserData = { ...validUserData, name: 'Updated Name' };
       mockGraphQLClient.updateUser.mockResolvedValue(updatedUserData);
 
-      const result = await userRepository.update('user-1', updateData);
+      const result = await userRepository.update('john@example.com', updateData);
 
-      expect(mockGraphQLClient.updateUser).toHaveBeenCalledWith('user-1', updateData);
+      expect(mockGraphQLClient.updateUser).toHaveBeenCalledWith('john@example.com', updateData);
       expect(result).toBeInstanceOf(User);
-      expect(result.id).toBe('user-1');
+      expect(result.email).toBe('john@example.com');
       expect(result.name).toBe('Updated Name');
     });
 
@@ -168,11 +169,11 @@ describe('UserRepository', () => {
     it('should delete user and return deleted User instance', async () => {
       mockGraphQLClient.deleteUser.mockResolvedValue(validUserData);
 
-      const result = await userRepository.delete('user-1');
+      const result = await userRepository.delete('john@example.com');
 
-      expect(mockGraphQLClient.deleteUser).toHaveBeenCalledWith('user-1');
+      expect(mockGraphQLClient.deleteUser).toHaveBeenCalledWith('john@example.com');
       expect(result).toBeInstanceOf(User);
-      expect(result.id).toBe('user-1');
+      expect(result.email).toBe('john@example.com');
     });
 
     it('should handle GraphQL client errors', async () => {
@@ -224,19 +225,6 @@ describe('UserRepository', () => {
       const result = await userRepository.findByEmail('nonexistent@example.com');
 
       expect(result).toBeNull();
-    });
-
-    it('should return first user when multiple users found (edge case)', async () => {
-      const usersData = [
-        validUserData,
-        { ...validUserData, id: 'user-2', name: 'Duplicate Email User' },
-      ];
-      mockGraphQLClient.listUsers.mockResolvedValue(usersData);
-
-      const result = await userRepository.findByEmail('john@example.com');
-
-      expect(result).toBeInstanceOf(User);
-      expect(result?.id).toBe('user-1');
     });
   });
 

@@ -66,6 +66,34 @@ describe('useAuth - User Authentication Experience', () => {
     vi.clearAllMocks();
   });
 
+  // --- getCognitoRole tests (must be after all other tests so authComposable is defined) ---
+  describe('getCognitoRole - User Role Resolution', () => {
+    it('returns Educator if user is in Educator group', () => {
+      authComposable.userAttributes.value = { 'cognito:groups': ['Educator'] };
+      expect(authComposable.getCognitoRole()).toBe('Educator');
+    });
+
+    it('returns Student if user is in Student group and not Educator', () => {
+      authComposable.userAttributes.value = { 'cognito:groups': ['Student'] };
+      expect(authComposable.getCognitoRole()).toBe('Student');
+    });
+
+    it('returns Parent if user is not in Educator or Student group', () => {
+      authComposable.userAttributes.value = { 'cognito:groups': ['Parent'] };
+      expect(authComposable.getCognitoRole()).toBe('Parent');
+    });
+
+    it('returns Parent if user has no groups', () => {
+      authComposable.userAttributes.value = {};
+      expect(authComposable.getCognitoRole()).toBe('Parent');
+    });
+
+    it('returns Educator if user is in both Educator and Student groups', () => {
+      authComposable.userAttributes.value = { 'cognito:groups': ['Educator', 'Student'] };
+      expect(authComposable.getCognitoRole()).toBe('Educator');
+    });
+  });
+
   describe('When users first visit the application', () => {
     it('should start with a clean, unauthenticated state', () => {
       // User starts with no session information

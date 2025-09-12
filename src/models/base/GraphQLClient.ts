@@ -7,7 +7,7 @@ import type { Schema } from '../../../amplify/data/resource';
  */
 export class GraphQLClient {
   private readonly client = generateClient<Schema>({
-    authMode: 'identityPool',
+    authMode: 'userPool',
   });
 
   /**
@@ -15,10 +15,12 @@ export class GraphQLClient {
    * @param data - The user data to create
    * @returns Promise with the created record
    */
-  async createUser(data: Record<string, unknown>): Promise<Schema['User']['type'] | null> {
+  async createUser(
+    data: { id: string; email: string } & Record<string, unknown>,
+  ): Promise<Schema['User']['type'] | null> {
     try {
       const result = await this.client.models.User.create(data, {
-        authMode: 'identityPool',
+        authMode: 'userPool',
       });
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
@@ -40,7 +42,7 @@ export class GraphQLClient {
       const result = await this.client.models.User.get(
         { id },
         {
-          authMode: 'identityPool',
+          authMode: 'userPool',
         },
       );
       if (result.errors) {
@@ -48,7 +50,7 @@ export class GraphQLClient {
       }
       return result.data;
     } catch (error) {
-      console.error(`Error getting User with ID ${id}:`, error);
+      console.error(`Error getting User with id ${id}:`, error);
       throw error;
     }
   }
@@ -60,8 +62,8 @@ export class GraphQLClient {
    */
   async listUsers(filter?: Record<string, unknown>): Promise<Schema['User']['type'][]> {
     try {
-      const options: { authMode: 'identityPool'; filter?: Record<string, unknown> } = {
-        authMode: 'identityPool',
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
       };
       if (filter) {
         options.filter = filter;
@@ -91,7 +93,7 @@ export class GraphQLClient {
       const result = await this.client.models.User.update(
         { id, ...data },
         {
-          authMode: 'identityPool',
+          authMode: 'userPool',
         },
       );
       if (result.errors) {
@@ -99,7 +101,7 @@ export class GraphQLClient {
       }
       return result.data;
     } catch (error) {
-      console.error(`Error updating User with ID ${id}:`, error);
+      console.error(`Error updating User with id ${id}:`, error);
       throw error;
     }
   }
@@ -114,7 +116,7 @@ export class GraphQLClient {
       const result = await this.client.models.User.delete(
         { id },
         {
-          authMode: 'identityPool',
+          authMode: 'userPool',
         },
       );
       if (result.errors) {
@@ -122,7 +124,7 @@ export class GraphQLClient {
       }
       return result.data;
     } catch (error) {
-      console.error(`Error deleting User with ID ${id}:`, error);
+      console.error(`Error deleting User with id ${id}:`, error);
       throw error;
     }
   }

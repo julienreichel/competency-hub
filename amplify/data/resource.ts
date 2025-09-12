@@ -15,10 +15,11 @@ const schema = a.schema({
     .model({
       name: a.string(),
       role: a.enum(['Student', 'Educator', 'Parent', 'Admin']),
-      email: a.string(),
+      email: a.string().required(),
       avatar: a.string(),
       contactInfo: a.string(),
       status: a.enum(['Active', 'Inactive', 'Suspended']),
+      lastActive: a.string(),
     })
     .authorization((allow) => [
       allow.owner(),

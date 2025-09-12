@@ -1,6 +1,6 @@
 import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
-import { User, type UserGraphQLData, type CreateUserData, type UpdateUserData } from '../User';
+import { User, type CreateUserData, type UpdateUserData, type UserGraphQLData } from '../User';
 
 /**
  * User filter type for queries
@@ -78,13 +78,18 @@ export class UserRepository
   }
 
   /**
-   * Find user by email
+   * Find user by email using the email secondary index
+   * @param email - User email
+   * @returns Promise with User instance or null if not found
+   */
+  /**
+   * Find user by email using a filter (since id is the primary key)
    * @param email - User email
    * @returns Promise with User instance or null if not found
    */
   async findByEmail(email: string): Promise<User | null> {
     const users = await this.findAll({ email: { eq: email } });
-    return users.length > 0 ? users[0] || null : null;
+    return users.length > 0 && users[0] ? users[0] : null;
   }
 }
 

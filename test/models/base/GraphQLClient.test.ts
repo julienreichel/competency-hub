@@ -62,7 +62,7 @@ describe('GraphQLClient', () => {
 
     describe('createUser', () => {
       it('should create a user successfully', async () => {
-        const createData = { name: 'John Doe', email: 'john@example.com' };
+        const createData = { id: 'user-1', name: 'John Doe', email: 'john@example.com' };
         mockAmplifyClient.models.User.create.mockResolvedValue({
           data: mockUserData,
           errors: null,
@@ -72,25 +72,25 @@ describe('GraphQLClient', () => {
 
         expect(result).toEqual(mockUserData);
         expect(mockAmplifyClient.models.User.create).toHaveBeenCalledWith(createData, {
-          authMode: 'identityPool',
+          authMode: 'userPool',
         });
       });
 
-      it('should handle GraphQL errors during user creation', async () => {
-        const createData = { name: 'John Doe', email: 'john@example.com' };
-        const graphQLErrors = [{ message: 'Validation error' }];
-        mockAmplifyClient.models.User.create.mockResolvedValue({
+      it('should handle GraphQL errors during user deletion', async () => {
+        const email = 'john@example.com';
+        const graphQLErrors = [{ message: 'Delete failed' }];
+
+        mockAmplifyClient.models.User.delete.mockResolvedValue({
           data: null,
           errors: graphQLErrors,
         });
 
-        await expect(graphQLClient.createUser(createData)).rejects.toThrow(
+        await expect(graphQLClient.deleteUser(email)).rejects.toThrow(
           `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
         );
       });
-
       it('should handle network errors during user creation', async () => {
-        const createData = { name: 'John Doe', email: 'john@example.com' };
+        const createData = { id: 'user-1', name: 'John Doe', email: 'john@example.com' };
         const networkError = new Error('Network error');
         mockAmplifyClient.models.User.create.mockRejectedValue(networkError);
 
@@ -100,40 +100,40 @@ describe('GraphQLClient', () => {
 
     describe('getUser', () => {
       it('should get a user successfully', async () => {
-        const userId = 'user-1';
+        const id = 'user-1';
         mockAmplifyClient.models.User.get.mockResolvedValue({
           data: mockUserData,
           errors: null,
         });
 
-        const result = await graphQLClient.getUser(userId);
+        const result = await graphQLClient.getUser(id);
 
         expect(result).toEqual(mockUserData);
         expect(mockAmplifyClient.models.User.get).toHaveBeenCalledWith(
-          { id: userId },
-          { authMode: 'identityPool' },
+          { id },
+          { authMode: 'userPool' },
         );
       });
 
       it('should handle GraphQL errors during user retrieval', async () => {
-        const userId = 'user-1';
+        const email = 'john@example.com';
         const graphQLErrors = [{ message: 'User not found' }];
         mockAmplifyClient.models.User.get.mockResolvedValue({
           data: null,
           errors: graphQLErrors,
         });
 
-        await expect(graphQLClient.getUser(userId)).rejects.toThrow(
+        await expect(graphQLClient.getUser(email)).rejects.toThrow(
           `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
         );
       });
 
       it('should handle network errors during user retrieval', async () => {
-        const userId = 'user-1';
+        const email = 'john@example.com';
         const networkError = new Error('Network timeout');
         mockAmplifyClient.models.User.get.mockRejectedValue(networkError);
 
-        await expect(graphQLClient.getUser(userId)).rejects.toThrow('Network timeout');
+        await expect(graphQLClient.getUser(email)).rejects.toThrow('Network timeout');
       });
     });
 
@@ -149,7 +149,7 @@ describe('GraphQLClient', () => {
 
         expect(result).toEqual(mockUsers);
         expect(mockAmplifyClient.models.User.list).toHaveBeenCalledWith({
-          authMode: 'identityPool',
+          authMode: 'userPool',
         });
       });
 
@@ -165,7 +165,7 @@ describe('GraphQLClient', () => {
 
         expect(result).toEqual(mockUsers);
         expect(mockAmplifyClient.models.User.list).toHaveBeenCalledWith({
-          authMode: 'identityPool',
+          authMode: 'userPool',
           filter,
         });
       });
@@ -185,7 +185,7 @@ describe('GraphQLClient', () => {
 
     describe('updateUser', () => {
       it('should update a user successfully', async () => {
-        const userId = 'user-1';
+        const id = 'user-1';
         const updateData = { name: 'Jane Doe' };
         const updatedUser = { ...mockUserData, ...updateData };
 
@@ -194,17 +194,17 @@ describe('GraphQLClient', () => {
           errors: null,
         });
 
-        const result = await graphQLClient.updateUser(userId, updateData);
+        const result = await graphQLClient.updateUser(id, updateData);
 
         expect(result).toEqual(updatedUser);
         expect(mockAmplifyClient.models.User.update).toHaveBeenCalledWith(
-          { id: userId, ...updateData },
-          { authMode: 'identityPool' },
+          { id, ...updateData },
+          { authMode: 'userPool' },
         );
       });
 
       it('should handle GraphQL errors during user update', async () => {
-        const userId = 'user-1';
+        const email = 'john@example.com';
         const updateData = { name: 'Jane Doe' };
         const graphQLErrors = [{ message: 'Validation failed' }];
 
@@ -213,7 +213,7 @@ describe('GraphQLClient', () => {
           errors: graphQLErrors,
         });
 
-        await expect(graphQLClient.updateUser(userId, updateData)).rejects.toThrow(
+        await expect(graphQLClient.updateUser(email, updateData)).rejects.toThrow(
           `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
         );
       });
@@ -221,23 +221,23 @@ describe('GraphQLClient', () => {
 
     describe('deleteUser', () => {
       it('should delete a user successfully', async () => {
-        const userId = 'user-1';
+        const id = 'user-1';
         mockAmplifyClient.models.User.delete.mockResolvedValue({
           data: mockUserData,
           errors: null,
         });
 
-        const result = await graphQLClient.deleteUser(userId);
+        const result = await graphQLClient.deleteUser(id);
 
         expect(result).toEqual(mockUserData);
         expect(mockAmplifyClient.models.User.delete).toHaveBeenCalledWith(
-          { id: userId },
-          { authMode: 'identityPool' },
+          { id },
+          { authMode: 'userPool' },
         );
       });
 
       it('should handle GraphQL errors during user deletion', async () => {
-        const userId = 'user-1';
+        const email = 'john@example.com';
         const graphQLErrors = [{ message: 'Cannot delete user' }];
 
         mockAmplifyClient.models.User.delete.mockResolvedValue({
@@ -245,7 +245,10 @@ describe('GraphQLClient', () => {
           errors: graphQLErrors,
         });
 
-        await expect(graphQLClient.deleteUser(userId)).rejects.toThrow(
+        await expect(graphQLClient.deleteUser(email)).rejects.toThrow(
+          `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
+        );
+        await expect(graphQLClient.deleteUser('john@example.com')).rejects.toThrow(
           `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
         );
       });

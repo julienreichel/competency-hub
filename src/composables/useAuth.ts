@@ -1,5 +1,6 @@
 import type { AuthUser } from 'aws-amplify/auth';
 import { fetchAuthSession, fetchUserAttributes, getCurrentUser, signOut } from 'aws-amplify/auth';
+import { UserRole } from 'src/models/User';
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 
 /**
@@ -33,6 +34,7 @@ interface UseAuthReturn {
   refreshUserAttributes: () => Promise<void>;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;
+  getCognitoRole: () => UserRole;
 }
 
 /**
@@ -170,6 +172,16 @@ export function useAuth(): UseAuthReturn {
     return roles.some((role) => groups.includes(role));
   }
 
+  /**
+   * Get the Cognito role for the current user (Educator > Student > Parent)
+   */
+  function getCognitoRole(): UserRole {
+    if (hasRole(UserRole.ADMIN)) return UserRole.ADMIN;
+    if (hasRole(UserRole.EDUCATOR)) return UserRole.EDUCATOR;
+    if (hasRole(UserRole.STUDENT)) return UserRole.STUDENT;
+    return UserRole.PARENT;
+  }
+
   return {
     // State
     user,
@@ -189,5 +201,6 @@ export function useAuth(): UseAuthReturn {
     refreshUserAttributes,
     hasRole,
     hasAnyRole,
+    getCognitoRole,
   };
 }

@@ -69,7 +69,7 @@
                 :text-color="selectedRole === role.value ? 'white' : 'grey-8'"
                 class="full-width q-py-md"
                 stack
-                @click="selectedRole = role.value"
+                @click="setSelectedRole(role.value)"
               >
                 <div class="text-caption q-mt-xs">{{ role.description }}</div>
               </q-btn>
@@ -95,6 +95,8 @@
 import { Authenticator } from '@aws-amplify/ui-vue';
 import { Hub } from 'aws-amplify/utils';
 import { useQuasar } from 'quasar';
+import { userRepository } from 'src/models/repositories/UserRepository';
+import { UserRole, UserStatus } from 'src/models/User';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
@@ -108,7 +110,7 @@ interface Role {
 
 const router = useRouter();
 const route = useRoute();
-const { initAuth, isAuthenticated, userRole } = useAuth();
+const { initAuth, isAuthenticated, userAttributes, getCognitoRole } = useAuth();
 const $q = useQuasar();
 
 // Auth listener cleanup function
@@ -119,33 +121,26 @@ const REDIRECT_DELAY_MS = 500; // Small delay to prevent race conditions with ro
 
 // Role selection state
 const showRoleSelection = ref(false);
-const selectedRole = ref('');
+
+const selectedRole = ref<UserRole | ''>('');
+function setSelectedRole(role: string): void {
+  selectedRole.value = role as UserRole;
+}
 
 // Available roles for new users
+// Only allow Student and Parent for self-selection
 const availableRoles: Role[] = [
   {
-    value: 'Student',
+    value: UserRole.STUDENT,
     label: 'Student',
     icon: 'school',
     description: 'I am here to learn and track my progress',
   },
   {
-    value: 'Educator',
-    label: 'Educator',
-    icon: 'psychology',
-    description: 'I teach and assess student competencies',
-  },
-  {
-    value: 'Parent',
+    value: UserRole.PARENT,
     label: 'Parent',
     icon: 'family_restroom',
     description: "I want to monitor my child's progress",
-  },
-  {
-    value: 'Admin',
-    label: 'Administrator',
-    icon: 'admin_panel_settings',
-    description: 'I manage the competency platform',
   },
 ];
 
@@ -168,11 +163,6 @@ const formFields = {
     email: {
       label: 'Email Address',
       placeholder: 'Enter your email address',
-      isRequired: true,
-    },
-    preferred_username: {
-      label: 'Username',
-      placeholder: 'Choose a unique username',
       isRequired: true,
     },
     password: {
@@ -220,11 +210,45 @@ async function handleAuthenticated(): Promise<void> {
   try {
     await initAuth();
 
-    // If user doesn't have a role assigned, show role selection
-    if (!userRole.value || userRole.value === 'Student') {
-      showRoleSelection.value = true;
+    // Get user email and Cognito userId (sub) from auth composable
+    const email = userAttributes.value.email;
+    const userId = String(userAttributes.value.sub);
+    if (!email || !userId) {
+      $q.notify({
+        type: 'negative',
+        message: 'No email or userId found in user attributes.',
+        position: 'top',
+      });
+      return;
+    }
+
+    // Fetch user from backend by Cognito sub (id)
+    let user = await userRepository.findById(userId);
+
+    // If user does not exist, create it with Cognito userId as id and role from Cognito group
+    if (!user) {
+      const givenName = userAttributes.value.given_name || '';
+      const familyName = userAttributes.value.family_name || '';
+      const name = `${givenName} ${familyName}`.trim() || email;
+      const role = getCognitoRole();
+      user = await userRepository.create({
+        id: userId,
+        name,
+        role,
+        email,
+        avatar: '',
+        contactInfo: '',
+        status: UserStatus.ACTIVE,
+        lastActive: new Date().toISOString(),
+      });
+      if (role === UserRole.PARENT) {
+        showRoleSelection.value = true;
+      } else {
+        redirectAfterLogin();
+      }
     } else {
-      // Redirect to target route or dashboard
+      // Update lastActive on login
+      await userRepository.update(user.id, { lastActive: new Date().toISOString() });
       redirectAfterLogin();
     }
   } catch {
@@ -239,17 +263,32 @@ async function handleAuthenticated(): Promise<void> {
 /**
  * Handle role selection confirmation
  */
-function handleRoleConfirm(): void {
+async function handleRoleConfirm(): Promise<void> {
   if (!selectedRole.value) return;
-
   try {
-    // Here you would typically update the user's group in Cognito
-    // For now, we'll just proceed to the dashboard
-    // TODO: Implement group assignment API call
-
+    // Get user email and Cognito userId (sub) from auth composable
+    const email = userAttributes.value.email;
+    const userId = String(userAttributes.value.sub);
+    if (!email || !userId) {
+      $q.notify({
+        type: 'negative',
+        message: 'No email or userId found in user attributes.',
+        position: 'top',
+      });
+      return;
+    }
+    // Fetch user by Cognito sub (id)
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new Error('User not found when assigning role.');
+    }
+    // Update user role (use id as identifier)
+    await userRepository.update(user.id, {
+      role: selectedRole.value,
+      lastActive: new Date().toISOString(),
+    });
     showRoleSelection.value = false;
     redirectAfterLogin();
-
     $q.notify({
       type: 'positive',
       message: `Welcome! You've been assigned the ${selectedRole.value} role.`,
@@ -270,7 +309,7 @@ function handleRoleConfirm(): void {
 function handleRoleCancel(): void {
   showRoleSelection.value = false;
   // For now, assign default Student role
-  selectedRole.value = 'Student';
+  selectedRole.value = UserRole.STUDENT;
   redirectAfterLogin();
 }
 
