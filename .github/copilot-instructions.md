@@ -139,6 +139,117 @@ const percentage = (value / PERCENTAGE_DIVISOR) * rate;
 
 ## 🧪 Testing Requirements
 
+### Testing Philosophy: Boston School (Behavior-Driven)
+
+**CRITICAL**: All tests MUST follow the **Boston School** (classicist) approach focusing on **user behavior**, not implementation details. This ensures tests survive refactoring and provide better documentation.
+
+#### ✅ **Boston School Principles**
+
+**Test WHAT the user experiences, not HOW the code works:**
+
+```typescript
+// ✅ CORRECT: Test user-visible behavior
+it('shows recent activity status to users', () => {
+  const recentTime = new Date(Date.now() - 30 * 1000).toISOString();
+
+  const wrapper = mount(
+    LastActiveCell,
+    withQuasarBrowser({
+      props: { lastActive: recentTime },
+    }),
+  );
+
+  // User behavior: What does the user see?
+  expect(wrapper.text()).toBe('Just now');
+
+  // Visual behavior: Is it visually distinct? (flexible matching)
+  expect(wrapper.html()).toMatch(/text-green|color.*green|recent/i);
+});
+
+// ✅ CORRECT: Test user interactions and outcomes
+it('allows users to view user details', async () => {
+  const wrapper = mount(
+    UserActions,
+    withQuasarBrowser({
+      props: { user: sampleUser },
+    }),
+  );
+
+  // Find by semantic meaning, not implementation
+  const viewAction = wrapper.find('[data-testid="view-user"], .q-btn:first-child');
+  await viewAction.trigger('click');
+
+  // Test outcome user cares about
+  expect(wrapper.emitted('view')).toBeTruthy();
+  expect(wrapper.emitted('view')?.[0]).toEqual([sampleUser]);
+});
+```
+
+#### ❌ **London School Anti-Patterns (AVOID)**
+
+```typescript
+// ❌ WRONG: Over-mocking implementation details
+vi.mock('src/composables/useUserFormatters', () => ({
+  useUserFormatters: () => ({
+    getLastActiveClass: mockGetLastActiveClass,
+  }),
+}));
+
+// ❌ WRONG: Testing mock interactions instead of behavior
+expect(mockGetLastActiveClass).toHaveBeenCalledWith(lastActiveValue);
+
+// ❌ WRONG: Testing CSS classes (implementation details)
+expect(wrapper.find('span').classes()).toContain('text-green');
+
+// ❌ WRONG: Testing DOM structure instead of behavior
+expect(wrapper.find('span').exists()).toBe(true);
+expect(buttons.length).toBe(3);
+```
+
+#### **Boston School Test Structure**
+
+```typescript
+describe('ComponentName - User Behavior', () => {
+  describe('When [user scenario]', () => {
+    it('should [expected user outcome]', () => {
+      // Arrange: Set up realistic user scenario
+      const userInput = 'realistic-data';
+
+      // Act: User performs action
+      const wrapper = mount(
+        Component,
+        withQuasarBrowser({
+          props: { userInput },
+        }),
+      );
+
+      // Assert: User sees expected outcome
+      expect(wrapper.text()).toBe('expected-user-visible-text');
+
+      // Assert: Behavior patterns (flexible implementation)
+      expect(wrapper.html()).toMatch(/visual-indicator-pattern/i);
+    });
+  });
+
+  describe('Accessibility and UX', () => {
+    it('provides accessible experience for screen readers', () => {
+      // Test accessibility requirements
+    });
+  });
+});
+```
+
+#### **Behavior-Focused Test Checklist**
+
+For EVERY test, verify:
+
+- [ ] **Test name describes user behavior** (not code behavior)
+- [ ] **Assertions test user-visible outcomes** (not implementation)
+- [ ] **Would test survive refactoring?** (changing CSS, DOM structure, internal methods)
+- [ ] **Uses minimal mocking** (only for external dependencies/APIs)
+- [ ] **Tests realistic user scenarios** (not artificial edge cases)
+- [ ] **Flexible implementation matching** (regex patterns vs exact matches)
+
 ### Coverage Goals
 
 - **Minimum 80% code coverage** for all new code
@@ -146,29 +257,36 @@ const percentage = (value / PERCENTAGE_DIVISOR) * rate;
 - Test all public methods and edge cases
 - Include both positive and negative test scenarios
 
-### Test Structure (AAA Pattern)
+### Test Structure (Behavior-Driven AAA Pattern)
 
-```javascript
-it('should describe expected behavior', () => {
-  // Arrange - Set up test data
-  const input = 'test-data';
-  const expected = 'expected-result';
+```typescript
+it('should [describe user behavior/outcome]', () => {
+  // Arrange - Set up realistic user scenario
+  const userInput = 'realistic-user-data';
 
-  // Act - Execute the function
-  const result = functionUnderTest(input);
+  // Act - User performs action or views component
+  const wrapper = mount(
+    Component,
+    withQuasarBrowser({
+      props: { userInput },
+    }),
+  );
 
-  // Assert - Verify the outcome
-  expect(result).toBe(expected);
+  // Assert - User sees expected behavior/outcome
+  expect(wrapper.text()).toBe('user-visible-result');
+  // Flexible implementation matching for visual behavior
+  expect(wrapper.html()).toMatch(/behavior-pattern/i);
 });
 ```
 
-### Test Categories
+### Test Categories (Boston School Focus)
 
-- **Unit Tests**: Individual functions/methods
-- **Integration Tests**: Component interactions
-- **Component Tests**: Vue component behavior
-- **Edge Cases**: Null/undefined inputs, boundary conditions
-- **Error Handling**: Exception paths and error scenarios
+- **User Behavior Tests**: What users see and experience
+- **Interaction Tests**: User actions and their outcomes
+- **Accessibility Tests**: Screen reader content, keyboard navigation
+- **Integration Tests**: Component collaboration (minimal mocking)
+- **Edge Case Behavior**: How system behaves under unusual conditions
+- **Error Scenarios**: User-visible error states and recovery
 
 ## 🏗️ Architecture Patterns
 
@@ -476,7 +594,7 @@ When updating documentation:
 1. **Check for DRY violations FIRST** - never duplicate templates, logic, or patterns
 2. **Ask for clarification** if requirements are unclear
 3. **Suggest architecture** before implementing
-4. **Include tests** with the implementation
+4. **Include Boston School tests** with the implementation
 5. **Explain design decisions** and trade-offs
 6. **Follow the established patterns** in the codebase
 7. **Consider edge cases** and error scenarios
@@ -489,11 +607,30 @@ When updating documentation:
 - ✅ Conditional rendering is parameterized, not duplicated
 - ✅ Common patterns are abstracted into reusable functions
 
+**MANDATORY BOSTON SCHOOL CHECK**: Before submitting any test code, verify:
+
+- ✅ Tests describe user behavior, not code behavior
+- ✅ Assertions test user-visible outcomes, not implementation
+- ✅ Tests would survive refactoring (CSS changes, DOM restructuring)
+- ✅ Minimal mocking (only external dependencies/APIs)
+- ✅ Test names describe user scenarios and expected outcomes
+- ✅ Uses flexible implementation matching (regex patterns vs exact matches)
+
+### When I Ask for Tests:
+
+1. **Follow Boston School principles** - test behavior, not implementation
+2. **Focus on user experience** - what does the user see/do?
+3. **Use realistic scenarios** - test actual use cases
+4. **Minimize mocking** - only mock external boundaries
+5. **Test accessibility** - screen reader content, keyboard navigation
+6. **Write resilient assertions** - flexible matching for implementation details
+7. **Group by user scenarios** - organize tests around user journeys
+
 ### When I Ask for Refactoring:
 
 1. **Preserve existing functionality**
 2. **Improve code structure** without breaking changes
-3. **Add tests** if missing
+3. **Update tests to be more behavior-focused** if they're brittle
 4. **Document any breaking changes**
 5. **Follow SOLID principles**
 6. **Extract reusable patterns**
@@ -501,9 +638,23 @@ When updating documentation:
 ### When I Ask for Bug Fixes:
 
 1. **Identify root cause** before fixing symptoms
-2. **Add tests** to prevent regression
+2. **Add behavior-focused tests** to prevent regression
 3. **Consider related edge cases**
 4. **Update documentation** if needed
 5. **Use minimal changes** to fix the issue
 
 Remember: **Quality over quantity**. It's better to write less code that is well-tested, documented, and maintainable than to write more code quickly.
+
+---
+
+## 🎯 **CRITICAL TESTING MANDATE**
+
+**ALL TESTS MUST FOLLOW BOSTON SCHOOL PRINCIPLES:**
+
+- **Test user behavior**, not implementation details
+- **Write resilient assertions** that survive refactoring
+- **Focus on what users see and experience**
+- **Minimize mocking** to test real integration
+- **Use flexible matching** for implementation details
+
+**This ensures tests provide better regression protection and survive codebase evolution.**
