@@ -131,10 +131,11 @@ Test Vue composables in a real browser environment:
 import { useUserFormatters } from '../../src/composables/useUserFormatters';
 
 describe('useUserFormatters (Browser)', () => {
-  const { getUserInitials, formatLastActive } = useUserFormatters();
+  const { getUserInitialsFromUser, formatLastActive } = useUserFormatters();
 
   it('should format user data correctly', () => {
-    expect(getUserInitials('John Doe')).toBe('JD');
+    const user = { getInitials: () => 'JD' };
+    expect(getUserInitialsFromUser(user)).toBe('JD');
   });
 });
 ```
@@ -147,10 +148,11 @@ Test Vue composables in a real browser environment:
 import { useUserFormatters } from '../../src/composables/useUserFormatters';
 
 describe('useUserFormatters (Browser)', () => {
-  const { getUserInitials, formatLastActive } = useUserFormatters();
+  const { getUserInitialsFromUser, formatLastActive } = useUserFormatters();
 
   it('should format user data correctly', () => {
-    expect(getUserInitials('John Doe')).toBe('JD');
+    const user = { getInitials: () => 'JD' };
+    expect(getUserInitialsFromUser(user)).toBe('JD');
   });
 });
 ```

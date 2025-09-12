@@ -1,10 +1,12 @@
 /**
  * Return type for useUserFormatters composable
  */
+import type { User } from '../models/User';
+
 interface UseUserFormattersReturn {
   getLastActiveClass: (lastActive: string) => string;
   formatLastActive: (lastActive: string) => string;
-  getUserInitials: (name: string) => string;
+  getUserInitialsFromUser: (user: User) => string;
 }
 
 /**
@@ -54,19 +56,16 @@ export function useUserFormatters(): UseUserFormattersReturn {
   }
 
   /**
-   * Generate user initials from full name
+   * Get user initials from User model instance
+   * Delegates to User.getInitials()
    */
-  function getUserInitials(name: string): string {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase();
+  function getUserInitialsFromUser(user: User): string {
+    return user.getInitials();
   }
 
   return {
     getLastActiveClass,
     formatLastActive,
-    getUserInitials,
+    getUserInitialsFromUser,
   };
 }

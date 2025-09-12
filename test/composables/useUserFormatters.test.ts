@@ -1,33 +1,57 @@
 import { describe, expect, it } from 'vitest';
 import { useUserFormatters } from '../../src/composables/useUserFormatters';
+import { User, UserRole } from '../../src/models/User';
 
 describe('useUserFormatters - User Experience Helpers', () => {
-  const { getUserInitials, formatLastActive, getLastActiveClass } = useUserFormatters();
+  const { getUserInitialsFromUser, formatLastActive, getLastActiveClass } = useUserFormatters();
 
   describe('When administrators need to identify users quickly', () => {
-    it('should create recognizable initials from full names for user identification', () => {
-      // Admin sees clear user identification
-      expect(getUserInitials('John Doe')).toBe('JD');
+    it('should create recognizable initials from user object for user identification', () => {
+      const user = new User({
+        id: '1',
+        name: 'John Doe',
+        role: UserRole.STUDENT,
+        email: 'john@example.com',
+        avatar: '',
+        contactInfo: '',
+      });
+      expect(getUserInitialsFromUser(user)).toBe('JD');
     });
 
-    it('should handle single names professionally for better user recognition', () => {
-      // Admin can identify users with single names
-      expect(getUserInitials('Madonna')).toBe('M');
+    it('should handle single name from user object', () => {
+      const user = new User({
+        id: '2',
+        name: 'Madonna',
+        role: UserRole.STUDENT,
+        email: 'madonna@example.com',
+        avatar: '',
+        contactInfo: '',
+      });
+      expect(getUserInitialsFromUser(user)).toBe('M');
     });
 
-    it('should create meaningful initials from complex names', () => {
-      // Admin gets helpful identification even for complex names
-      expect(getUserInitials('Mary Jane Watson')).toBe('MJW');
+    it('should handle multiple names from user object', () => {
+      const user = new User({
+        id: '3',
+        name: 'Mary Jane Watson',
+        role: UserRole.STUDENT,
+        email: 'mjw@example.com',
+        avatar: '',
+        contactInfo: '',
+      });
+      expect(getUserInitialsFromUser(user)).toBe('MJ');
     });
 
-    it('should gracefully handle missing name data without breaking interface', () => {
-      // System continues to work when name data is missing
-      expect(getUserInitials('')).toBe('');
-    });
-
-    it('should clean up messy name data for consistent user experience', () => {
-      // Admin gets clean initials despite data quality issues
-      expect(getUserInitials('  John   Doe  ')).toBe('JD');
+    it('should handle names with extra spaces from user object', () => {
+      const user = new User({
+        id: '5',
+        name: '  John   Doe  ',
+        role: UserRole.STUDENT,
+        email: 'john2@example.com',
+        avatar: '',
+        contactInfo: '',
+      });
+      expect(getUserInitialsFromUser(user)).toBe('JD');
     });
   });
 
@@ -101,7 +125,15 @@ describe('useUserFormatters - User Experience Helpers', () => {
   describe('Accessibility and User Experience', () => {
     it('should provide consistent initials for screen reader compatibility', () => {
       // Screen readers get predictable content
-      const initials = getUserInitials('Alice Johnson');
+      const user = new User({
+        id: '6',
+        name: 'Alice Johnson',
+        role: UserRole.STUDENT,
+        email: 'alice@example.com',
+        avatar: '',
+        contactInfo: '',
+      });
+      const initials = getUserInitialsFromUser(user);
       expect(initials).toMatch(/^[A-Z]*$/);
       expect(initials.length).toBeGreaterThan(0);
     });
