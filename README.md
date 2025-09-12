@@ -1,9 +1,7 @@
 # Competency Hub
 
 [![CI](https://github.com/julienreichel/competency-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/julienreichel/competency-hub/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/github/julienreichel/competency-hub/coverage.svg?branch=main)](https://codecov.io/github/julienreichel/competency-hub?branch=main)
 [![Quality Gate Status](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](https://github.com/julienreichel/competency-hub)
-[![Mutation Score](https://img.shields.io/badge/mutation%20score-90.06%25-brightgreen)](https://github.com/julienreichel/competency-hub)
 
 A Vue 3 + Quasar application for managing competencies with enterprise-grade testing and quality assurance.
 
@@ -12,18 +10,16 @@ A Vue 3 + Quasar application for managing competencies with enterprise-grade tes
 - **Vue 3** with Composition API and TypeScript
 - **Quasar Framework** for UI components and responsive design
 - **AWS Amplify** for backend services and GraphQL API
-- **Comprehensive Testing Suite** with Vitest and mutation testing
+- **Comprehensive Testing Suite** with Vitest browser mode
 - **Quality Assurance** with ESLint, Prettier, and automated checks
 - **CI/CD Pipeline** with GitHub Actions and quality gates
-- **Code Coverage** reporting with Codecov integration
 
 ## 📊 Quality Metrics
 
-- **Test Coverage**: 84.71% overall coverage with focus on business logic
-- **Mutation Score**: 90.06% (exceeding 80% threshold)
+- **Test Coverage**: 94.87% overall coverage with comprehensive component testing
 - **Code Quality**: ESLint + Prettier with complexity limits
 - **Git Hooks**: Pre-commit quality checks with Husky
-- **CI/CD**: Multi-node testing (Node 18.x, 20.x) with artifacts
+- **CI/CD**: Multi-node testing with automated quality gates
 
 ## 🧪 Testing Infrastructure
 
