@@ -85,6 +85,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create dummy amplify_outputs.json
+        run: echo '{"version":"1","auth":{"aws_region":"us-east-1","user_pool_id":"DUMMY","user_pool_client_id":"DUMMY"}}' > amplify_outputs.json
+
       - name: Build application
         run: npm run build
 
