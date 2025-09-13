@@ -44,4 +44,17 @@ export default {
     lastNameRequired: 'Last name is required',
     roleRequired: 'Role is required',
   },
+
+  // Login and authentication
+  login: {
+    welcomeBack: 'Welcome Back',
+    enterCredentials: 'Enter your credentials to continue',
+    signIn: 'Sign In',
+    accessDashboard: 'Access your competency dashboard',
+    createAccount: 'Create Account',
+    joinPlatform: 'Join the competency learning platform',
+    termsAndPrivacy: 'By signing in, you agree to our Terms of Service and Privacy Policy',
+    success: 'Login successful',
+    signedIn: 'You are now signed in to Competency Hub.',
+  },
 };

@@ -8,7 +8,7 @@
       </div>
 
       <!-- Authentication Component -->
-      <q-card class="q-pa-lg">
+      <q-card v-if="!isAuthenticated" class="q-pa-lg">
         <authenticator
           :login-mechanisms="['email']"
           :sign-up-attributes="signUpAttributes"
@@ -17,37 +17,38 @@
           <template #header>
             <div class="text-center q-mb-md">
               <q-avatar size="80px" color="primary" text-color="white" icon="school" />
-              <h5 class="q-mt-md q-mb-none text-weight-medium">Welcome Back</h5>
-              <p class="text-grey-6 q-mb-none">Enter your credentials to continue</p>
+              <h5 class="q-mt-md q-mb-none text-weight-medium">{{ t('login.welcomeBack') }}</h5>
+              <p class="text-grey-6 q-mb-none">{{ t('login.enterCredentials') }}</p>
             </div>
           </template>
 
           <template #sign-in-header>
             <div class="text-center q-mb-md">
-              <h6 class="q-my-none text-weight-medium">Sign In</h6>
-              <p class="text-grey-6 text-caption">Access your competency dashboard</p>
+              <h6 class="q-my-none text-weight-medium">{{ t('login.signIn') }}</h6>
+              <p class="text-grey-6 text-caption">{{ t('login.accessDashboard') }}</p>
             </div>
           </template>
 
           <template #sign-up-header>
             <div class="text-center q-mb-md">
-              <h6 class="q-my-none text-weight-medium">Create Account</h6>
-              <p class="text-grey-6 text-caption">Join the competency learning platform</p>
+              <h6 class="q-my-none text-weight-medium">{{ t('login.createAccount') }}</h6>
+              <p class="text-grey-6 text-caption">{{ t('login.joinPlatform') }}</p>
             </div>
           </template>
 
           <template #footer>
             <div class="text-center q-mt-md">
               <p class="text-caption text-grey-6">
-                <strong>Note:</strong> You sign in with your email address, but you'll have a unique
-                username for display purposes.
-              </p>
-              <p class="text-caption text-grey-6">
-                By signing in, you agree to our Terms of Service and Privacy Policy
+                {{ t('login.termsAndPrivacy') }}
               </p>
             </div>
           </template>
         </authenticator>
+      </q-card>
+      <q-card v-else class="q-pa-lg text-center">
+        <q-icon name="check_circle" color="positive" size="48px" class="q-mb-md" />
+        <h5 class="q-my-none text-weight-medium">{{ t('login.success') }}</h5>
+        <p class="text-grey-7">{{ t('login.signedIn') }}</p>
       </q-card>
 
       <!-- Role Selection Dialog -->
@@ -98,8 +99,11 @@ import { useQuasar } from 'quasar';
 import { userRepository } from 'src/models/repositories/UserRepository';
 import { UserRole, UserStatus } from 'src/models/User';
 import { onMounted, onUnmounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
+
+import '@aws-amplify/ui-vue/styles.css';
 
 interface Role {
   value: string;
@@ -111,6 +115,7 @@ interface Role {
 const router = useRouter();
 const route = useRoute();
 const { initAuth, isAuthenticated, userAttributes, getCognitoRole } = useAuth();
+const { t } = useI18n();
 const $q = useQuasar();
 
 // Auth listener cleanup function
@@ -145,7 +150,7 @@ const availableRoles: Role[] = [
 ];
 
 // Sign up attributes configuration
-const signUpAttributes = ['given_name', 'family_name', 'email', 'preferred_username'];
+const signUpAttributes = ['given_name', 'family_name', 'email'];
 
 // Form fields configuration
 const formFields = {

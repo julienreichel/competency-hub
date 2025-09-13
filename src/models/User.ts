@@ -59,6 +59,7 @@ export interface UserGraphQLData {
   status: UserStatus;
   createdAt?: string;
   updatedAt?: string;
+  lastActive?: string;
 }
 
 /**
@@ -72,6 +73,7 @@ export class User extends BaseModel {
   public readonly avatar: string;
   public readonly contactInfo: string;
   public readonly status: UserStatus;
+  public readonly lastActive: string | undefined;
 
   constructor(data: UserGraphQLData) {
     super(data);
@@ -81,6 +83,7 @@ export class User extends BaseModel {
     this.avatar = data.avatar;
     this.contactInfo = data.contactInfo;
     this.status = data.status;
+    this.lastActive = data.lastActive;
     this.validate();
   }
 
