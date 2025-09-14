@@ -1,15 +1,12 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { postConfirmation } from '../auth/post-confirmation/resource';
-
-/*== STEP 1 ===============================================================
-The section below creates User and Competency database tables with proper
-authentication and authorization. The authorization rules specify that:
-- Users can manage their own records (owner-based access)
-- Admins can manage all users
-- Educators can read user data
-- All authenticated users can read competencies
-- Only Admins and Educators can create/update/delete competencies
-=========================================================================*/
+// ✅ NEW: import function resources
+import {
+  addUserToGroupFn,
+  adminCreateUserFn,
+  adminDeleteUserFn,
+  resetUserPasswordFn,
+} from './user-admin/resource';
 
 const schema = a
   .schema({
@@ -40,8 +37,49 @@ const schema = a
         allow.authenticated().to(['read']),
         allow.groups(['Admin', 'Educator']).to(['create', 'update', 'delete']),
       ]),
+    addUserToGroup: a
+      .mutation()
+      .arguments({
+        userId: a.string().required(),
+        groupName: a.string().required(),
+      })
+      .returns(a.json())
+      .authorization((allow) => [allow.group('Admin')])
+      .handler(a.handler.function(addUserToGroupFn)),
+
+    resetUserPassword: a
+      .mutation()
+      .arguments({
+        userId: a.string().required(),
+        newPassword: a.string(), // if provided → set permanent; else → reset flow
+      })
+      .returns(a.json())
+      .authorization((allow) => [allow.group('Admin')])
+      .handler(a.handler.function(resetUserPasswordFn)),
+
+    adminDeleteUser: a
+      .mutation()
+      .arguments({
+        userId: a.string().required(),
+      })
+      .returns(a.json())
+      .authorization((allow) => [allow.group('Admin')])
+      .handler(a.handler.function(adminDeleteUserFn)),
+
+    adminCreateUser: a
+      .mutation()
+      .arguments({
+        userId: a.string().required(),
+        email: a.string().required(),
+        phone: a.string(), // optional
+        tempPassword: a.string(), // optional (Cognito can auto-generate)
+        suppressMessage: a.boolean(),
+      })
+      .returns(a.json())
+      .authorization((allow) => [allow.group('Admin')])
+      .handler(a.handler.function(adminCreateUserFn)),
   })
-  .authorization((allow) => [allow.resource(postConfirmation)]);
+  .authorization((allow) => [allow.resource(postConfirmation), allow.resource(addUserToGroupFn)]);
 
 export type Schema = ClientSchema<typeof schema>;
 

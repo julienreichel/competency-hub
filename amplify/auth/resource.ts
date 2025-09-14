@@ -1,4 +1,10 @@
 import { defineAuth } from '@aws-amplify/backend';
+import {
+  addUserToGroupFn,
+  adminCreateUserFn,
+  adminDeleteUserFn,
+  resetUserPasswordFn,
+} from '../data/user-admin/resource';
 import { postConfirmation } from './post-confirmation/resource';
 
 /**
@@ -31,4 +37,12 @@ export const auth = defineAuth({
   triggers: {
     postConfirmation,
   },
+
+  // ✅ grant least-privilege access to the functions
+  access: (allow) => [
+    allow.resource(addUserToGroupFn).to(['addUserToGroup']),
+    allow.resource(resetUserPasswordFn).to(['resetUserPassword']),
+    allow.resource(adminCreateUserFn).to(['createUser']),
+    allow.resource(adminDeleteUserFn).to(['deleteUser']),
+  ],
 });
