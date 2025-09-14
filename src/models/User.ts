@@ -13,6 +13,7 @@ export enum UserStatus {
  * User role enumeration
  */
 export enum UserRole {
+  UNKNOWN = 'Unknown',
   ADMIN = 'Admin',
   STUDENT = 'Student',
   EDUCATOR = 'Educator',

@@ -97,7 +97,7 @@ import { Authenticator } from '@aws-amplify/ui-vue';
 import { Hub } from 'aws-amplify/utils';
 import { useQuasar } from 'quasar';
 import { userRepository } from 'src/models/repositories/UserRepository';
-import { UserRole, UserStatus } from 'src/models/User';
+import { UserRole } from 'src/models/User';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -114,7 +114,7 @@ interface Role {
 
 const router = useRouter();
 const route = useRoute();
-const { initAuth, isAuthenticated, userAttributes, getCognitoRole } = useAuth();
+const { initAuth, isAuthenticated, userAttributes } = useAuth();
 const { t } = useI18n();
 const $q = useQuasar();
 
@@ -228,32 +228,21 @@ async function handleAuthenticated(): Promise<void> {
     }
 
     // Fetch user from backend by Cognito sub (id)
-    let user = await userRepository.findById(userId);
-
-    // If user does not exist, create it with Cognito userId as id and role from Cognito group
+    const user = await userRepository.findById(userId);
     if (!user) {
-      const givenName = userAttributes.value.given_name || '';
-      const familyName = userAttributes.value.family_name || '';
-      const name = `${givenName} ${familyName}`.trim() || email;
-      const role = getCognitoRole();
-      user = await userRepository.create({
-        id: userId,
-        name,
-        role,
-        email,
-        avatar: '',
-        contactInfo: '',
-        status: UserStatus.ACTIVE,
-        lastActive: new Date().toISOString(),
+      $q.notify({
+        type: 'negative',
+        message: 'User not found. Please contact support.',
+        position: 'top',
       });
-      if (role === UserRole.PARENT) {
-        showRoleSelection.value = true;
-      } else {
-        redirectAfterLogin();
-      }
+      return;
+    }
+    // Update lastActive on login
+    await userRepository.update(user.id, { lastActive: new Date().toISOString() });
+    // If user role is UNKNOWN, show role selection dialog
+    if (user.role === UserRole.UNKNOWN) {
+      showRoleSelection.value = true;
     } else {
-      // Update lastActive on login
-      await userRepository.update(user.id, { lastActive: new Date().toISOString() });
       redirectAfterLogin();
     }
   } catch {

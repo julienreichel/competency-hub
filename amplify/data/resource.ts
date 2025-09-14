@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { postConfirmation } from '../auth/post-confirmation/resource';
 
 /*== STEP 1 ===============================================================
 The section below creates User and Competency database tables with proper
@@ -10,35 +11,37 @@ authentication and authorization. The authorization rules specify that:
 - Only Admins and Educators can create/update/delete competencies
 =========================================================================*/
 
-const schema = a.schema({
-  User: a
-    .model({
-      name: a.string(),
-      role: a.enum(['Student', 'Educator', 'Parent', 'Admin']),
-      email: a.string().required(),
-      avatar: a.string(),
-      contactInfo: a.string(),
-      status: a.enum(['Active', 'Inactive', 'Suspended']),
-      lastActive: a.string(),
-    })
-    .authorization((allow) => [
-      allow.owner(),
-      allow.groups(['Admin']).to(['create', 'read', 'update', 'delete']),
-      allow.groups(['Educator']).to(['read']),
-    ]),
-  Competency: a
-    .model({
-      domain: a.string(),
-      subDomain: a.string(),
-      description: a.string(),
-      stage: a.string(),
-      status: a.enum(['LOCKED', 'UNLOCKED', 'ACQUIRED', 'IN_PROGRESS']),
-    })
-    .authorization((allow) => [
-      allow.authenticated().to(['read']),
-      allow.groups(['Admin', 'Educator']).to(['create', 'update', 'delete']),
-    ]),
-});
+const schema = a
+  .schema({
+    User: a
+      .model({
+        name: a.string(),
+        role: a.enum(['Unknown', 'Student', 'Educator', 'Parent', 'Admin']),
+        email: a.string().required(),
+        avatar: a.string(),
+        contactInfo: a.string(),
+        status: a.enum(['Active', 'Inactive', 'Suspended']),
+        lastActive: a.string(),
+      })
+      .authorization((allow) => [
+        allow.owner(),
+        allow.groups(['Admin']).to(['create', 'read', 'update', 'delete']),
+        allow.groups(['Educator']).to(['read']),
+      ]),
+    Competency: a
+      .model({
+        domain: a.string(),
+        subDomain: a.string(),
+        description: a.string(),
+        stage: a.string(),
+        status: a.enum(['LOCKED', 'UNLOCKED', 'ACQUIRED', 'IN_PROGRESS']),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.groups(['Admin', 'Educator']).to(['create', 'update', 'delete']),
+      ]),
+  })
+  .authorization((allow) => [allow.resource(postConfirmation)]);
 
 export type Schema = ClientSchema<typeof schema>;
 
