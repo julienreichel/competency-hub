@@ -10,12 +10,19 @@ Amplify.configure(resourceConfig, libraryOptions);
 const client = generateClient<Schema>();
 
 export const handler: PostConfirmationTriggerHandler = async (event) => {
+  const { userAttributes } = event.request;
+  const email = userAttributes.email;
+  const id = userAttributes.sub;
+  if (!email) {
+    throw new Error('Missing required user attribute: email');
+  }
+  if (!id) {
+    throw new Error('Missing required user attribute: sub (id)');
+  }
   await client.models.User.create({
-    email: event.request.userAttributes.email,
-    id: event.request.userAttributes.sub,
-    name:
-      `${event.request.userAttributes.given_name || ''} ${event.request.userAttributes.family_name || ''}`.trim() ||
-      event.request.userAttributes.email,
+    email,
+    id,
+    name: `${userAttributes.given_name || ''} ${userAttributes.family_name || ''}`.trim() || email,
     role: 'Unknown',
     status: 'Active',
     avatar: '',
