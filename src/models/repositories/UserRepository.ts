@@ -1,7 +1,6 @@
 import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
 import { User, type CreateUserData, type UpdateUserData, type UserGraphQLData } from '../User';
-
 /**
  * User filter type for queries
  */
@@ -9,11 +8,6 @@ interface UserFilter extends Record<string, unknown> {
   role?: { eq: string };
   email?: { eq: string };
 }
-
-/**
- * User repository implementing the Repository pattern
- * Handles data access for User entities
- */
 export class UserRepository
   implements Repository<User, CreateUserData, UpdateUserData, UserFilter>
 {
@@ -78,11 +72,6 @@ export class UserRepository
   }
 
   /**
-   * Find user by email using the email secondary index
-   * @param email - User email
-   * @returns Promise with User instance or null if not found
-   */
-  /**
    * Find user by email using a filter (since id is the primary key)
    * @param email - User email
    * @returns Promise with User instance or null if not found
@@ -91,7 +80,43 @@ export class UserRepository
     const users = await this.findAll({ email: { eq: email } });
     return users.length > 0 && users[0] ? users[0] : null;
   }
+
+  /**
+   * Add a user to a Cognito group (admin mutation)
+   */
+  async addUserToGroup(userId: string, groupName: string): Promise<boolean> {
+    return graphQLClient.addUserToGroup(userId, groupName);
+  }
+
+  /**
+   * Reset a user's password (admin mutation)
+   */
+  async resetUserPassword(userId: string, newPassword?: string): Promise<boolean> {
+    return graphQLClient.resetUserPassword(userId, newPassword);
+  }
+
+  /**
+   * Delete a user (admin mutation)
+   */
+  async deleteUser(userId: string): Promise<boolean> {
+    return graphQLClient.adminDeleteUser(userId);
+  }
+
+  /**
+   * Create a user (admin mutation)
+   */
+  async createUser(input: {
+    userId: string;
+    email: string;
+    phone?: string;
+    tempPassword?: string;
+    suppressMessage?: boolean;
+  }): Promise<boolean> {
+    return graphQLClient.adminCreateUser(input);
+  }
 }
+
+// Singleton instance
 
 // Singleton instance
 export const userRepository = new UserRepository();

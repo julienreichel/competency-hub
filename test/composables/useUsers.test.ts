@@ -64,4 +64,64 @@ describe('useUsers - User Behavior', () => {
     expect(loading.value).toBe(false);
     expect(error.value).toBe('Failed to fetch users');
   });
+
+  describe('admin functions', () => {
+    it('addUserToGroup returns true on success', async () => {
+      vi.spyOn(userRepository, 'addUserToGroup').mockResolvedValueOnce(true);
+      const { addUserToGroup } = useUsers();
+      const result = await addUserToGroup('user-1', 'Admin');
+      expect(result).toBe(true);
+    });
+
+    it('addUserToGroup returns false on failure', async () => {
+      vi.spyOn(userRepository, 'addUserToGroup').mockResolvedValueOnce(false);
+      const { addUserToGroup } = useUsers();
+      const result = await addUserToGroup('user-1', 'Admin');
+      expect(result).toBe(false);
+    });
+
+    it('resetUserPassword returns true on success', async () => {
+      vi.spyOn(userRepository, 'resetUserPassword').mockResolvedValueOnce(true);
+      const { resetUserPassword } = useUsers();
+      const result = await resetUserPassword('user-1', 'pw');
+      expect(result).toBe(true);
+    });
+
+    it('resetUserPassword returns false on failure', async () => {
+      vi.spyOn(userRepository, 'resetUserPassword').mockResolvedValueOnce(false);
+      const { resetUserPassword } = useUsers();
+      const result = await resetUserPassword('user-1', 'pw');
+      expect(result).toBe(false);
+    });
+
+    it('deleteUser (admin) returns true on success', async () => {
+      vi.spyOn(userRepository, 'deleteUser').mockResolvedValueOnce(true);
+      const { deleteUser } = useUsers();
+      const result = await deleteUser('user-1');
+      expect(result).toBe(true);
+    });
+
+    it('deleteUser (admin) returns false on failure', async () => {
+      vi.spyOn(userRepository, 'deleteUser').mockResolvedValueOnce(false);
+      const { deleteUser } = useUsers();
+      const result = await deleteUser('user-1');
+      expect(result).toBe(false);
+    });
+
+    it('createUser (admin) returns true on success', async () => {
+      vi.spyOn(userRepository, 'createUser').mockResolvedValueOnce(true);
+      const { createUser } = useUsers();
+      const input = { userId: 'user-1', email: 'john@example.com' };
+      const result = await createUser(input);
+      expect(result).toBe(true);
+    });
+
+    it('createUser (admin) returns false on failure', async () => {
+      vi.spyOn(userRepository, 'createUser').mockResolvedValueOnce(false);
+      const { createUser } = useUsers();
+      const input = { userId: 'user-1', email: 'john@example.com' };
+      const result = await createUser(input);
+      expect(result).toBe(false);
+    });
+  });
 });

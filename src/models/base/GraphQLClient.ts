@@ -6,6 +6,106 @@ import type { Schema } from '../../../amplify/data/resource';
  * Provides type-safe CRUD operations and error handling
  */
 export class GraphQLClient {
+  /**
+   * Add a user to a Cognito group (admin mutation)
+   * @param userId - The Cognito user ID
+   * @param groupName - The group to add the user to
+   * @returns Promise with the mutation result
+   */
+  async addUserToGroup(userId: string, groupName: string): Promise<boolean> {
+    try {
+      const result = await this.client.mutations.addUserToGroup(
+        { userId, groupName },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error adding user to group:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Reset a user's password (admin mutation)
+   * @param userId - The Cognito user ID
+   * @param newPassword - Optional new password
+   * @returns Promise with the mutation result
+   */
+  async resetUserPassword(userId: string, newPassword?: string): Promise<boolean> {
+    try {
+      const result = await this.client.mutations.resetUserPassword(
+        { userId, newPassword: newPassword ?? null },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error resetting user password:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete a user (admin mutation)
+   * @param userId - The Cognito user ID
+   * @returns Promise with the mutation result
+   */
+  async adminDeleteUser(userId: string): Promise<boolean> {
+    try {
+      const result = await this.client.mutations.adminDeleteUser(
+        { userId },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Create a user (admin mutation)
+   * @param input - The user creation input
+   * @returns Promise with the mutation result
+   */
+  async adminCreateUser(input: {
+    userId: string;
+    email: string;
+    phone?: string;
+    tempPassword?: string;
+    suppressMessage?: boolean;
+  }): Promise<boolean> {
+    try {
+      const result = await this.client.mutations.adminCreateUser(input, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      return false;
+    }
+  }
   private readonly client = generateClient<Schema>({
     authMode: 'userPool',
   });

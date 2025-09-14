@@ -252,4 +252,75 @@ describe('UserRepository', () => {
       expect(deletedUser).toBeInstanceOf(User);
     });
   });
+  describe('admin mutations', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('addUserToGroup returns true on success', async () => {
+      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(true);
+      const repo = new UserRepository();
+      const result = await repo.addUserToGroup('user-1', 'Admin');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(graphQLClient.addUserToGroup).toHaveBeenCalledWith('user-1', 'Admin');
+      expect(result).toBe(true);
+    });
+
+    it('addUserToGroup returns false on failure', async () => {
+      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(false);
+      const repo = new UserRepository();
+      const result = await repo.addUserToGroup('user-1', 'Admin');
+      expect(result).toBe(false);
+    });
+
+    it('resetUserPassword returns true on success', async () => {
+      graphQLClient.resetUserPassword = vi.fn().mockResolvedValue(true);
+      const repo = new UserRepository();
+      const result = await repo.resetUserPassword('user-1', 'pw');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(graphQLClient.resetUserPassword).toHaveBeenCalledWith('user-1', 'pw');
+      expect(result).toBe(true);
+    });
+
+    it('resetUserPassword returns false on failure', async () => {
+      graphQLClient.resetUserPassword = vi.fn().mockResolvedValue(false);
+      const repo = new UserRepository();
+      const result = await repo.resetUserPassword('user-1', 'pw');
+      expect(result).toBe(false);
+    });
+
+    it('deleteUser (admin) returns true on success', async () => {
+      graphQLClient.adminDeleteUser = vi.fn().mockResolvedValue(true);
+      const repo = new UserRepository();
+      const result = await repo.deleteUser('user-1');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(graphQLClient.adminDeleteUser).toHaveBeenCalledWith('user-1');
+      expect(result).toBe(true);
+    });
+
+    it('deleteUser (admin) returns false on failure', async () => {
+      graphQLClient.adminDeleteUser = vi.fn().mockResolvedValue(false);
+      const repo = new UserRepository();
+      const result = await repo.deleteUser('user-1');
+      expect(result).toBe(false);
+    });
+
+    it('createUser (admin) returns true on success', async () => {
+      graphQLClient.adminCreateUser = vi.fn().mockResolvedValue(true);
+      const repo = new UserRepository();
+      const input = { userId: 'user-1', email: 'john@example.com' };
+      const result = await repo.createUser(input);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(graphQLClient.adminCreateUser).toHaveBeenCalledWith(input);
+      expect(result).toBe(true);
+    });
+
+    it('createUser (admin) returns false on failure', async () => {
+      graphQLClient.adminCreateUser = vi.fn().mockResolvedValue(false);
+      const repo = new UserRepository();
+      const input = { userId: 'user-1', email: 'john@example.com' };
+      const result = await repo.createUser(input);
+      expect(result).toBe(false);
+    });
+  });
 });
