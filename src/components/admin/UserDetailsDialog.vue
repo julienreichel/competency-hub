@@ -1,0 +1,101 @@
+<template>
+  <q-dialog v-model="isOpen" persistent>
+    <q-card style="min-width: 360px">
+      <q-card-section class="text-subtitle1 text-primary">
+        {{ t('admin.userDetails') }}
+      </q-card-section>
+
+      <q-card-section class="row items-center q-gutter-sm">
+        <user-avatar v-if="user" :user="user" size="64px" />
+        <div class="column">
+          <div class="text-h6">{{ user?.name }}</div>
+          <div class="text-body2 text-grey-7">{{ user?.email }}</div>
+        </div>
+      </q-card-section>
+
+      <q-card-section v-if="user">
+        <q-list dense>
+          <q-item>
+            <q-item-section>
+              <div class="text-caption text-grey-7">{{ t('common.role') }}</div>
+              <div>{{ user.role }}</div>
+            </q-item-section>
+          </q-item>
+          <q-item v-if="user.lastActive">
+            <q-item-section>
+              <div class="text-caption text-grey-7">{{ t('admin.lastActive') }}</div>
+              <div>{{ formatLastActive(user.lastActive) }}</div>
+            </q-item-section>
+          </q-item>
+          <q-item v-if="user.createdAt">
+            <q-item-section>
+              <div class="text-caption text-grey-7">{{ t('admin.memberSince') }}</div>
+              <div>{{ formatDate(user.createdAt) }}</div>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat :label="t('common.close')" color="primary" @click="handleClose" />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+</template>
+
+<script setup lang="ts">
+import UserAvatar from 'src/components/ui/UserAvatar.vue';
+import type { User } from 'src/models/User';
+import { useUserFormatters } from 'src/composables/useUserFormatters';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+type UserDetailsUser = Pick<User, 'name' | 'email' | 'role' | 'avatar' | 'contactInfo'> & {
+  createdAt?: string | undefined;
+  lastActive?: string | undefined;
+};
+
+const props = defineProps<{
+  modelValue: boolean;
+  user: UserDetailsUser | null;
+}>();
+
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean];
+  close: [];
+}>();
+
+const { formatLastActive } = useUserFormatters();
+const { t } = useI18n();
+
+const isOpen = computed({
+  get: () => props.modelValue,
+  set: (value: boolean) => {
+    emit('update:modelValue', value);
+    if (!value) {
+      emit('close');
+    }
+  },
+});
+
+function handleClose(): void {
+  emit('update:modelValue', false);
+  emit('close');
+}
+
+function formatDate(date: string): string {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) {
+    return '';
+  }
+  return parsed.toLocaleDateString();
+}
+</script>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+  name: 'UserDetailsDialog',
+});
+</script>

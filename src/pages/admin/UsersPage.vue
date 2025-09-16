@@ -67,6 +67,12 @@
 
     <!-- Statistics Cards -->
     <user-stats-cards :users="users" />
+
+    <user-details-dialog
+      v-model="showUserDialog"
+      :user="selectedUserForDialog"
+      @close="closeUserDialog"
+    />
   </q-page>
 </template>
 
@@ -74,11 +80,12 @@
 import LastActiveCell from 'src/components/admin/LastActiveCell.vue';
 import UserActionBar from 'src/components/admin/UserActionBar.vue';
 import UserActions from 'src/components/admin/UserActions.vue';
+import UserDetailsDialog from 'src/components/admin/UserDetailsDialog.vue';
 import UserStatsCards from 'src/components/admin/UserStatsCards.vue';
 import RoleChip from 'src/components/ui/RoleChip.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { useUsers } from 'src/composables/useUsers';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import type { User as UserModel } from 'src/models/User';
 import { UserRole } from 'src/models/User';
@@ -88,6 +95,8 @@ const searchQuery = ref('');
 const roleFilter = ref<UserRole | null>(null);
 const selectedUsers = ref<User[]>([]);
 const users = ref<User[]>([]);
+const showUserDialog = ref(false);
+const selectedUserForDialog = ref<User | null>(null);
 
 const roleOptions = [UserRole.STUDENT, UserRole.EDUCATOR, UserRole.PARENT];
 
@@ -132,7 +141,8 @@ const filteredUsers = computed(() => {
 });
 
 function viewUser(user: User): void {
-  console.log('Viewing user:', user.name);
+  selectedUserForDialog.value = user;
+  showUserDialog.value = true;
 }
 
 function editUser(user: User): void {
@@ -149,4 +159,15 @@ function bulkChangeRole(): void {
     selectedUsers.value.map((user) => user.name),
   );
 }
+
+function closeUserDialog(): void {
+  showUserDialog.value = false;
+  selectedUserForDialog.value = null;
+}
+
+watch(showUserDialog, (value) => {
+  if (!value) {
+    selectedUserForDialog.value = null;
+  }
+});
 </script>

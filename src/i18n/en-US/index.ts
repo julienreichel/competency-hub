@@ -18,6 +18,7 @@ export default {
     firstName: 'First Name',
     lastName: 'Last Name',
     username: 'Username',
+    close: 'Close',
   },
 
   // Admin section
@@ -33,6 +34,9 @@ export default {
     viewActivity: 'View Activity',
     changeRole: 'Change Role',
     usernameHint: 'Leave blank to auto-generate',
+    userDetails: 'User Details',
+    lastActive: 'Last Active',
+    memberSince: 'Member Since',
     stats: {
       totalUsers: 'Total Users',
       students: 'Students',
