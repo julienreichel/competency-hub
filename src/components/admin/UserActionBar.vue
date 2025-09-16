@@ -3,12 +3,9 @@
     <user-search-filters
       :search="search"
       :role-filter="roleFilter"
-      :status-filter="statusFilter"
       :role-options="roleOptions"
-      :status-options="statusOptions"
       @update:search="$emit('update:search', $event)"
       @update:role-filter="$emit('update:roleFilter', $event)"
-      @update:status-filter="$emit('update:statusFilter', $event)"
     />
   </div>
 </template>
@@ -19,9 +16,7 @@ import UserSearchFilters from './UserSearchFilters.vue';
 export interface UserActionBarProps {
   search: string;
   roleFilter: string | null;
-  statusFilter: string | null;
   roleOptions: string[];
-  statusOptions: string[];
 }
 
 defineProps<UserActionBarProps>();
@@ -29,7 +24,6 @@ defineProps<UserActionBarProps>();
 defineEmits<{
   'update:search': [value: string];
   'update:roleFilter': [value: string | null];
-  'update:statusFilter': [value: string | null];
 }>();
 </script>
 

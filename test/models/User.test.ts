@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { User, UserRole, UserStatus } from '../../src/models/User';
+import { User, UserRole } from '../../src/models/User';
 
 describe('User Model', () => {
   const validUserData = {
@@ -9,7 +9,6 @@ describe('User Model', () => {
     email: 'john@example.com',
     avatar: 'avatar-url',
     contactInfo: 'contact-info',
-    status: UserStatus.ACTIVE,
     createdAt: '2023-01-01T00:00:00Z',
     updatedAt: '2023-01-01T00:00:00Z',
   };
@@ -23,7 +22,6 @@ describe('User Model', () => {
       expect(user.email).toBe('john@example.com');
       expect(user.avatar).toBe('avatar-url');
       expect(user.contactInfo).toBe('contact-info');
-      expect(user.status).toBe(UserStatus.ACTIVE);
       expect(user.createdAt).toBe('2023-01-01T00:00:00Z');
       expect(user.updatedAt).toBe('2023-01-01T00:00:00Z');
     });
@@ -36,7 +34,6 @@ describe('User Model', () => {
         email: 'jane@example.com',
         avatar: 'avatar-url-2',
         contactInfo: 'contact-info-2',
-        status: UserStatus.ACTIVE,
       };
 
       const user = new User(userDataWithoutTimestamps);
@@ -202,7 +199,6 @@ describe('User Model', () => {
         email: 'jane@example.com',
         avatar: 'avatar-url-2',
         contactInfo: 'contact-info-2',
-        status: UserStatus.ACTIVE,
       };
 
       const user = new User(userDataWithoutTimestamps);
@@ -226,7 +222,6 @@ describe('User Model', () => {
         email: 'john@example.com',
         avatar: 'avatar-url',
         contactInfo: 'contact-info',
-        status: UserStatus.ACTIVE,
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z',
       });
@@ -240,7 +235,6 @@ describe('User Model', () => {
         email: 'jane@example.com',
         avatar: 'avatar-url-2',
         contactInfo: 'contact-info-2',
-        status: UserStatus.ACTIVE,
       };
 
       const user = new User(userDataWithoutTimestamps);

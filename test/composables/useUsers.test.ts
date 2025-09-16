@@ -11,7 +11,6 @@ const mockUsers = [
     email: 'alice@example.com',
     avatar: '',
     contactInfo: '',
-    status: 'Active',
   },
   {
     id: '2',
@@ -20,7 +19,6 @@ const mockUsers = [
     email: 'bob@example.com',
     avatar: '',
     contactInfo: '',
-    status: 'Active',
   },
 ];
 

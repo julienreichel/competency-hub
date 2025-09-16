@@ -21,15 +21,6 @@
       clearable
       style="width: 150px"
     />
-    <q-select
-      :model-value="statusFilter"
-      @update:model-value="$emit('update:statusFilter', $event)"
-      filled
-      :options="statusOptions"
-      :label="$t('common.status')"
-      clearable
-      style="width: 150px"
-    />
   </div>
 </template>
 
@@ -37,9 +28,7 @@
 export interface UserSearchFiltersProps {
   search: string;
   roleFilter: string | null;
-  statusFilter: string | null;
   roleOptions: string[];
-  statusOptions: string[];
 }
 
 defineProps<UserSearchFiltersProps>();
@@ -47,7 +36,6 @@ defineProps<UserSearchFiltersProps>();
 const emit = defineEmits<{
   'update:search': [value: string];
   'update:roleFilter': [value: string | null];
-  'update:statusFilter': [value: string | null];
 }>();
 
 /**

@@ -9,11 +9,6 @@
     <q-btn flat icon="more_vert" size="sm">
       <q-menu>
         <q-list>
-          <q-item clickable @click="$emit('toggle-status', user)">
-            <q-item-section>
-              {{ user.status === 'Active' ? $t('admin.deactivate') : $t('admin.activate') }}
-            </q-item-section>
-          </q-item>
           <q-item clickable @click="$emit('view-activity', user)">
             <q-item-section>{{ $t('admin.viewActivity') }}</q-item-section>
           </q-item>
@@ -31,7 +26,6 @@ defineProps<{ user: User }>();
 defineEmits<{
   view: [user: User];
   edit: [user: User];
-  'toggle-status': [user: User];
   'view-activity': [user: User];
 }>();
 </script>

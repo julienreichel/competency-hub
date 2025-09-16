@@ -3,12 +3,6 @@ import { BaseModel } from './base/BaseModel';
 // Constants
 const MAX_INITIALS = 2;
 
-export enum UserStatus {
-  ACTIVE = 'Active',
-  INACTIVE = 'Inactive',
-  SUSPENDED = 'Suspended',
-}
-
 /**
  * User role enumeration
  */
@@ -30,7 +24,6 @@ export interface CreateUserData extends Record<string, unknown> {
   email: string;
   avatar: string;
   contactInfo: string;
-  status: UserStatus;
   lastActive?: string;
 }
 
@@ -43,7 +36,6 @@ export interface UpdateUserData extends Record<string, unknown> {
   email?: string;
   avatar?: string;
   contactInfo?: string;
-  status?: UserStatus;
   lastActive?: string;
 }
 
@@ -57,7 +49,6 @@ export interface UserGraphQLData {
   email: string;
   avatar: string;
   contactInfo: string;
-  status: UserStatus;
   createdAt?: string;
   updatedAt?: string;
   lastActive?: string;
@@ -73,7 +64,6 @@ export class User extends BaseModel {
   public readonly email: string;
   public readonly avatar: string;
   public readonly contactInfo: string;
-  public readonly status: UserStatus;
   public readonly lastActive: string | undefined;
 
   constructor(data: UserGraphQLData) {
@@ -83,7 +73,6 @@ export class User extends BaseModel {
     this.email = data.email;
     this.avatar = data.avatar;
     this.contactInfo = data.contactInfo;
-    this.status = data.status;
     this.lastActive = data.lastActive;
     this.validate();
   }
@@ -167,7 +156,6 @@ export class User extends BaseModel {
       email: this.email,
       avatar: this.avatar,
       contactInfo: this.contactInfo,
-      status: this.status,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
@@ -185,7 +173,6 @@ export class User extends BaseModel {
       email: this.email,
       avatar: this.avatar,
       contactInfo: this.contactInfo,
-      status: this.status,
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
     });
@@ -204,7 +191,6 @@ export class User extends BaseModel {
       email: updates.email ?? this.email,
       avatar: updates.avatar ?? this.avatar,
       contactInfo: updates.contactInfo ?? this.contactInfo,
-      status: updates.status ?? this.status,
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
     });

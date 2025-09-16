@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { UserRepository } from '../../src/models/repositories/UserRepository';
-import { User, UserRole, UserStatus } from '../../src/models/User';
+import { User, UserRole } from '../../src/models/User';
 
 // Mock the GraphQL client
 vi.mock('../../src/models/base/GraphQLClient', () => ({
@@ -44,7 +44,6 @@ describe('UserRepository', () => {
     email: 'jane@example.com',
     avatar: 'avatar-url-2',
     contactInfo: 'contact-info-2',
-    status: UserStatus.ACTIVE,
   };
 
   beforeEach(() => {
@@ -267,7 +266,6 @@ describe('UserRepository', () => {
         email: 'updated@example.com',
         avatar: 'avatar',
         contactInfo: 'contact',
-        status: UserStatus.ACTIVE,
       };
       graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(updatedUser);
       const repo = new UserRepository();

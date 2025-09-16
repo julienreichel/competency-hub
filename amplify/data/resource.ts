@@ -12,7 +12,6 @@ const schema = a
         email: a.string().required(),
         avatar: a.string(),
         contactInfo: a.string(),
-        status: a.enum(['Active', 'Inactive', 'Suspended']),
         lastActive: a.string(),
       })
       .authorization((allow) => [
