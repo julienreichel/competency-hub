@@ -66,7 +66,7 @@
     </q-table>
 
     <!-- Statistics Cards -->
-    <user-stats-cards :stats="userStats" />
+    <user-stats-cards :users="users" />
   </q-page>
 </template>
 
@@ -117,13 +117,6 @@ function onRoleFilterUpdate(val: string | null): void {
 
 onMounted(async () => {
   users.value = await fetchUsers();
-});
-
-const userStats = ref({
-  total: 1247,
-  active: 1156,
-  newThisMonth: 23,
-  onlineNow: 89,
 });
 
 const filteredUsers = computed(() => {

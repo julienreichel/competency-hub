@@ -33,6 +33,12 @@ export default {
     viewActivity: 'View Activity',
     changeRole: 'Change Role',
     usernameHint: 'Leave blank to auto-generate',
+    stats: {
+      totalUsers: 'Total Users',
+      students: 'Students',
+      newThisMonth: 'New This Month',
+      onlineNow: 'Online Now',
+    },
   },
 
   // Validation messages
