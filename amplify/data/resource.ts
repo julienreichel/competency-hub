@@ -1,12 +1,7 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { postConfirmation } from '../auth/post-confirmation/resource';
 // ✅ NEW: import function resources
-import {
-  addUserToGroupFn,
-  adminCreateUserFn,
-  adminDeleteUserFn,
-  resetUserPasswordFn,
-} from './user-admin/resource';
+import { addUserToGroupFn } from './user-admin/resource';
 
 const schema = a
   .schema({
@@ -46,38 +41,6 @@ const schema = a
       .returns(a.json())
       .authorization((allow) => [allow.group('Admin')])
       .handler(a.handler.function(addUserToGroupFn)),
-
-    resetUserPassword: a
-      .mutation()
-      .arguments({
-        userId: a.string().required(),
-        newPassword: a.string(), // if provided → set permanent; else → reset flow
-      })
-      .returns(a.json())
-      .authorization((allow) => [allow.group('Admin')])
-      .handler(a.handler.function(resetUserPasswordFn)),
-
-    adminDeleteUser: a
-      .mutation()
-      .arguments({
-        userId: a.string().required(),
-      })
-      .returns(a.json())
-      .authorization((allow) => [allow.group('Admin')])
-      .handler(a.handler.function(adminDeleteUserFn)),
-
-    adminCreateUser: a
-      .mutation()
-      .arguments({
-        userId: a.string().required(),
-        email: a.string().required(),
-        phone: a.string(), // optional
-        tempPassword: a.string(), // optional (Cognito can auto-generate)
-        suppressMessage: a.boolean(),
-      })
-      .returns(a.json())
-      .authorization((allow) => [allow.group('Admin')])
-      .handler(a.handler.function(adminCreateUserFn)),
   })
   .authorization((allow) => [allow.resource(postConfirmation), allow.resource(addUserToGroupFn)]);
 

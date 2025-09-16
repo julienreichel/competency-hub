@@ -9,9 +9,6 @@
     <q-btn flat icon="more_vert" size="sm">
       <q-menu>
         <q-list>
-          <q-item clickable @click="$emit('reset-password', user)">
-            <q-item-section>{{ $t('admin.resetPassword') }}</q-item-section>
-          </q-item>
           <q-item clickable @click="$emit('toggle-status', user)">
             <q-item-section>
               {{ user.status === 'Active' ? $t('admin.deactivate') : $t('admin.activate') }}
@@ -19,10 +16,6 @@
           </q-item>
           <q-item clickable @click="$emit('view-activity', user)">
             <q-item-section>{{ $t('admin.viewActivity') }}</q-item-section>
-          </q-item>
-          <q-separator />
-          <q-item clickable @click="$emit('delete', user)">
-            <q-item-section>{{ $t('common.delete') }} {{ $t('common.user') }}</q-item-section>
           </q-item>
         </q-list>
       </q-menu>
@@ -38,10 +31,8 @@ defineProps<{ user: User }>();
 defineEmits<{
   view: [user: User];
   edit: [user: User];
-  'reset-password': [user: User];
   'toggle-status': [user: User];
   'view-activity': [user: User];
-  delete: [user: User];
 }>();
 </script>
 

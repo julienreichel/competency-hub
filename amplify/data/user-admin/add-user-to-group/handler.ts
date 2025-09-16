@@ -51,7 +51,7 @@ export const handler = async (event: any): Promise<any> => {
   }
 
   // 3. Add user to the new group
-  const res = await client.send(
+  await client.send(
     new AdminAddUserToGroupCommand({
       Username: userId,
       GroupName: groupName,
@@ -69,8 +69,8 @@ export const handler = async (event: any): Promise<any> => {
       role: groupName,
     });
   } catch {
-    // Optionally log or handle error
+    return { ok: false };
   }
 
-  return { ok: true, sdkResult: res, userUpdateResult };
+  return { ok: true, user: userUpdateResult?.data };
 };

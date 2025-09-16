@@ -56,122 +56,42 @@ describe('GraphQLClient', () => {
   // --- Admin user mutations ---
   type AdminMutations = {
     addUserToGroup: ReturnType<typeof vi.fn>;
-    resetUserPassword: ReturnType<typeof vi.fn>;
-    adminDeleteUser: ReturnType<typeof vi.fn>;
-    adminCreateUser: ReturnType<typeof vi.fn>;
   };
   describe('Admin user mutations', () => {
     let adminMutations: AdminMutations;
     beforeEach(() => {
       adminMutations = {
         addUserToGroup: vi.fn(),
-        resetUserPassword: vi.fn(),
-        adminDeleteUser: vi.fn(),
-        adminCreateUser: vi.fn(),
       };
       // @ts-expect-error: override for test
       graphQLClient.client = { mutations: adminMutations };
     });
 
     describe('addUserToGroup', () => {
-      it('should return true on success', async () => {
-        adminMutations.addUserToGroup.mockResolvedValue({ errors: null });
+      it('should return the updated user on success', async () => {
+        const user = { id: 'user-1' };
+        adminMutations.addUserToGroup.mockResolvedValue({
+          errors: null,
+          data: { user },
+        });
         const result = await graphQLClient.addUserToGroup('user-1', 'Admin');
-        expect(result).toBe(true);
+        expect(result).toEqual(user);
         expect(adminMutations.addUserToGroup).toHaveBeenCalledWith(
           { userId: 'user-1', groupName: 'Admin' },
           { authMode: 'userPool' },
         );
       });
-      it('should return false on GraphQL errors', async () => {
+      it('should throw on GraphQL errors', async () => {
         adminMutations.addUserToGroup.mockResolvedValue({
           errors: [{ message: 'Denied' }],
         });
-        const result = await graphQLClient.addUserToGroup('user-1', 'Admin');
-        expect(result).toBe(false);
+        await expect(graphQLClient.addUserToGroup('user-1', 'Admin')).rejects.toThrow(/Denied/);
       });
-      it('should return false on network error', async () => {
+      it('should throw on network error', async () => {
         adminMutations.addUserToGroup.mockRejectedValue(new Error('Network error'));
-        const result = await graphQLClient.addUserToGroup('user-1', 'Admin');
-        expect(result).toBe(false);
-      });
-    });
-
-    describe('resetUserPassword', () => {
-      it('should return true on success', async () => {
-        adminMutations.resetUserPassword.mockResolvedValue({ errors: null });
-        const result = await graphQLClient.resetUserPassword('user-1', 'newpass');
-        expect(result).toBe(true);
-        expect(adminMutations.resetUserPassword).toHaveBeenCalledWith(
-          { userId: 'user-1', newPassword: 'newpass' },
-          { authMode: 'userPool' },
+        await expect(graphQLClient.addUserToGroup('user-1', 'Admin')).rejects.toThrow(
+          'Network error',
         );
-      });
-      it('should return false on GraphQL errors', async () => {
-        adminMutations.resetUserPassword.mockResolvedValue({
-          errors: [{ message: 'Denied' }],
-        });
-        const result = await graphQLClient.resetUserPassword('user-1', 'newpass');
-        expect(result).toBe(false);
-      });
-      it('should return false on network error', async () => {
-        adminMutations.resetUserPassword.mockRejectedValue(new Error('Network error'));
-        const result = await graphQLClient.resetUserPassword('user-1', 'newpass');
-        expect(result).toBe(false);
-      });
-    });
-
-    describe('adminDeleteUser', () => {
-      it('should return true on success', async () => {
-        adminMutations.adminDeleteUser.mockResolvedValue({ errors: null });
-        const result = await graphQLClient.adminDeleteUser('user-1');
-        expect(result).toBe(true);
-        expect(adminMutations.adminDeleteUser).toHaveBeenCalledWith(
-          { userId: 'user-1' },
-          { authMode: 'userPool' },
-        );
-      });
-      it('should return false on GraphQL errors', async () => {
-        adminMutations.adminDeleteUser.mockResolvedValue({
-          errors: [{ message: 'Denied' }],
-        });
-        const result = await graphQLClient.adminDeleteUser('user-1');
-        expect(result).toBe(false);
-      });
-      it('should return false on network error', async () => {
-        adminMutations.adminDeleteUser.mockRejectedValue(new Error('Network error'));
-        const result = await graphQLClient.adminDeleteUser('user-1');
-        expect(result).toBe(false);
-      });
-    });
-
-    describe('adminCreateUser', () => {
-      const input = {
-        userId: 'user-1',
-        email: 'john@example.com',
-        phone: '123',
-        tempPassword: 'pw',
-        suppressMessage: false,
-      };
-      it('should return true on success', async () => {
-        adminMutations.adminCreateUser.mockResolvedValue({ errors: null });
-        const result = await graphQLClient.adminCreateUser(input);
-        expect(result).toBe(true);
-        expect(adminMutations.adminCreateUser).toHaveBeenCalledWith(input, {
-          authMode: 'userPool',
-        });
-      });
-      it('should return false on GraphQL errors', async () => {
-        adminMutations.adminCreateUser.mockResolvedValue({
-          errors: [{ message: 'Denied' }],
-        });
-        const result = await graphQLClient.adminCreateUser(input);
-        expect(result).toBe(false);
-      });
-      it('should return false on network error', async () => {
-        adminMutations.adminCreateUser.mockRejectedValue(new Error('Network error'));
-        const result = await graphQLClient.adminCreateUser(input);
-        expect(result).toBe(false);
       });
     });
   });

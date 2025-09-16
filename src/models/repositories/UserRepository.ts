@@ -84,35 +84,10 @@ export class UserRepository
   /**
    * Add a user to a Cognito group (admin mutation)
    */
-  async addUserToGroup(userId: string, groupName: string): Promise<boolean> {
-    return graphQLClient.addUserToGroup(userId, groupName);
-  }
-
-  /**
-   * Reset a user's password (admin mutation)
-   */
-  async resetUserPassword(userId: string, newPassword?: string): Promise<boolean> {
-    return graphQLClient.resetUserPassword(userId, newPassword);
-  }
-
-  /**
-   * Delete a user (admin mutation)
-   */
-  async deleteUser(userId: string): Promise<boolean> {
-    return graphQLClient.adminDeleteUser(userId);
-  }
-
-  /**
-   * Create a user (admin mutation)
-   */
-  async createUser(input: {
-    userId: string;
-    email: string;
-    phone?: string;
-    tempPassword?: string;
-    suppressMessage?: boolean;
-  }): Promise<boolean> {
-    return graphQLClient.adminCreateUser(input);
+  async addUserToGroup(userId: string, groupName: string): Promise<User | null> {
+    const rawUser = await graphQLClient.addUserToGroup(userId, groupName);
+    if (!rawUser) return null;
+    return new User(rawUser as UserGraphQLData);
   }
 }
 

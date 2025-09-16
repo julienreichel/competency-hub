@@ -15,8 +15,6 @@
       @update:search="searchQuery = $event"
       @update:role-filter="onRoleFilterUpdate"
       @update:status-filter="onStatusFilterUpdate"
-      @add-user="showAddUserDialog = true"
-      @bulk-import="bulkImport"
     />
 
     <!-- Users Table -->
@@ -60,94 +58,25 @@
             :user="props.row"
             @view="viewUser"
             @edit="editUser"
-            @reset-password="resetPassword"
             @toggle-status="toggleUserStatus"
             @view-activity="viewActivity"
-            @delete="deleteUser"
           />
         </q-td>
       </template>
 
       <template v-slot:top-right v-if="selectedUsers.length > 0">
-        <q-btn-group>
-          <q-btn
-            outline
-            color="negative"
-            icon="delete"
-            :label="`${$t('common.delete')} (${selectedUsers.length})`"
-            @click="bulkDelete"
-          />
-          <q-btn
-            outline
-            color="primary"
-            icon="group"
-            :label="$t('admin.changeRole')"
-            @click="bulkChangeRole"
-          />
-        </q-btn-group>
+        <q-btn
+          outline
+          color="primary"
+          icon="group"
+          :label="$t('admin.changeRole')"
+          @click="bulkChangeRole"
+        />
       </template>
     </q-table>
 
     <!-- Statistics Cards -->
     <user-stats-cards :stats="userStats" />
-
-    <!-- Add User Dialog -->
-    <q-dialog v-model="showAddUserDialog">
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">{{ $t('admin.addNewUser') }}</div>
-        </q-card-section>
-
-        <q-card-section>
-          <q-form @submit="addUser" class="q-gutter-md">
-            <div class="row q-gutter-md">
-              <div class="col">
-                <q-input
-                  v-model="newUser.firstName"
-                  filled
-                  :label="`${$t('common.firstName')} *`"
-                  :rules="[(val) => !!val || $t('validation.firstNameRequired')]"
-                />
-              </div>
-              <div class="col">
-                <q-input
-                  v-model="newUser.lastName"
-                  filled
-                  :label="`${$t('common.lastName')} *`"
-                  :rules="[(val) => !!val || $t('validation.lastNameRequired')]"
-                />
-              </div>
-            </div>
-
-            <q-input
-              v-model="newUser.email"
-              filled
-              type="email"
-              :label="`${$t('common.email')} *`"
-              :rules="[(val) => !!val || $t('validation.emailRequired')]"
-            />
-
-            <q-select
-              v-model="newUser.role"
-              filled
-              :options="roleOptions"
-              :label="`${$t('common.role')} *`"
-              :rules="[(val) => !!val || $t('validation.roleRequired')]"
-            />
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('common.cancel')" @click="showAddUserDialog = false" />
-          <q-btn
-            color="primary"
-            :label="$t('admin.addUser')"
-            @click="addUser"
-            :disable="!isNewUserValid"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -166,25 +95,11 @@ import type { User as UserModel } from 'src/models/User';
 import { UserRole, UserStatus } from 'src/models/User';
 type User = UserModel;
 
-interface NewUser {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-}
-
 const searchQuery = ref('');
 const roleFilter = ref<UserRole | null>(null);
 const statusFilter = ref<UserStatus | null>(null);
 const selectedUsers = ref<User[]>([]);
-const showAddUserDialog = ref(false);
-
-const newUser = ref<NewUser>({
-  firstName: '',
-  lastName: '',
-  email: '',
-  role: '',
-});
+const users = ref<User[]>([]);
 
 const roleOptions = [UserRole.STUDENT, UserRole.EDUCATOR, UserRole.PARENT];
 const statusOptions = [UserStatus.ACTIVE, UserStatus.INACTIVE, UserStatus.SUSPENDED];
@@ -208,7 +123,7 @@ const columns = [
 
 // Real user data
 
-const { users, fetchUsers } = useUsers();
+const { fetchUsers } = useUsers();
 
 function onRoleFilterUpdate(val: string | null): void {
   roleFilter.value = (val as UserRole) ?? null;
@@ -218,8 +133,8 @@ function onStatusFilterUpdate(val: string | null): void {
   statusFilter.value = (val as UserStatus) ?? null;
 }
 
-onMounted(() => {
-  void fetchUsers();
+onMounted(async () => {
+  users.value = await fetchUsers();
 });
 
 const userStats = ref({
@@ -243,22 +158,12 @@ const filteredUsers = computed(() => {
   });
 });
 
-const isNewUserValid = computed(() => {
-  return (
-    newUser.value.firstName && newUser.value.lastName && newUser.value.email && newUser.value.role
-  );
-});
-
 function viewUser(user: User): void {
   console.log('Viewing user:', user.name);
 }
 
 function editUser(user: User): void {
   console.log('Editing user:', user.name);
-}
-
-function resetPassword(user: User): void {
-  console.log('Resetting password for:', user.name);
 }
 
 function toggleUserStatus(user: User): void {
@@ -269,33 +174,10 @@ function viewActivity(user: User): void {
   console.log('Viewing activity for:', user.name);
 }
 
-function deleteUser(user: User): void {
-  console.log('Deleting user:', user.name);
-}
-
-function bulkDelete(): void {
-  console.log('Bulk deleting users:', selectedUsers.value);
-}
-
 function bulkChangeRole(): void {
-  console.log('Bulk changing role for users:', selectedUsers.value);
-}
-
-function bulkImport(): void {
-  console.log('Bulk importing users');
-}
-
-function addUser(): void {
-  if (!isNewUserValid.value) return;
-
-  console.log('Adding new user:', newUser.value);
-  // Reset form
-  newUser.value = {
-    firstName: '',
-    lastName: '',
-    email: '',
-    role: '',
-  };
-  showAddUserDialog.value = false;
+  console.log(
+    'Bulk changing role for:',
+    selectedUsers.value.map((user) => user.name),
+  );
 }
 </script>

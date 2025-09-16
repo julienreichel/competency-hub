@@ -10,21 +10,6 @@
       @update:role-filter="$emit('update:roleFilter', $event)"
       @update:status-filter="$emit('update:statusFilter', $event)"
     />
-    <q-btn-group>
-      <q-btn
-        color="primary"
-        icon="person_add"
-        :label="$t('admin.addUser')"
-        @click="$emit('add-user')"
-      />
-      <q-btn
-        outline
-        color="primary"
-        icon="file_upload"
-        :label="$t('admin.bulkImport')"
-        @click="$emit('bulk-import')"
-      />
-    </q-btn-group>
   </div>
 </template>
 
@@ -45,8 +30,6 @@ defineEmits<{
   'update:search': [value: string];
   'update:roleFilter': [value: string | null];
   'update:statusFilter': [value: string | null];
-  'add-user': [];
-  'bulk-import': [];
 }>();
 </script>
 

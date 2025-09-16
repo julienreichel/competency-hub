@@ -11,6 +11,7 @@ vi.mock('../../src/models/base/GraphQLClient', () => ({
     listUsers: vi.fn(),
     updateUser: vi.fn(),
     deleteUser: vi.fn(),
+    addUserToGroup: vi.fn(),
   },
 }));
 
@@ -22,6 +23,7 @@ describe('UserRepository', () => {
     listUsers: ReturnType<typeof vi.fn>;
     updateUser: ReturnType<typeof vi.fn>;
     deleteUser: ReturnType<typeof vi.fn>;
+    addUserToGroup: ReturnType<typeof vi.fn>;
   };
 
   const validUserData = {
@@ -257,70 +259,30 @@ describe('UserRepository', () => {
       vi.clearAllMocks();
     });
 
-    it('addUserToGroup returns true on success', async () => {
-      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(true);
+    it('addUserToGroup returns user on success', async () => {
+      const updatedUser = {
+        id: 'user-1',
+        name: 'Updated',
+        role: UserRole.STUDENT,
+        email: 'updated@example.com',
+        avatar: 'avatar',
+        contactInfo: 'contact',
+        status: UserStatus.ACTIVE,
+      };
+      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(updatedUser);
       const repo = new UserRepository();
       const result = await repo.addUserToGroup('user-1', 'Admin');
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(graphQLClient.addUserToGroup).toHaveBeenCalledWith('user-1', 'Admin');
-      expect(result).toBe(true);
+      expect(result).toBeInstanceOf(User);
+      expect(result?.id).toBe('user-1');
     });
 
-    it('addUserToGroup returns false on failure', async () => {
-      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(false);
+    it('addUserToGroup returns null on failure', async () => {
+      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(null);
       const repo = new UserRepository();
       const result = await repo.addUserToGroup('user-1', 'Admin');
-      expect(result).toBe(false);
-    });
-
-    it('resetUserPassword returns true on success', async () => {
-      graphQLClient.resetUserPassword = vi.fn().mockResolvedValue(true);
-      const repo = new UserRepository();
-      const result = await repo.resetUserPassword('user-1', 'pw');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(graphQLClient.resetUserPassword).toHaveBeenCalledWith('user-1', 'pw');
-      expect(result).toBe(true);
-    });
-
-    it('resetUserPassword returns false on failure', async () => {
-      graphQLClient.resetUserPassword = vi.fn().mockResolvedValue(false);
-      const repo = new UserRepository();
-      const result = await repo.resetUserPassword('user-1', 'pw');
-      expect(result).toBe(false);
-    });
-
-    it('deleteUser (admin) returns true on success', async () => {
-      graphQLClient.adminDeleteUser = vi.fn().mockResolvedValue(true);
-      const repo = new UserRepository();
-      const result = await repo.deleteUser('user-1');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(graphQLClient.adminDeleteUser).toHaveBeenCalledWith('user-1');
-      expect(result).toBe(true);
-    });
-
-    it('deleteUser (admin) returns false on failure', async () => {
-      graphQLClient.adminDeleteUser = vi.fn().mockResolvedValue(false);
-      const repo = new UserRepository();
-      const result = await repo.deleteUser('user-1');
-      expect(result).toBe(false);
-    });
-
-    it('createUser (admin) returns true on success', async () => {
-      graphQLClient.adminCreateUser = vi.fn().mockResolvedValue(true);
-      const repo = new UserRepository();
-      const input = { userId: 'user-1', email: 'john@example.com' };
-      const result = await repo.createUser(input);
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(graphQLClient.adminCreateUser).toHaveBeenCalledWith(input);
-      expect(result).toBe(true);
-    });
-
-    it('createUser (admin) returns false on failure', async () => {
-      graphQLClient.adminCreateUser = vi.fn().mockResolvedValue(false);
-      const repo = new UserRepository();
-      const input = { userId: 'user-1', email: 'john@example.com' };
-      const result = await repo.createUser(input);
-      expect(result).toBe(false);
+      expect(result).toBeNull();
     });
   });
 });

@@ -36,67 +36,6 @@ describe('UserActionBar - User Behavior', () => {
       });
     });
 
-    it('allows adding new users to the system', async () => {
-      // Arrange: Admin wants to add a new user
-      const wrapper = mount(
-        UserActionBar,
-        withQuasarBrowser({
-          props: sampleProps,
-        }),
-      );
-
-      // Act: Admin clicks add user action
-      const addUserButton = wrapper.find(
-        '[data-testid="add-user"], .q-btn:has([data-cy="person_add"]), .q-btn:first-child',
-      );
-      if (!addUserButton.exists()) {
-        // Fallback: Find button with add user text or icon
-        const buttons = wrapper.findAll('.q-btn');
-        const addButton = buttons.find(
-          (btn) => btn.text().toLowerCase().includes('add') || btn.html().includes('person_add'),
-        );
-        expect(addButton?.exists()).toBe(true);
-        await addButton?.trigger('click');
-      } else {
-        await addUserButton.trigger('click');
-      }
-
-      // Assert: System receives intent to add user
-      expect(wrapper.emitted('add-user')).toBeTruthy();
-    });
-
-    it('enables bulk import of multiple users', async () => {
-      // Arrange: Admin wants to import multiple users at once
-      const wrapper = mount(
-        UserActionBar,
-        withQuasarBrowser({
-          props: sampleProps,
-        }),
-      );
-
-      // Act: Admin clicks bulk import action
-      const bulkImportButton = wrapper.find(
-        '[data-testid="bulk-import"], .q-btn:has([data-cy="file_upload"])',
-      );
-      if (!bulkImportButton.exists()) {
-        // Fallback: Find button with import text or icon
-        const buttons = wrapper.findAll('.q-btn');
-        const importButton = buttons.find(
-          (btn) =>
-            btn.text().toLowerCase().includes('import') ||
-            btn.text().toLowerCase().includes('bulk') ||
-            btn.html().includes('file_upload'),
-        );
-        expect(importButton?.exists()).toBe(true);
-        await importButton?.trigger('click');
-      } else {
-        await bulkImportButton.trigger('click');
-      }
-
-      // Assert: System receives intent to bulk import
-      expect(wrapper.emitted('bulk-import')).toBeTruthy();
-    });
-
     it('propagates search filter changes to parent', async () => {
       // Arrange: Admin is using search filters
       const wrapper = mount(
@@ -172,10 +111,6 @@ describe('UserActionBar - User Behavior', () => {
       // Assert: Admin still has access to core functionality
       const searchFilters = wrapper.findComponent({ name: 'UserSearchFilters' });
       expect(searchFilters.exists()).toBe(true);
-
-      // Behavior: Action buttons remain available regardless of filter options
-      const buttons = wrapper.findAll('.q-btn');
-      expect(buttons.length).toBeGreaterThanOrEqual(2);
     });
   });
 
@@ -197,9 +132,7 @@ describe('UserActionBar - User Behavior', () => {
 
       // Behavior: Visual separation between filter and action areas
       const searchFilters = wrapper.findComponent({ name: 'UserSearchFilters' });
-      const buttonGroup = wrapper.findComponent({ name: 'QBtnGroup' });
       expect(searchFilters.exists()).toBe(true);
-      expect(buttonGroup.exists()).toBe(true);
     });
 
     it('provides clear visual hierarchy for admin actions', () => {
@@ -211,13 +144,11 @@ describe('UserActionBar - User Behavior', () => {
         }),
       );
 
-      // Assert: Action buttons are visually distinct and grouped
-      const buttonGroup = wrapper.findComponent({ name: 'QBtnGroup' });
-      expect(buttonGroup.exists()).toBe(true);
-
-      // Behavior: Multiple action buttons are grouped for better UX
-      const buttons = wrapper.findAll('.q-btn');
-      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      // Assert: Layout focuses on filter controls for clarity
+      const searchFilters = wrapper.findComponent({ name: 'UserSearchFilters' });
+      expect(searchFilters.exists()).toBe(true);
+      // No additional action buttons are shown in MVP
+      expect(wrapper.findAll('.q-btn').length).toBe(0);
     });
 
     it('maintains responsive layout for different screen sizes', () => {
