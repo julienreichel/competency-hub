@@ -47,7 +47,7 @@
       />
 
       <div>
-        <div class="text-caption text-grey-7 q-mb-sm">{{ t('profile.uploadPhoto') }}</div>
+        <div class="text-caption text-grey-7 q-mb-sm">{{ t('profile.picture') }}</div>
 
         <div v-if="!showUploadSection && picturePreview" class="profile-picture-wrapper">
           <q-img

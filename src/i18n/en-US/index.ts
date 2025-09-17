@@ -61,6 +61,7 @@ export default {
 
   profile: {
     uploadPhoto: 'Upload Photo',
+    picture: 'Profile Photo',
     uploadInstructions: 'Drag and Drop an image to replace your profile picture.',
     uploadError: 'Could not upload the photo. Please try again.',
   },
