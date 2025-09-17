@@ -34,5 +34,9 @@ export const auth = defineAuth({
   },
 
   // ✅ grant least-privilege access to the functions
-  access: (allow) => [allow.resource(addUserToGroupFn).to(['addUserToGroup'])],
+  access: (allow) => [
+    allow
+      .resource(addUserToGroupFn)
+      .to(['addUserToGroup', 'removeUserFromGroup', 'listGroupsForUser']),
+  ],
 });
