@@ -221,6 +221,7 @@ describe('User Model', () => {
         role: UserRole.STUDENT,
         email: 'john@example.com',
         avatar: 'avatar-url',
+        picture: null,
         contactInfo: 'contact-info',
         createdAt: '2023-01-01T00:00:00Z',
         updatedAt: '2023-01-01T00:00:00Z',
