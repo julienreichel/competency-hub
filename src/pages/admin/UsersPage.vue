@@ -130,6 +130,7 @@ const selectedUserForDialog = ref<User | null>(null);
 const showEditDialog = ref(false);
 const selectedUserForEdit = ref<EditableUser | null>(null);
 const bulkRoleLoading = ref(false);
+const dialogLoading = ref(false);
 
 const roleOptions = [UserRole.STUDENT, UserRole.PARENT, UserRole.EDUCATOR];
 
@@ -150,6 +151,7 @@ const columns = [
 
 const {
   fetchUsers,
+  getUserById,
   updateUser,
   addUserToGroup,
   assignParentToStudent,
@@ -212,9 +214,34 @@ function updateDialogUser(updatedUser: User | null): void {
   }
 }
 
-function viewUser(user: User): void {
+async function viewUser(user: User): Promise<void> {
   selectedUserForDialog.value = user;
   showUserDialog.value = true;
+  dialogLoading.value = true;
+
+  try {
+    const fullUser = await getUserById(user.id);
+
+    if (fullUser) {
+      selectedUserForDialog.value = fullUser;
+      updateUserInState(fullUser);
+    } else {
+      $q.notify({
+        type: 'warning',
+        message: t('admin.userDetailsLoadFailed'),
+        position: 'top',
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load user details', err);
+    $q.notify({
+      type: 'negative',
+      message: t('admin.userDetailsLoadFailed'),
+      position: 'top',
+    });
+  } finally {
+    dialogLoading.value = false;
+  }
 }
 
 function editUser(user: User): void {
