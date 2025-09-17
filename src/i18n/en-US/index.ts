@@ -59,6 +59,7 @@ export default {
       newThisMonth: 'New This Month',
       onlineNow: 'Online Now',
     },
+    userDetailsLoadFailed: 'Failed to load full user details. Please try again.',
   },
 
   profile: {
