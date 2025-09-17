@@ -127,24 +127,11 @@
             icon="people"
             link="/admin/users"
           />
-
-          <essential-link
-            title="System Settings"
-            caption="Configure platform settings"
-            icon="admin_panel_settings"
-            link="/admin/settings"
-          />
         </template>
 
         <q-separator class="q-my-md" />
 
         <!-- Common links -->
-        <essential-link
-          title="Help & Support"
-          caption="Get help and documentation"
-          icon="help"
-          link="/help"
-        />
       </q-list>
     </q-drawer>
 
