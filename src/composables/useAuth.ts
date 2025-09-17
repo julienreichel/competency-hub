@@ -28,7 +28,6 @@ interface UseAuthReturn {
   error: Ref<string | null>;
   isAuthenticated: ComputedRef<boolean>;
   userFullName: ComputedRef<string>;
-  userDisplayName: ComputedRef<string>;
   userRole: ComputedRef<string>;
   userId: ComputedRef<string | null>;
   initAuth: () => Promise<void>;
@@ -56,12 +55,13 @@ async function fetchUserAttributesWithGroups(): Promise<UserAttributes> {
   } as UserAttributes;
 }
 
+const user = ref<AuthUser | null>(null);
+const userAttributes = ref<UserAttributes>({});
+
 /**
  * Composable for managing authentication state and user information
  */
 export function useAuth(): UseAuthReturn {
-  const user = ref<AuthUser | null>(null);
-  const userAttributes = ref<UserAttributes>({});
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
@@ -83,13 +83,6 @@ export function useAuth(): UseAuthReturn {
     }
 
     // Fallback to preferred username or email
-    return userAttributes.value.preferred_username || userAttributes.value.email || 'User';
-  });
-
-  /**
-   * Get user's display username
-   */
-  const userDisplayName = computed(() => {
     return userAttributes.value.preferred_username || userAttributes.value.email || 'User';
   });
 
@@ -196,7 +189,6 @@ export function useAuth(): UseAuthReturn {
     // Computed
     isAuthenticated,
     userFullName,
-    userDisplayName,
     userRole,
     userId,
 
