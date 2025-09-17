@@ -36,11 +36,13 @@ export function useUsers(): {
 
   // Admin mutation wrappers
   const addUserToGroup = async (userId: string, groupName: string): Promise<User | null> => {
+    loading.value = true;
+    error.value = null;
     let user;
     try {
       user = await userRepository.addUserToGroup(userId, groupName);
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to fetch users';
+      error.value = e instanceof Error ? e.message : 'Failed to update user role';
     } finally {
       loading.value = false;
     }

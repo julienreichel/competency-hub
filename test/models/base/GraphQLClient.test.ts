@@ -72,7 +72,7 @@ describe('GraphQLClient', () => {
         const user = { id: 'user-1' };
         adminMutations.addUserToGroup.mockResolvedValue({
           errors: null,
-          data: { user },
+          data: JSON.stringify({ user }),
         });
         const result = await graphQLClient.addUserToGroup('user-1', 'Admin');
         expect(result).toEqual(user);

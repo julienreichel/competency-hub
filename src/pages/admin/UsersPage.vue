@@ -43,12 +43,7 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props">
-          <user-actions
-            :user="props.row"
-            @view="viewUser"
-            @edit="editUser"
-            @view-activity="viewActivity"
-          />
+          <user-actions :user="props.row" @view="viewUser" @edit="editUser" />
         </q-td>
       </template>
 
@@ -58,6 +53,8 @@
           color="primary"
           icon="group"
           :label="$t('admin.changeRole')"
+          :loading="bulkRoleLoading"
+          :disable="bulkRoleLoading"
           @click="bulkChangeRole"
         />
       </template>
@@ -82,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+import { useQuasar } from 'quasar';
 import EditUserDialog from 'src/components/admin/EditUserDialog.vue';
 import LastActiveCell from 'src/components/admin/LastActiveCell.vue';
 import UserActionBar from 'src/components/admin/UserActionBar.vue';
@@ -92,6 +90,7 @@ import RoleChip from 'src/components/ui/RoleChip.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { useUsers } from 'src/composables/useUsers';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import type { User as UserModel } from 'src/models/User';
 import { UserRole } from 'src/models/User';
@@ -107,6 +106,9 @@ interface EditableUser {
   contactInfo?: string | null;
 }
 
+const $q = useQuasar();
+const { t } = useI18n();
+
 const searchQuery = ref('');
 const roleFilter = ref<UserRole | null>(null);
 const selectedUsers = ref<User[]>([]);
@@ -115,8 +117,9 @@ const showUserDialog = ref(false);
 const selectedUserForDialog = ref<User | null>(null);
 const showEditDialog = ref(false);
 const selectedUserForEdit = ref<EditableUser | null>(null);
+const bulkRoleLoading = ref(false);
 
-const roleOptions = [UserRole.STUDENT, UserRole.EDUCATOR, UserRole.PARENT];
+const roleOptions = [UserRole.STUDENT, UserRole.PARENT, UserRole.EDUCATOR];
 
 const columns = [
   { name: 'avatar', label: '', field: 'avatar', align: 'center' as const },
@@ -133,7 +136,7 @@ const columns = [
   { name: 'actions', label: 'Actions', field: 'actions', align: 'center' as const },
 ];
 
-const { fetchUsers, updateUser } = useUsers();
+const { fetchUsers, updateUser, addUserToGroup } = useUsers();
 
 onMounted(async () => {
   users.value = await fetchUsers();
@@ -205,15 +208,117 @@ function handleEditCanceled(): void {
   showEditDialog.value = false;
 }
 
-function viewActivity(user: User): void {
-  console.log('Viewing activity for:', user.name);
+async function performBulkRoleChange(targetRole: UserRole): Promise<void> {
+  const targets = selectedUsers.value.filter((user) => user.role !== targetRole);
+
+  if (targets.length === 0) {
+    $q.notify({
+      type: 'info',
+      message: t('admin.bulkRoleNoChanges'),
+      position: 'top',
+    });
+    return;
+  }
+
+  bulkRoleLoading.value = true;
+  const updatedUsers: User[] = [];
+  const failedIds = new Set<string>();
+  const failedNames = new Set<string>();
+
+  try {
+    for (const user of targets) {
+      try {
+        const result = await addUserToGroup(user.id, targetRole);
+        if (result) {
+          updatedUsers.push(result);
+        } else {
+          failedIds.add(user.id);
+          failedNames.add(user.name);
+        }
+      } catch (error) {
+        console.error('Failed to update role for user', user.id, error);
+        failedIds.add(user.id);
+        failedNames.add(user.name);
+      }
+    }
+  } finally {
+    bulkRoleLoading.value = false;
+  }
+
+  updatedUsers.forEach((updatedUser) => {
+    const index = users.value.findIndex((candidate) => candidate.id === updatedUser.id);
+    if (index !== -1) {
+      users.value.splice(index, 1, updatedUser);
+    }
+  });
+
+  if (failedIds.size === 0) {
+    selectedUsers.value = [];
+    $q.notify({
+      type: 'positive',
+      message: t('admin.bulkRoleSuccess', { count: updatedUsers.length }),
+      position: 'top',
+    });
+    return;
+  }
+
+  selectedUsers.value = users.value.filter((user) => failedIds.has(user.id));
+
+  if (updatedUsers.length > 0) {
+    $q.notify({
+      type: 'warning',
+      message: t('admin.bulkRolePartial', {
+        success: updatedUsers.length,
+        failed: failedIds.size,
+      }),
+      caption: Array.from(failedNames).join(', '),
+      position: 'top',
+    });
+  } else {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.bulkRoleError'),
+      position: 'top',
+    });
+  }
 }
 
 function bulkChangeRole(): void {
-  console.log(
-    'Bulk changing role for:',
-    selectedUsers.value.map((user) => user.name),
-  );
+  if (roleOptions.length === 0) {
+    return;
+  }
+  selectedUserForDialog.value = null;
+
+  const fallbackRole = roleOptions[0] ?? UserRole.STUDENT;
+  const initialRoleCandidate = selectedUsers.value[0]?.role;
+  const dialogDefaultRole =
+    initialRoleCandidate && roleOptions.includes(initialRoleCandidate)
+      ? initialRoleCandidate
+      : fallbackRole;
+
+  $q.dialog({
+    title: t('admin.changeRole'),
+    message: t('admin.changeRolePrompt', { count: selectedUsers.value.length }),
+    cancel: true,
+    persistent: true,
+    options: {
+      type: 'radio',
+      model: dialogDefaultRole,
+      items: roleOptions.map((role) => ({
+        label: role,
+        value: role,
+      })),
+    },
+  }).onOk((newRole: UserRole) => {
+    performBulkRoleChange(newRole).catch((error) => {
+      console.error('Bulk role change failed unexpectedly', error);
+      $q.notify({
+        type: 'negative',
+        message: t('admin.bulkRoleError'),
+        position: 'top',
+      });
+    });
+  });
 }
 
 function closeUserDialog(): void {

@@ -23,7 +23,10 @@ export class GraphQLClient {
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
-      const data = result.data as unknown as { ok: boolean; user: Schema['User']['type'] | null };
+      const data = JSON.parse(result.data as string) as unknown as {
+        ok: boolean;
+        user: Schema['User']['type'] | null;
+      };
       return data.user;
     } catch (error) {
       console.error('Error adding user to group:', error);
