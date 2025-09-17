@@ -96,7 +96,7 @@
 import { useQuasar } from 'quasar';
 import AmplifyUploader from 'src/components/ui/AmplifyUploader';
 import AvatarPicker from 'src/components/ui/AvatarPicker.vue';
-import { useUsers } from 'src/composables/useUsers';
+import { useUserFormatters } from 'src/composables/useUserFormatters';
 import type { UserRole } from 'src/models/User';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -125,7 +125,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const $q = useQuasar();
-const { resolvePictureUrl } = useUsers();
+const { resolvePictureUrl } = useUserFormatters();
 
 const disabled = computed(() => props.disabled ?? false);
 const roleOptions = computed(() => props.roleOptions ?? []);

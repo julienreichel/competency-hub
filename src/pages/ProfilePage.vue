@@ -31,6 +31,17 @@
                 @uploading="handleProfileUploading"
               />
 
+              <div v-if="!editMode" class="text-center q-mb-md">
+                <q-img
+                  v-if="pictureUrl"
+                  :src="pictureUrl"
+                  :ratio="1"
+                  class="profile-picture-display q-mt-md"
+                  spinner-color="primary"
+                  :alt="t('profile.uploadPhoto')"
+                />
+              </div>
+
               <div class="row q-gutter-sm">
                 <q-btn
                   v-if="!editMode"
@@ -78,6 +89,7 @@ import UserProfileForm, {
   type UserProfileFormModel,
 } from 'src/components/user/UserProfileForm.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useUserFormatters } from 'src/composables/useUserFormatters';
 import { useUsers } from 'src/composables/useUsers';
 import type { UserRole } from 'src/models/User';
 import { type User } from 'src/models/User';
@@ -88,6 +100,7 @@ const { t } = useI18n();
 const $q = useQuasar();
 const { userId, refreshUserAttributes } = useAuth();
 const { getUserById, updateUser } = useUsers();
+const { resolvePictureUrl } = useUserFormatters();
 
 type ProfileUserSnapshot = {
   id: string;
@@ -138,6 +151,33 @@ const avatarUser = computed(() => {
   }
   return { name: displayName.value };
 });
+
+const activePicture = computed(() => {
+  if (editMode.value) {
+    return profileForm.value.picture;
+  }
+  return profileUser.value?.picture ?? null;
+});
+
+const pictureUrl = ref<string | null>(null);
+let pictureResolveToken = 0;
+
+watch(
+  activePicture,
+  (picture) => {
+    pictureResolveToken += 1;
+    const currentToken = pictureResolveToken;
+
+    void resolvePictureUrl(picture ?? null).then((resolvedUrl) => {
+      if (currentToken !== pictureResolveToken) {
+        return;
+      }
+
+      pictureUrl.value = resolvedUrl;
+    });
+  },
+  { immediate: true },
+);
 
 function toFormModel(user: ProfileUserSnapshot | null): UserProfileFormModel {
   if (!user) {
@@ -280,3 +320,13 @@ watch(
   { immediate: true },
 );
 </script>
+
+<style scoped>
+.profile-picture-display {
+  width: 200px;
+  max-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  display: inline-block;
+}
+</style>

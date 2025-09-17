@@ -2,6 +2,7 @@ import { userRepository } from 'src/models/repositories/UserRepository';
 import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useUserFormatters } from '../../src/composables/useUserFormatters';
 import { useUsers } from '../../src/composables/useUsers';
 
 vi.mock('aws-amplify/storage', () => ({
@@ -225,13 +226,13 @@ describe('useUsers - User Behavior', () => {
 
   describe('resolvePictureUrl', () => {
     it('returns null when input is empty', async () => {
-      const { resolvePictureUrl } = useUsers();
+      const { resolvePictureUrl } = useUserFormatters();
       const result = await resolvePictureUrl(null);
       expect(result).toBeNull();
     });
 
     it('returns the original url when already absolute', async () => {
-      const { resolvePictureUrl } = useUsers();
+      const { resolvePictureUrl } = useUserFormatters();
       const url = 'https://example.com/photo.jpg';
       const result = await resolvePictureUrl(url);
       expect(result).toBe(url);
@@ -239,7 +240,7 @@ describe('useUsers - User Behavior', () => {
     });
 
     it('resolves storage path via getUrl', async () => {
-      const { resolvePictureUrl } = useUsers();
+      const { resolvePictureUrl } = useUserFormatters();
       mockedGetUrl.mockResolvedValueOnce({
         url: new URL('https://example.com/photo.jpg'),
         expiresAt: new Date(),
@@ -252,7 +253,7 @@ describe('useUsers - User Behavior', () => {
     });
 
     it('returns null when getUrl fails', async () => {
-      const { resolvePictureUrl } = useUsers();
+      const { resolvePictureUrl } = useUserFormatters();
       mockedGetUrl.mockRejectedValueOnce(new Error('boom'));
 
       const result = await resolvePictureUrl('protected/profile/photo.jpg');
