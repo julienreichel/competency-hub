@@ -1,12 +1,21 @@
 import { userRepository } from 'src/models/repositories/UserRepository';
-import type { User } from 'src/models/User';
+import type { UpdateUserData, User, UserRole } from 'src/models/User';
 import { ref } from 'vue';
+
+type UpdatableUserFields = {
+  name?: string;
+  role?: UserRole;
+  avatar?: string | null | undefined;
+  contactInfo?: string | null | undefined;
+  lastActive?: string | null | undefined;
+};
 
 export function useUsers(): {
   loading: typeof loading;
   error: typeof error;
   fetchUsers: () => Promise<User[]>;
   addUserToGroup: (userId: string, groupName: string) => Promise<User | null>;
+  updateUser: (id: string, data: UpdatableUserFields) => Promise<User | null>;
 } {
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -38,10 +47,39 @@ export function useUsers(): {
     return user || null;
   };
 
+  const updateUser = async (id: string, data: UpdatableUserFields): Promise<User | null> => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const originalUser = await userRepository.findById(id);
+
+      const updatePayload: UpdateUserData = {};
+      if (data.name !== undefined) updatePayload.name = data.name;
+      if (data.role !== undefined) updatePayload.role = data.role;
+      if (data.avatar !== undefined) updatePayload.avatar = data.avatar ?? '';
+      if (data.contactInfo !== undefined) updatePayload.contactInfo = data.contactInfo ?? '';
+      if (data.lastActive !== undefined) updatePayload.lastActive = data.lastActive ?? '';
+
+      const updatedUser = await userRepository.update(id, updatePayload);
+
+      if (data.role && originalUser && originalUser.role !== data.role) {
+        await userRepository.addUserToGroup(id, data.role);
+      }
+
+      return updatedUser;
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : 'Failed to update user';
+      return null;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     loading,
     error,
     fetchUsers,
     addUserToGroup,
+    updateUser,
   };
 }

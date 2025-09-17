@@ -1,8 +1,9 @@
 <template>
   <q-dialog v-model="isOpen" persistent>
     <q-card style="min-width: 360px">
-      <q-card-section class="text-subtitle1 text-primary">
-        {{ t('admin.userDetails') }}
+      <q-card-section class="row items-center justify-between text-subtitle1 text-primary">
+        <span>{{ t('admin.userDetails') }}</span>
+        <q-btn flat dense round icon="close" @click="handleClose" />
       </q-card-section>
 
       <q-card-section class="row items-center q-gutter-sm">
@@ -19,6 +20,12 @@
             <q-item-section>
               <div class="text-caption text-grey-7">{{ t('common.role') }}</div>
               <div>{{ user.role }}</div>
+            </q-item-section>
+          </q-item>
+          <q-item v-if="user.contactInfo">
+            <q-item-section>
+              <div class="text-caption text-grey-7">{{ t('admin.contactInfo') }}</div>
+              <div class="text-body2" style="white-space: pre-wrap">{{ user.contactInfo }}</div>
             </q-item-section>
           </q-item>
           <q-item v-if="user.lastActive">
@@ -50,7 +57,8 @@ import { useUserFormatters } from 'src/composables/useUserFormatters';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-type UserDetailsUser = Pick<User, 'name' | 'email' | 'role' | 'avatar' | 'contactInfo'> & {
+type UserDetailsUser = Pick<User, 'name' | 'email' | 'role' | 'avatar'> & {
+  contactInfo?: string | null;
   createdAt?: string | undefined;
   lastActive?: string | undefined;
 };

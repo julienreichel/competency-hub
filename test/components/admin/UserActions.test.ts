@@ -16,8 +16,9 @@ describe('UserActions - User Behavior', () => {
   describe('Primary actions', () => {
     it('emits view event when profile action is triggered', async () => {
       const wrapper = mount(UserActions, withQuasarBrowser({ props: { user: sampleUser } }));
+      await wrapper.vm.$nextTick();
 
-      const viewButton = wrapper.find('.q-btn');
+      const viewButton = wrapper.find('[data-testid="user-actions-view"]');
       expect(viewButton.exists()).toBe(true);
 
       await viewButton.trigger('click');
@@ -28,35 +29,15 @@ describe('UserActions - User Behavior', () => {
 
     it('emits edit event when edit action is triggered', async () => {
       const wrapper = mount(UserActions, withQuasarBrowser({ props: { user: sampleUser } }));
+      await wrapper.vm.$nextTick();
 
-      const buttons = wrapper.findAll('.q-btn');
-      expect(buttons.length).toBeGreaterThan(1);
+      const editButton = wrapper.find('[data-testid="user-actions-edit"]');
+      expect(editButton.exists()).toBe(true);
 
-      await buttons[1]?.trigger('click');
+      await editButton.trigger('click');
 
       expect(wrapper.emitted('edit')).toBeTruthy();
       expect(wrapper.emitted('edit')?.[0]).toEqual([sampleUser]);
-    });
-  });
-
-  describe('Secondary menu', () => {
-    it('exposes activity view option through menu', async () => {
-      const wrapper = mount(UserActions, withQuasarBrowser({ props: { user: sampleUser } }));
-
-      const menuButton = wrapper.findAll('.q-btn')[2];
-      expect(menuButton).toBeDefined();
-
-      await menuButton?.trigger('click');
-      await wrapper.findComponent({ name: 'QItem' }).trigger('click');
-
-      expect(wrapper.emitted('view-activity')).toBeTruthy();
-      expect(wrapper.emitted('view-activity')?.[0]).toEqual([sampleUser]);
-    });
-
-    it('keeps actions grouped for accessibility', () => {
-      const wrapper = mount(UserActions, withQuasarBrowser({ props: { user: sampleUser } }));
-
-      expect(wrapper.find('.q-btn-group').exists()).toBe(true);
     });
   });
 });

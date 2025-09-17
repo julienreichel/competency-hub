@@ -5,7 +5,6 @@
       {{ $t('admin.userManagement') }}
     </div>
 
-    <!-- Action Bar -->
     <user-action-bar
       :search="searchQuery"
       :role-filter="roleFilter"
@@ -14,7 +13,6 @@
       @update:role-filter="onRoleFilterUpdate"
     />
 
-    <!-- Users Table -->
     <q-table
       :rows="filteredUsers"
       :columns="columns"
@@ -65,7 +63,6 @@
       </template>
     </q-table>
 
-    <!-- Statistics Cards -->
     <user-stats-cards :users="users" />
 
     <user-details-dialog
@@ -73,10 +70,19 @@
       :user="selectedUserForDialog"
       @close="closeUserDialog"
     />
+
+    <edit-user-dialog
+      v-model="showEditDialog"
+      :user="selectedUserForEdit"
+      :role-options="roleOptions"
+      @cancel="handleEditCanceled"
+      @save="handleEditSaved"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
+import EditUserDialog from 'src/components/admin/EditUserDialog.vue';
 import LastActiveCell from 'src/components/admin/LastActiveCell.vue';
 import UserActionBar from 'src/components/admin/UserActionBar.vue';
 import UserActions from 'src/components/admin/UserActions.vue';
@@ -89,7 +95,17 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 import type { User as UserModel } from 'src/models/User';
 import { UserRole } from 'src/models/User';
+
 type User = UserModel;
+
+interface EditableUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string | null;
+  contactInfo?: string | null;
+}
 
 const searchQuery = ref('');
 const roleFilter = ref<UserRole | null>(null);
@@ -97,6 +113,8 @@ const selectedUsers = ref<User[]>([]);
 const users = ref<User[]>([]);
 const showUserDialog = ref(false);
 const selectedUserForDialog = ref<User | null>(null);
+const showEditDialog = ref(false);
+const selectedUserForEdit = ref<EditableUser | null>(null);
 
 const roleOptions = [UserRole.STUDENT, UserRole.EDUCATOR, UserRole.PARENT];
 
@@ -104,7 +122,6 @@ const columns = [
   { name: 'avatar', label: '', field: 'avatar', align: 'center' as const },
   { name: 'name', label: 'Name', field: 'name', align: 'left' as const, sortable: true },
   { name: 'email', label: 'Email', field: 'email', align: 'left' as const, sortable: true },
-  // Username column removed
   { name: 'role', label: 'Role', field: 'role', align: 'center' as const, sortable: true },
   {
     name: 'lastActive',
@@ -116,13 +133,7 @@ const columns = [
   { name: 'actions', label: 'Actions', field: 'actions', align: 'center' as const },
 ];
 
-// Real user data
-
-const { fetchUsers } = useUsers();
-
-function onRoleFilterUpdate(val: string | null): void {
-  roleFilter.value = (val as UserRole) ?? null;
-}
+const { fetchUsers, updateUser } = useUsers();
 
 onMounted(async () => {
   users.value = await fetchUsers();
@@ -140,13 +151,58 @@ const filteredUsers = computed(() => {
   });
 });
 
+function onRoleFilterUpdate(val: string | null): void {
+  roleFilter.value = (val as UserRole) ?? null;
+}
+
 function viewUser(user: User): void {
   selectedUserForDialog.value = user;
   showUserDialog.value = true;
 }
 
 function editUser(user: User): void {
-  console.log('Editing user:', user.name);
+  selectedUserForEdit.value = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar ?? null,
+    contactInfo: user.contactInfo ?? null,
+  };
+  showEditDialog.value = true;
+}
+
+async function handleEditSaved(payload: {
+  id: string;
+  name: string;
+  role: UserRole;
+  avatar: string | null;
+  contactInfo: string;
+}): Promise<void> {
+  const updatedUser = await updateUser(payload.id, {
+    name: payload.name,
+    role: payload.role,
+    avatar: payload.avatar ?? null,
+    contactInfo: payload.contactInfo === '' ? null : payload.contactInfo,
+  });
+
+  if (updatedUser) {
+    const index = users.value.findIndex((candidate) => candidate.id === updatedUser.id);
+    if (index !== -1) {
+      users.value.splice(index, 1, updatedUser);
+    }
+    if (selectedUserForDialog.value?.id === updatedUser.id) {
+      selectedUserForDialog.value = updatedUser;
+    }
+  }
+
+  selectedUserForEdit.value = null;
+  showEditDialog.value = false;
+}
+
+function handleEditCanceled(): void {
+  selectedUserForEdit.value = null;
+  showEditDialog.value = false;
 }
 
 function viewActivity(user: User): void {
@@ -165,9 +221,15 @@ function closeUserDialog(): void {
   selectedUserForDialog.value = null;
 }
 
-watch(showUserDialog, (value) => {
-  if (!value) {
+watch(showUserDialog, (isOpen) => {
+  if (!isOpen) {
     selectedUserForDialog.value = null;
+  }
+});
+
+watch(showEditDialog, (isOpen) => {
+  if (!isOpen) {
+    selectedUserForEdit.value = null;
   }
 });
 </script>

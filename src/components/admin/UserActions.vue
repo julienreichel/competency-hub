@@ -1,15 +1,25 @@
 <template>
-  <q-btn-group flat>
-    <q-btn flat icon="visibility" size="sm" @click="$emit('view', user)">
+  <q-btn-group flat data-testid="user-actions-group">
+    <q-btn
+      flat
+      icon="visibility"
+      size="sm"
+      data-testid="user-actions-view"
+      @click="$emit('view', user)"
+    >
       <q-tooltip>{{ $t('common.view') }} {{ $t('common.profile') }}</q-tooltip>
     </q-btn>
-    <q-btn flat icon="edit" size="sm" @click="$emit('edit', user)">
+    <q-btn flat icon="edit" size="sm" data-testid="user-actions-edit" @click="$emit('edit', user)">
       <q-tooltip>{{ $t('common.edit') }} {{ $t('common.user') }}</q-tooltip>
     </q-btn>
-    <q-btn flat icon="more_vert" size="sm">
+    <q-btn flat icon="more_vert" size="sm" data-testid="user-actions-menu">
       <q-menu>
         <q-list>
-          <q-item clickable @click="$emit('view-activity', user)">
+          <q-item
+            clickable
+            data-testid="user-actions-view-activity"
+            @click="$emit('view-activity', user)"
+          >
             <q-item-section>{{ $t('admin.viewActivity') }}</q-item-section>
           </q-item>
         </q-list>

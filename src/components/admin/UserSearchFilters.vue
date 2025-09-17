@@ -1,6 +1,7 @@
 <template>
-  <div class="row q-gutter-md">
+  <div class="row q-gutter-md" data-testid="user-search-filters">
     <q-input
+      data-testid="user-search-input"
       :model-value="search"
       @update:model-value="handleSearchUpdate"
       filled
@@ -13,6 +14,7 @@
       </template>
     </q-input>
     <q-select
+      data-testid="user-role-select"
       :model-value="roleFilter"
       @update:model-value="$emit('update:roleFilter', $event)"
       filled
