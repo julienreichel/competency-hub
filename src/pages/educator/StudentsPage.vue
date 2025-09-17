@@ -88,7 +88,7 @@ import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';
 import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const activeTab = ref<'my' | 'all'>('my');
@@ -96,9 +96,17 @@ const searchTerm = ref('');
 const allUsers = ref<User[]>([]);
 const showStudentDialog = ref(false);
 const selectedStudentForDialog = ref<User | null>(null);
+const currentEducator = ref<User | null>(null);
 
-const { assignEducatorToStudent, unassignEducatorFromStudent, fetchUsers, loading, error } =
-  useUsers();
+const {
+  assignEducatorToStudent,
+  unassignEducatorFromStudent,
+  fetchUsers,
+  getUserById,
+  getUsersByIds,
+  loading,
+  error,
+} = useUsers();
 const { userId } = useAuth();
 const $q = useQuasar();
 const { t } = useI18n();
@@ -116,13 +124,15 @@ const students = computed<User[]>(
   () => allUsers.value.filter((user) => user.role === UserRole.STUDENT) as User[],
 );
 
-const myStudents = computed(() => {
-  if (!currentEducatorId.value) {
-    return [] as User[];
+const myStudents = computed<User[]>(() => {
+  const ids = currentEducator.value?.studentIds ?? [];
+  if (ids.length === 0) {
+    return [];
   }
-  return students.value.filter((student) =>
-    (student.educatorIds ?? []).includes(currentEducatorId.value!),
-  );
+
+  return ids
+    .map((id) => userMap.value.get(id))
+    .filter((student): student is User => Boolean(student) && student?.role === UserRole.STUDENT);
 });
 
 const normalizedSearch = computed(() => searchTerm.value.trim().toLowerCase());
@@ -145,8 +155,46 @@ async function loadUsers(): Promise<void> {
   allUsers.value = fetched;
 }
 
+async function ensureStudentsLoaded(studentIds: string[] | undefined): Promise<void> {
+  if (!studentIds || studentIds.length === 0) {
+    return;
+  }
+
+  try {
+    const studentsToMerge = await getUsersByIds(studentIds);
+    studentsToMerge.forEach((record) => {
+      updateUserInState(record);
+    });
+  } catch (err) {
+    console.error('Failed to load educator students', err);
+  }
+}
+
+async function loadCurrentEducator(): Promise<void> {
+  const id = currentEducatorId.value;
+  if (!id) {
+    currentEducator.value = null;
+    return;
+  }
+
+  try {
+    const educator = await getUserById(id);
+    if (!educator) {
+      currentEducator.value = null;
+      return;
+    }
+
+    currentEducator.value = educator;
+    updateUserInState(educator);
+    await ensureStudentsLoaded(educator.studentIds);
+  } catch (err) {
+    console.error('Failed to load educator details', err);
+  }
+}
+
 async function refreshUsers(): Promise<void> {
   await loadUsers();
+  await loadCurrentEducator();
   if (error.value) {
     $q.notify({ type: 'negative', message: error.value, position: 'top' });
   } else {
@@ -162,6 +210,11 @@ function updateUserInState(updated: User | null): void {
   } else {
     allUsers.value.push(updated);
   }
+
+  if (currentEducator.value?.id === updated.id) {
+    currentEducator.value = updated;
+    void ensureStudentsLoaded(updated.studentIds);
+  }
 }
 
 function updateDialogUser(updated: User | null): void {
@@ -170,6 +223,10 @@ function updateDialogUser(updated: User | null): void {
   }
   if (selectedStudentForDialog.value.id === updated.id) {
     selectedStudentForDialog.value = updated;
+  }
+  if (currentEducator.value?.id === updated.id) {
+    currentEducator.value = updated;
+    void ensureStudentsLoaded(updated.studentIds);
   }
 }
 
@@ -221,7 +278,12 @@ function openStudentDialog(studentId: string): void {
   showStudentDialog.value = true;
 }
 
-onMounted(() => {
-  void loadUsers();
+onMounted(async () => {
+  await loadUsers();
+  await loadCurrentEducator();
+});
+
+watch(currentEducatorId, () => {
+  void loadCurrentEducator();
 });
 </script>
