@@ -38,13 +38,6 @@
                 <q-item-section>Profile</q-item-section>
               </q-item>
 
-              <q-item clickable v-close-popup @click="goToSettings">
-                <q-item-section avatar>
-                  <q-icon name="settings" />
-                </q-item-section>
-                <q-item-section>Settings</q-item-section>
-              </q-item>
-
               <q-separator />
 
               <q-item clickable v-close-popup @click="handleSignOut">
@@ -202,13 +195,6 @@ function getRoleIcon(role: string): string {
  */
 async function goToProfile(): Promise<void> {
   await router.push('/profile');
-}
-
-/**
- * Navigate to settings page
- */
-async function goToSettings(): Promise<void> {
-  await router.push('/settings');
 }
 
 /**
