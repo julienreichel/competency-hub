@@ -12,14 +12,16 @@
             v-model="form"
             :role-options="roleOptions"
             enable-role
+            :user-id="props.user?.id ?? null"
             data-testid="edit-user-form"
+            @uploading="handleUploading"
           />
         </q-card-section>
 
         <q-card-actions>
           <q-space />
-          <q-btn flat :label="t('common.cancel')" @click="handleCancel" />
-          <q-btn color="primary" type="submit" :label="t('common.save')" />
+          <q-btn flat :label="t('common.cancel')" :disable="uploading" @click="handleCancel" />
+          <q-btn color="primary" type="submit" :label="t('common.save')" :disable="uploading" />
         </q-card-actions>
       </q-form>
     </q-card>
@@ -40,6 +42,7 @@ type EditableUser = {
   email: string;
   role: UserRole;
   avatar?: string | null;
+  picture?: string | null;
   contactInfo?: string | null;
 };
 
@@ -52,7 +55,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
   save: [
-    value: { id: string; name: string; role: UserRole; avatar: string | null; contactInfo: string },
+    value: {
+      id: string;
+      name: string;
+      role: UserRole;
+      avatar: string | null;
+      picture: string | null;
+      contactInfo: string;
+    },
   ];
   cancel: [];
 }>();
@@ -65,9 +75,11 @@ const emptyForm = (): UserProfileFormModel => ({
   role: '' as UserRole | '',
   contactInfo: '',
   avatar: null,
+  picture: null,
 });
 
 const form = ref<UserProfileFormModel>(emptyForm());
+const uploading = ref(false);
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -84,6 +96,7 @@ watch(
   (user) => {
     if (!user) {
       form.value = emptyForm();
+      uploading.value = false;
       return;
     }
 
@@ -93,7 +106,9 @@ watch(
       role: user.role,
       contactInfo: user.contactInfo ?? '',
       avatar: user.avatar ?? null,
+      picture: user.picture ?? null,
     };
+    uploading.value = false;
   },
   { immediate: true },
 );
@@ -101,6 +116,10 @@ watch(
 function handleCancel(): void {
   emit('cancel');
   emit('update:modelValue', false);
+}
+
+function handleUploading(status: boolean): void {
+  uploading.value = status;
 }
 
 function handleSubmit(): void {
@@ -112,6 +131,7 @@ function handleSubmit(): void {
     name: form.value.name,
     role,
     avatar: form.value.avatar,
+    picture: form.value.picture,
     contactInfo: form.value.contactInfo,
   });
 }

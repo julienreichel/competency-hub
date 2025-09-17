@@ -25,6 +25,7 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
     name: `${userAttributes.given_name || ''} ${userAttributes.family_name || ''}`.trim() || email,
     role: 'Unknown',
     avatar: '',
+    picture: '',
     contactInfo: '',
     lastActive: new Date().toISOString(),
   });

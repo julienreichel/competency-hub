@@ -103,6 +103,7 @@ interface EditableUser {
   email: string;
   role: UserRole;
   avatar?: string | null;
+  picture?: string | null;
   contactInfo?: string | null;
 }
 
@@ -170,6 +171,7 @@ function editUser(user: User): void {
     email: user.email,
     role: user.role,
     avatar: user.avatar ?? null,
+    picture: user.picture ?? null,
     contactInfo: user.contactInfo ?? null,
   };
   showEditDialog.value = true;
@@ -180,12 +182,14 @@ async function handleEditSaved(payload: {
   name: string;
   role: UserRole;
   avatar: string | null;
+  picture: string | null;
   contactInfo: string;
 }): Promise<void> {
   const updatedUser = await updateUser(payload.id, {
     name: payload.name,
     role: payload.role,
     avatar: payload.avatar ?? null,
+    picture: payload.picture ?? null,
     contactInfo: payload.contactInfo === '' ? null : payload.contactInfo,
   });
 

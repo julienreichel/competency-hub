@@ -4,6 +4,13 @@ import { UserRole } from 'src/models/User';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUsers } from '../../src/composables/useUsers';
 
+vi.mock('aws-amplify/storage', () => ({
+  getUrl: vi.fn(),
+}));
+
+import { getUrl } from 'aws-amplify/storage';
+const mockedGetUrl = vi.mocked(getUrl);
+
 const mockUsers = [
   {
     id: '1',
@@ -131,11 +138,15 @@ describe('useUsers - User Behavior', () => {
         id: 'user-1',
         name: 'Original',
         role: UserRole.STUDENT,
+        avatar: '',
+        picture: null,
       } as unknown as User;
       const updatedUser = {
         id: 'user-1',
         name: 'Updated Name',
         role: UserRole.STUDENT,
+        avatar: '',
+        picture: null,
       } as unknown as User;
       vi.spyOn(userRepository, 'findById').mockResolvedValueOnce(originalUser);
       const updateSpy = vi.spyOn(userRepository, 'update').mockResolvedValueOnce(updatedUser);
@@ -152,6 +163,31 @@ describe('useUsers - User Behavior', () => {
         expect.objectContaining({ name: 'Updated Name' }),
       );
       expect(addUserToGroupSpy).not.toHaveBeenCalled();
+    });
+
+    it('updateUser persists picture changes when provided', async () => {
+      const originalUser = {
+        id: 'user-1',
+        role: UserRole.STUDENT,
+        avatar: '',
+        picture: null,
+      } as unknown as User;
+      const updatedUser = {
+        id: 'user-1',
+        role: UserRole.STUDENT,
+        avatar: '',
+        picture: 'protected/profile/new-photo',
+      } as unknown as User;
+      vi.spyOn(userRepository, 'findById').mockResolvedValueOnce(originalUser);
+      const updateSpy = vi.spyOn(userRepository, 'update').mockResolvedValueOnce(updatedUser);
+      const { updateUser } = useUsers();
+
+      await updateUser('user-1', { picture: 'protected/profile/new-photo' });
+
+      expect(updateSpy).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ picture: 'protected/profile/new-photo' }),
+      );
     });
 
     it('updateUser returns null and records error on failure', async () => {
@@ -184,6 +220,44 @@ describe('useUsers - User Behavior', () => {
       await updateUser('user-1', { role: UserRole.EDUCATOR });
 
       expect(addUserToGroupSpy).toHaveBeenCalledWith('user-1', UserRole.EDUCATOR);
+    });
+  });
+
+  describe('resolvePictureUrl', () => {
+    it('returns null when input is empty', async () => {
+      const { resolvePictureUrl } = useUsers();
+      const result = await resolvePictureUrl(null);
+      expect(result).toBeNull();
+    });
+
+    it('returns the original url when already absolute', async () => {
+      const { resolvePictureUrl } = useUsers();
+      const url = 'https://example.com/photo.jpg';
+      const result = await resolvePictureUrl(url);
+      expect(result).toBe(url);
+      expect(mockedGetUrl).not.toHaveBeenCalled();
+    });
+
+    it('resolves storage path via getUrl', async () => {
+      const { resolvePictureUrl } = useUsers();
+      mockedGetUrl.mockResolvedValueOnce({
+        url: new URL('https://example.com/photo.jpg'),
+        expiresAt: new Date(),
+      });
+
+      const result = await resolvePictureUrl('protected/profile/photo.jpg');
+
+      expect(result).toBe('https://example.com/photo.jpg');
+      expect(mockedGetUrl).toHaveBeenCalledWith({ path: 'protected/profile/photo.jpg' });
+    });
+
+    it('returns null when getUrl fails', async () => {
+      const { resolvePictureUrl } = useUsers();
+      mockedGetUrl.mockRejectedValueOnce(new Error('boom'));
+
+      const result = await resolvePictureUrl('protected/profile/photo.jpg');
+
+      expect(result).toBeNull();
     });
   });
 });

@@ -23,7 +23,13 @@
                 <role-chip :role="displayRole" />
               </div>
 
-              <user-profile-form v-model="profileForm" :disabled="!editMode" :enable-role="false" />
+              <user-profile-form
+                v-model="profileForm"
+                :disabled="!editMode"
+                :enable-role="false"
+                :user-id="resolvedUserId"
+                @uploading="handleProfileUploading"
+              />
 
               <div class="row q-gutter-sm">
                 <q-btn
@@ -42,7 +48,7 @@
                     label="Save Changes"
                     class="col-auto"
                     :loading="saving"
-                    :disable="saving"
+                    :disable="saving || uploadInProgress"
                     @click="handleSave"
                   />
                   <q-btn
@@ -51,7 +57,7 @@
                     label="Cancel"
                     class="col-auto"
                     flat
-                    :disable="saving"
+                    :disable="saving || uploadInProgress"
                     @click="cancelEdit"
                   />
                 </template>
@@ -73,13 +79,14 @@ import UserProfileForm, {
 } from 'src/components/user/UserProfileForm.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';
-import type { User, UserRole } from 'src/models/User';
+import type { UserRole } from 'src/models/User';
+import { type User } from 'src/models/User';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const $q = useQuasar();
-const { userId, refreshUserAttributes, initAuth } = useAuth();
+const { userId, refreshUserAttributes } = useAuth();
 const { getUserById, updateUser } = useUsers();
 
 type ProfileUserSnapshot = {
@@ -88,6 +95,7 @@ type ProfileUserSnapshot = {
   email: string;
   role: UserRole;
   avatar?: string | null;
+  picture?: string | null;
   contactInfo?: string | null;
 };
 
@@ -95,6 +103,7 @@ const profileUser = ref<ProfileUserSnapshot | null>(null);
 const isLoading = ref(true);
 const editMode = ref(false);
 const saving = ref(false);
+const uploadInProgress = ref(false);
 
 const emptyForm = (): UserProfileFormModel => ({
   name: '',
@@ -102,9 +111,12 @@ const emptyForm = (): UserProfileFormModel => ({
   role: '' as UserRole | '',
   contactInfo: '',
   avatar: null,
+  picture: null,
 });
 
 const profileForm = ref<UserProfileFormModel>(emptyForm());
+
+const resolvedUserId = computed(() => profileUser.value?.id ?? userId.value ?? '');
 
 const displayName = computed(() => {
   const source = editMode.value ? profileForm.value.name : profileUser.value?.name;
@@ -137,6 +149,7 @@ function toFormModel(user: ProfileUserSnapshot | null): UserProfileFormModel {
     role: user.role,
     contactInfo: user.contactInfo ?? '',
     avatar: user.avatar ?? null,
+    picture: user.picture ?? null,
   };
 }
 
@@ -151,19 +164,19 @@ function toSnapshot(user: User | null): ProfileUserSnapshot | null {
     email: user.email,
     role: user.role,
     avatar: user.avatar ?? null,
+    picture: user.picture ?? null,
     contactInfo: user.contactInfo ?? '',
   };
 }
 
 async function loadProfile(): Promise<void> {
-  await initAuth();
   const id = userId.value;
-  console.log('id', id);
   if (!id) {
     profileUser.value = null;
     profileForm.value = emptyForm();
     isLoading.value = false;
     editMode.value = false;
+    uploadInProgress.value = false;
     return;
   }
 
@@ -173,6 +186,7 @@ async function loadProfile(): Promise<void> {
     profileUser.value = toSnapshot(userRecord);
     profileForm.value = toFormModel(profileUser.value);
     editMode.value = false;
+    uploadInProgress.value = false;
   } finally {
     isLoading.value = false;
   }
@@ -184,16 +198,27 @@ function startEdit(): void {
   }
   profileForm.value = toFormModel(profileUser.value);
   editMode.value = true;
+  uploadInProgress.value = false;
 }
 
 function cancelEdit(): void {
   profileForm.value = toFormModel(profileUser.value);
   editMode.value = false;
+  uploadInProgress.value = false;
 }
 
 async function handleSave(): Promise<void> {
   const id = userId.value;
   if (!id) {
+    return;
+  }
+
+  if (uploadInProgress.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Please wait for the image upload to finish before saving.',
+      position: 'top',
+    });
     return;
   }
 
@@ -212,6 +237,7 @@ async function handleSave(): Promise<void> {
     const updated = await updateUser(id, {
       name: trimmedName,
       avatar: profileForm.value.avatar,
+      picture: profileForm.value.picture,
       contactInfo: profileForm.value.contactInfo.trim() || null,
     });
 
@@ -240,6 +266,10 @@ async function handleSave(): Promise<void> {
   } finally {
     saving.value = false;
   }
+}
+
+function handleProfileUploading(status: boolean): void {
+  uploadInProgress.value = status;
 }
 
 watch(

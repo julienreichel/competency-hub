@@ -35,6 +35,7 @@ export interface UpdateUserData extends Record<string, unknown> {
   role?: UserRole;
   email?: string;
   avatar?: string;
+  picture?: string | null;
   contactInfo?: string;
   lastActive?: string;
 }
@@ -48,6 +49,7 @@ export interface UserGraphQLData {
   role: UserRole;
   email: string;
   avatar: string;
+  picture?: string | null;
   contactInfo: string;
   createdAt?: string;
   updatedAt?: string;
@@ -63,6 +65,7 @@ export class User extends BaseModel {
   public readonly role: UserRole;
   public readonly email: string;
   public readonly avatar: string;
+  public readonly picture?: string | null;
   public readonly contactInfo: string;
   public readonly lastActive: string | undefined;
 
@@ -72,6 +75,7 @@ export class User extends BaseModel {
     this.role = data.role;
     this.email = data.email;
     this.avatar = data.avatar;
+    this.picture = data.picture ?? null;
     this.contactInfo = data.contactInfo;
     this.lastActive = data.lastActive;
     this.validate();
@@ -155,6 +159,7 @@ export class User extends BaseModel {
       role: this.role,
       email: this.email,
       avatar: this.avatar,
+      picture: this.picture ?? null,
       contactInfo: this.contactInfo,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
@@ -172,6 +177,7 @@ export class User extends BaseModel {
       role: this.role,
       email: this.email,
       avatar: this.avatar,
+      picture: this.picture ?? null,
       contactInfo: this.contactInfo,
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
@@ -190,6 +196,7 @@ export class User extends BaseModel {
       role: updates.role ?? this.role,
       email: updates.email ?? this.email,
       avatar: updates.avatar ?? this.avatar,
+      picture: updates.picture ?? this.picture ?? null,
       contactInfo: updates.contactInfo ?? this.contactInfo,
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),

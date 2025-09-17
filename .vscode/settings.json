@@ -38,5 +38,6 @@
   },
   "testing.automaticallyOpenPeekView": "never",
   "vitest.enable": true,
-  "vitest.commandLine": "npm run test"
+  "vitest.commandLine": "npm run test",
+  "i18n-ally.keystyle": "nested"
 }

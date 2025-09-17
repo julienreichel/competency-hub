@@ -59,6 +59,12 @@ export default {
     },
   },
 
+  profile: {
+    uploadPhoto: 'Upload Photo',
+    uploadInstructions: 'Drag and Drop an image to replace your profile picture.',
+    uploadError: 'Could not upload the photo. Please try again.',
+  },
+
   // Validation messages
   validation: {
     required: 'This field is required',

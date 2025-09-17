@@ -11,6 +11,7 @@ const schema = a
         role: a.enum(['Unknown', 'Student', 'Educator', 'Parent', 'Admin']),
         email: a.string().required(),
         avatar: a.string(),
+        picture: a.string(),
         contactInfo: a.string(),
         lastActive: a.string(),
       })

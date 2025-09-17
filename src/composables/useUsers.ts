@@ -1,3 +1,4 @@
+import { getUrl } from 'aws-amplify/storage';
 import { userRepository } from 'src/models/repositories/UserRepository';
 import type { UpdateUserData, User, UserRole } from 'src/models/User';
 import { ref } from 'vue';
@@ -6,6 +7,7 @@ type UpdatableUserFields = {
   name?: string;
   role?: UserRole;
   avatar?: string | null | undefined;
+  picture?: string | null | undefined;
   contactInfo?: string | null | undefined;
   lastActive?: string | null | undefined;
 };
@@ -17,6 +19,7 @@ export function useUsers(): {
   getUserById: (id: string) => Promise<User | null>;
   addUserToGroup: (userId: string, groupName: string) => Promise<User | null>;
   updateUser: (id: string, data: UpdatableUserFields) => Promise<User | null>;
+  resolvePictureUrl: (picture?: string | null) => Promise<string | null>;
 } {
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -73,6 +76,7 @@ export function useUsers(): {
       if (data.name !== undefined) updatePayload.name = data.name;
       if (data.role !== undefined) updatePayload.role = data.role;
       if (data.avatar !== undefined) updatePayload.avatar = data.avatar ?? '';
+      if (data.picture !== undefined) updatePayload.picture = data.picture ?? '';
       if (data.contactInfo !== undefined) updatePayload.contactInfo = data.contactInfo ?? '';
       if (data.lastActive !== undefined) updatePayload.lastActive = data.lastActive ?? '';
 
@@ -91,6 +95,24 @@ export function useUsers(): {
     }
   };
 
+  const resolvePictureUrl = async (picture?: string | null): Promise<string | null> => {
+    if (!picture) {
+      return null;
+    }
+
+    if (/^https?:\/\//i.test(picture)) {
+      return picture;
+    }
+
+    try {
+      const { url } = await getUrl({ path: picture });
+      return url.toString();
+    } catch (error) {
+      console.error('Failed to resolve picture URL', error);
+      return null;
+    }
+  };
+
   return {
     loading,
     error,
@@ -98,5 +120,6 @@ export function useUsers(): {
     getUserById,
     addUserToGroup,
     updateUser,
+    resolvePictureUrl,
   };
 }
