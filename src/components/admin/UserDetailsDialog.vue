@@ -40,6 +40,15 @@
               <div>{{ formatDate(user.createdAt) }}</div>
             </q-item-section>
           </q-item>
+          <q-item v-if="user.picture">
+            <q-img
+              :src="picturePreview"
+              :ratio="1"
+              class="profile-picture-preview"
+              spinner-color="primary"
+              :alt="t('profile.uploadPhoto')"
+            />
+          </q-item>
         </q-list>
       </q-card-section>
 
@@ -52,15 +61,16 @@
 
 <script setup lang="ts">
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
-import type { User } from 'src/models/User';
 import { useUserFormatters } from 'src/composables/useUserFormatters';
-import { computed } from 'vue';
+import type { User } from 'src/models/User';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 type UserDetailsUser = Pick<User, 'name' | 'email' | 'role' | 'avatar'> & {
   contactInfo?: string | null;
   createdAt?: string | undefined;
   lastActive?: string | undefined;
+  picture?: string | null;
 };
 
 const props = defineProps<{
@@ -73,7 +83,7 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const { formatLastActive } = useUserFormatters();
+const { formatLastActive, resolvePictureUrl } = useUserFormatters();
 const { t } = useI18n();
 
 const isOpen = computed({
@@ -98,6 +108,16 @@ function formatDate(date: string): string {
   }
   return parsed.toLocaleDateString();
 }
+
+const picturePreview = ref<string | undefined>();
+watch(
+  () => props.user?.picture,
+  async (picture) => {
+    const resolvedUrl = await resolvePictureUrl(picture ?? null);
+    picturePreview.value = resolvedUrl || undefined;
+  },
+  { immediate: true },
+);
 </script>
 
 <script lang="ts">

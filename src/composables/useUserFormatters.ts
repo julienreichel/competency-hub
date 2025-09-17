@@ -1,12 +1,14 @@
 /**
  * Return type for useUserFormatters composable
  */
+import { getUrl } from 'aws-amplify/storage';
 import type { User } from '../models/User';
 
 interface UseUserFormattersReturn {
   getLastActiveClass: (lastActive: string) => string;
   formatLastActive: (lastActive: string) => string;
   getUserInitialsFromUser: (user: User) => string;
+  resolvePictureUrl: (picture?: string | null) => Promise<string | null>;
 }
 
 /**
@@ -55,6 +57,24 @@ export function useUserFormatters(): UseUserFormattersReturn {
     return lastActiveDate.toLocaleDateString();
   }
 
+  const resolvePictureUrl = async (picture?: string | null): Promise<string | null> => {
+    if (!picture) {
+      return null;
+    }
+
+    if (/^https?:\/\//i.test(picture)) {
+      return picture;
+    }
+
+    try {
+      const { url } = await getUrl({ path: picture });
+      return url.toString();
+    } catch (error) {
+      console.error('Failed to resolve picture URL', error);
+      return null;
+    }
+  };
+
   /**
    * Get user initials from User model instance
    * Delegates to User.getInitials()
@@ -67,5 +87,6 @@ export function useUserFormatters(): UseUserFormattersReturn {
     getLastActiveClass,
     formatLastActive,
     getUserInitialsFromUser,
+    resolvePictureUrl,
   };
 }
