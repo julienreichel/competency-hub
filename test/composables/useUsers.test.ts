@@ -63,6 +63,44 @@ describe('useUsers - User Behavior', () => {
     expect(error.value).toBe('Failed to fetch users');
   });
 
+  describe('getUserById', () => {
+    it('returns the user when found', async () => {
+      const foundUser = { id: 'user-1' } as unknown as User;
+      vi.spyOn(userRepository, 'findById').mockResolvedValueOnce(foundUser);
+      const { getUserById, error, loading } = useUsers();
+
+      const promise = getUserById('user-1');
+      expect(loading.value).toBe(true);
+      const result = await promise;
+
+      expect(result).toBe(foundUser);
+      expect(error.value).toBeNull();
+      expect(loading.value).toBe(false);
+    });
+
+    it('returns null when the user is not found', async () => {
+      vi.spyOn(userRepository, 'findById').mockResolvedValueOnce(null);
+      const { getUserById, error, loading } = useUsers();
+
+      const result = await getUserById('missing-user');
+
+      expect(result).toBeNull();
+      expect(error.value).toBeNull();
+      expect(loading.value).toBe(false);
+    });
+
+    it('records an error when lookup fails', async () => {
+      vi.spyOn(userRepository, 'findById').mockRejectedValueOnce(new Error('boom'));
+      const { getUserById, error, loading } = useUsers();
+
+      const result = await getUserById('user-1');
+
+      expect(result).toBeNull();
+      expect(error.value).toBe('boom');
+      expect(loading.value).toBe(false);
+    });
+  });
+
   describe('admin functions', () => {
     it('addUserToGroup returns the updated user on success', async () => {
       const updatedUser = { id: 'user-1' } as unknown as User;

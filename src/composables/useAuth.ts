@@ -13,6 +13,7 @@ interface UserAttributes {
   givenName?: string;
   familyName?: string;
   preferred_username?: string;
+  sub?: string;
   'cognito:groups'?: string[];
   [key: string]: unknown;
 }
@@ -29,6 +30,7 @@ interface UseAuthReturn {
   userFullName: ComputedRef<string>;
   userDisplayName: ComputedRef<string>;
   userRole: ComputedRef<string>;
+  userId: ComputedRef<string | null>;
   initAuth: () => Promise<void>;
   handleSignOut: () => Promise<void>;
   refreshUserAttributes: () => Promise<void>;
@@ -101,6 +103,8 @@ export function useAuth(): UseAuthReturn {
     }
     return 'Student';
   });
+
+  const userId = computed((): string => String(userAttributes.value.sub));
 
   /**
    * Initialize authentication state
@@ -194,6 +198,7 @@ export function useAuth(): UseAuthReturn {
     userFullName,
     userDisplayName,
     userRole,
+    userId,
 
     // Methods
     initAuth,

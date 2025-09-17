@@ -16,73 +16,46 @@
               <div class="q-mt-md">Loading profile...</div>
             </div>
 
-            <div v-else class="q-gutter-md">
-              <!-- Profile Avatar -->
-              <div class="text-center q-mb-lg">
-                <q-avatar size="120px" color="primary" text-color="white">
-                  <q-icon name="person" size="60px" />
-                </q-avatar>
-                <div class="text-h6 q-mt-md">{{ userFullName }}</div>
-                <q-chip
-                  :color="getRoleColor(userRole)"
-                  text-color="white"
-                  :icon="getRoleIcon(userRole)"
-                >
-                  {{ userRole }}
-                </q-chip>
+            <div v-else class="q-gutter-lg">
+              <div class="text-center q-mb-md">
+                <user-avatar :user="avatarUser" size="120px" />
+                <div class="text-h6 q-mt-md">{{ displayName }}</div>
+                <role-chip :role="displayRole" />
               </div>
 
-              <!-- Profile Information -->
-              <q-form @submit="handleSave" class="q-gutter-md">
-                <div class="row q-gutter-md">
-                  <div class="col-12 col-sm-6">
-                    <q-input
-                      v-model="profileForm.givenName"
-                      label="First Name"
-                      outlined
-                      :disable="!editMode"
-                    />
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <q-input
-                      v-model="profileForm.familyName"
-                      label="Last Name"
-                      outlined
-                      :disable="!editMode"
-                    />
-                  </div>
-                </div>
+              <user-profile-form v-model="profileForm" :disabled="!editMode" :enable-role="false" />
 
-                <q-input
-                  v-model="profileForm.email"
-                  label="Email Address"
-                  type="email"
-                  outlined
-                  disable
+              <div class="row q-gutter-sm">
+                <q-btn
+                  v-if="!editMode"
+                  color="primary"
+                  icon="edit"
+                  label="Edit Profile"
+                  class="col-auto"
+                  :disable="saving"
+                  @click="startEdit"
                 />
-
-                <div class="row q-gutter-md q-mt-md">
-                  <div class="col">
-                    <q-btn
-                      v-if="!editMode"
-                      color="primary"
-                      icon="edit"
-                      label="Edit Profile"
-                      @click="editMode = true"
-                    />
-                    <div v-else class="q-gutter-sm">
-                      <q-btn
-                        color="primary"
-                        icon="save"
-                        label="Save Changes"
-                        type="submit"
-                        :loading="saving"
-                      />
-                      <q-btn color="grey" icon="cancel" label="Cancel" flat @click="cancelEdit" />
-                    </div>
-                  </div>
-                </div>
-              </q-form>
+                <template v-else>
+                  <q-btn
+                    color="primary"
+                    icon="save"
+                    label="Save Changes"
+                    class="col-auto"
+                    :loading="saving"
+                    :disable="saving"
+                    @click="handleSave"
+                  />
+                  <q-btn
+                    color="grey"
+                    icon="cancel"
+                    label="Cancel"
+                    class="col-auto"
+                    flat
+                    :disable="saving"
+                    @click="cancelEdit"
+                  />
+                </template>
+              </div>
             </div>
           </q-card-section>
         </q-card>
@@ -93,79 +66,172 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import { onMounted, reactive, ref } from 'vue';
-import { useAuth } from '../composables/useAuth';
+import RoleChip from 'src/components/ui/RoleChip.vue';
+import UserAvatar from 'src/components/ui/UserAvatar.vue';
+import UserProfileForm, {
+  type UserProfileFormModel,
+} from 'src/components/user/UserProfileForm.vue';
+import { useAuth } from 'src/composables/useAuth';
+import { useUsers } from 'src/composables/useUsers';
+import type { User, UserRole } from 'src/models/User';
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const $q = useQuasar();
-const { userFullName, userRole, userAttributes, isLoading, refreshUserAttributes } = useAuth();
+const { userId, refreshUserAttributes, initAuth } = useAuth();
+const { getUserById, updateUser } = useUsers();
 
+type ProfileUserSnapshot = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string | null;
+  contactInfo?: string | null;
+};
+
+const profileUser = ref<ProfileUserSnapshot | null>(null);
+const isLoading = ref(true);
 const editMode = ref(false);
 const saving = ref(false);
 
-const profileForm = reactive({
-  givenName: '',
-  familyName: '',
+const emptyForm = (): UserProfileFormModel => ({
+  name: '',
   email: '',
+  role: '' as UserRole | '',
+  contactInfo: '',
+  avatar: null,
 });
 
-/**
- * Get role-specific color
- */
-function getRoleColor(role: string): string {
-  const colors: Record<string, string> = {
-    Student: 'blue',
-    Educator: 'green',
-    Parent: 'orange',
-    Admin: 'purple',
+const profileForm = ref<UserProfileFormModel>(emptyForm());
+
+const displayName = computed(() => {
+  const source = editMode.value ? profileForm.value.name : profileUser.value?.name;
+  return source?.trim() || 'User';
+});
+
+const displayRole = computed(() => profileUser.value?.role ?? 'Unknown');
+
+const avatarUrl = computed(() => {
+  if (editMode.value) {
+    return profileForm.value.avatar;
+  }
+  return profileUser.value?.avatar ?? null;
+});
+
+const avatarUser = computed(() => {
+  if (avatarUrl.value) {
+    return { name: displayName.value, avatar: avatarUrl.value };
+  }
+  return { name: displayName.value };
+});
+
+function toFormModel(user: ProfileUserSnapshot | null): UserProfileFormModel {
+  if (!user) {
+    return emptyForm();
+  }
+  return {
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    contactInfo: user.contactInfo ?? '',
+    avatar: user.avatar ?? null,
   };
-  return colors[role] || 'grey';
 }
 
-/**
- * Get role-specific icon
- */
-function getRoleIcon(role: string): string {
-  const icons: Record<string, string> = {
-    Student: 'school',
-    Educator: 'psychology',
-    Parent: 'family_restroom',
-    Admin: 'admin_panel_settings',
+function toSnapshot(user: User | null): ProfileUserSnapshot | null {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    avatar: user.avatar ?? null,
+    contactInfo: user.contactInfo ?? '',
   };
-  return icons[role] || 'person';
 }
 
-/**
- * Load user profile data
- */
-function loadProfile(): void {
-  profileForm.givenName = userAttributes.value.given_name || userAttributes.value.givenName || '';
-  profileForm.familyName =
-    userAttributes.value.family_name || userAttributes.value.familyName || '';
-  profileForm.email = userAttributes.value.email || '';
+async function loadProfile(): Promise<void> {
+  await initAuth();
+  const id = userId.value;
+  console.log('id', id);
+  if (!id) {
+    profileUser.value = null;
+    profileForm.value = emptyForm();
+    isLoading.value = false;
+    editMode.value = false;
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    const userRecord = await getUserById(id);
+    profileUser.value = toSnapshot(userRecord);
+    profileForm.value = toFormModel(profileUser.value);
+    editMode.value = false;
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-/**
- * Handle form submission
- */
+function startEdit(): void {
+  if (!profileUser.value) {
+    return;
+  }
+  profileForm.value = toFormModel(profileUser.value);
+  editMode.value = true;
+}
+
+function cancelEdit(): void {
+  profileForm.value = toFormModel(profileUser.value);
+  editMode.value = false;
+}
+
 async function handleSave(): Promise<void> {
+  const id = userId.value;
+  if (!id) {
+    return;
+  }
+
+  const trimmedName = profileForm.value.name.trim();
+  if (!trimmedName) {
+    $q.notify({
+      type: 'negative',
+      message: t('validation.nameRequired'),
+      position: 'top',
+    });
+    return;
+  }
+
   try {
     saving.value = true;
+    const updated = await updateUser(id, {
+      name: trimmedName,
+      avatar: profileForm.value.avatar,
+      contactInfo: profileForm.value.contactInfo.trim() || null,
+    });
 
-    // TODO: Implement profile update API call
-    // await updateUserAttributes({
-    //   given_name: profileForm.givenName,
-    //   family_name: profileForm.familyName,
-    // });
+    if (!updated) {
+      throw new Error('Failed to update profile');
+    }
+
+    profileUser.value = toSnapshot(updated);
+    profileForm.value = toFormModel(profileUser.value);
+    editMode.value = false;
 
     await refreshUserAttributes();
-    editMode.value = false;
 
     $q.notify({
       type: 'positive',
       message: 'Profile updated successfully!',
       position: 'top',
     });
-  } catch {
+  } catch (error) {
+    console.error('Failed to update profile', error);
     $q.notify({
       type: 'negative',
       message: 'Failed to update profile. Please try again.',
@@ -176,18 +242,11 @@ async function handleSave(): Promise<void> {
   }
 }
 
-/**
- * Cancel editing
- */
-function cancelEdit(): void {
-  editMode.value = false;
-  loadProfile(); // Reset form to original values
-}
-
-/**
- * Initialize component
- */
-onMounted(() => {
-  loadProfile();
-});
+watch(
+  userId,
+  () => {
+    void loadProfile();
+  },
+  { immediate: true },
+);
 </script>

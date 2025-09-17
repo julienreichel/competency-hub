@@ -14,6 +14,7 @@ export function useUsers(): {
   loading: typeof loading;
   error: typeof error;
   fetchUsers: () => Promise<User[]>;
+  getUserById: (id: string) => Promise<User | null>;
   addUserToGroup: (userId: string, groupName: string) => Promise<User | null>;
   updateUser: (id: string, data: UpdatableUserFields) => Promise<User | null>;
 } {
@@ -32,6 +33,19 @@ export function useUsers(): {
       loading.value = false;
     }
     return users || [];
+  };
+
+  const getUserById = async (id: string): Promise<User | null> => {
+    loading.value = true;
+    error.value = null;
+    try {
+      return await userRepository.findById(id);
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : 'Failed to fetch user';
+      return null;
+    } finally {
+      loading.value = false;
+    }
   };
 
   // Admin mutation wrappers
@@ -81,6 +95,7 @@ export function useUsers(): {
     loading,
     error,
     fetchUsers,
+    getUserById,
     addUserToGroup,
     updateUser,
   };

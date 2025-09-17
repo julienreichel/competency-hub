@@ -8,41 +8,12 @@
 
       <q-form @submit.prevent="handleSubmit">
         <q-card-section class="q-gutter-md">
-          <q-input
-            v-model="form.name"
-            :label="t('admin.userName')"
-            :rules="[(val) => !!val || t('validation.nameRequired')]"
-            filled
-            data-testid="edit-user-name"
+          <user-profile-form
+            v-model="form"
+            :role-options="roleOptions"
+            enable-role
+            data-testid="edit-user-form"
           />
-
-          <q-input
-            v-model="form.email"
-            :label="t('common.email')"
-            filled
-            readonly
-            data-testid="edit-user-email"
-          />
-
-          <q-select
-            v-model="form.role"
-            :options="roleOptions"
-            :label="t('common.role')"
-            filled
-            :rules="[(val) => !!val || t('validation.roleRequired')]"
-          />
-
-          <q-input
-            v-model="form.contactInfo"
-            :label="t('admin.contactInfo')"
-            filled
-            type="textarea"
-          />
-
-          <div>
-            <div class="text-caption text-grey-7 q-mb-sm">{{ t('admin.avatarPickerTitle') }}</div>
-            <avatar-picker v-model="form.avatarUrl" />
-          </div>
         </q-card-section>
 
         <q-card-actions>
@@ -56,9 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import AvatarPicker from 'src/components/ui/AvatarPicker.vue';
+import UserProfileForm, {
+  type UserProfileFormModel,
+} from 'src/components/user/UserProfileForm.vue';
 import type { UserRole } from 'src/models/User';
-import { computed, reactive, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 type EditableUser = {
@@ -86,13 +59,15 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
-const form = reactive({
+const emptyForm = (): UserProfileFormModel => ({
   name: '',
   email: '',
   role: '' as UserRole | '',
-  avatarUrl: null as string | null,
   contactInfo: '',
+  avatar: null,
 });
+
+const form = ref<UserProfileFormModel>(emptyForm());
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -108,17 +83,17 @@ watch(
   () => props.user,
   (user) => {
     if (!user) {
-      form.name = '';
-      form.email = '';
-      form.role = '';
-      form.avatarUrl = null;
+      form.value = emptyForm();
       return;
     }
-    form.name = user.name;
-    form.email = user.email;
-    form.role = user.role;
-    form.avatarUrl = user.avatar ?? null;
-    form.contactInfo = user.contactInfo ?? '';
+
+    form.value = {
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      contactInfo: user.contactInfo ?? '',
+      avatar: user.avatar ?? null,
+    };
   },
   { immediate: true },
 );
@@ -130,14 +105,14 @@ function handleCancel(): void {
 
 function handleSubmit(): void {
   if (!props.user) return;
-  if (!form.role) return;
-  const { role } = form;
+  if (!form.value.role) return;
+  const { role } = form.value;
   emit('save', {
     id: props.user.id,
-    name: form.name,
+    name: form.value.name,
     role,
-    avatar: form.avatarUrl,
-    contactInfo: form.contactInfo,
+    avatar: form.value.avatar,
+    contactInfo: form.value.contactInfo,
   });
 }
 </script>

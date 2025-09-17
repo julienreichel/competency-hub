@@ -8,7 +8,7 @@
 import { computed } from 'vue';
 
 export interface RoleChipProps {
-  role: 'Student' | 'Educator' | 'Parent' | 'Admin';
+  role: 'Student' | 'Educator' | 'Parent' | 'Admin' | 'Unknown';
 }
 
 const props = defineProps<RoleChipProps>();
