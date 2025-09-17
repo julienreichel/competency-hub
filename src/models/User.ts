@@ -1,3 +1,4 @@
+import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 
 // Constants
@@ -22,9 +23,10 @@ export interface CreateUserData extends Record<string, unknown> {
   name: string;
   role: UserRole;
   email: string;
-  avatar: string;
-  contactInfo: string;
-  lastActive?: string;
+  avatar?: string | null;
+  picture?: string | null;
+  contactInfo?: string | null;
+  lastActive?: string | null;
 }
 
 /**
@@ -38,23 +40,33 @@ export interface UpdateUserData extends Record<string, unknown> {
   picture?: string | null;
   contactInfo?: string;
   lastActive?: string;
+  /**
+   * Derived relationship fields (not persisted directly via GraphQL)
+   */
+  educatorIds?: string[];
+  parentIds?: string[];
+  studentIds?: string[];
 }
 
-/**
- * Raw user data from GraphQL
- */
-export interface UserGraphQLData {
+type AmplifyUser = NonNullable<Schema['User']['type']>;
+
+type RelationEntries = AmplifyUser['educators'] | AmplifyUser['parents'];
+
+type UserInit = {
   id: string;
   name: string;
   role: UserRole;
   email: string;
-  avatar: string;
+  avatar?: string | null;
   picture?: string | null;
-  contactInfo: string;
+  contactInfo?: string | null;
+  lastActive?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  lastActive?: string;
-}
+  educatorIds?: string[];
+  parentIds?: string[];
+  studentIds?: string[];
+};
 
 /**
  * User domain model
@@ -68,17 +80,59 @@ export class User extends BaseModel {
   public readonly picture?: string | null;
   public readonly contactInfo: string;
   public readonly lastActive: string | undefined;
+  public readonly educatorIds: string[];
+  public readonly parentIds: string[];
+  public readonly studentIds: string[];
 
-  constructor(data: UserGraphQLData) {
+  constructor(data: UserInit) {
     super(data);
     this.name = data.name;
     this.role = data.role;
     this.email = data.email;
-    this.avatar = data.avatar;
+    this.avatar = data.avatar ?? '';
     this.picture = data.picture ?? null;
-    this.contactInfo = data.contactInfo;
-    this.lastActive = data.lastActive;
+    this.contactInfo = data.contactInfo ?? '';
+    this.lastActive = data.lastActive ?? undefined;
+    this.educatorIds = [...(data.educatorIds ?? [])];
+    this.parentIds = [...(data.parentIds ?? [])];
+    this.studentIds = [...(data.studentIds ?? [])];
     this.validate();
+  }
+
+  static fromAmplify(raw: AmplifyUser): User {
+    return new User({
+      id: raw.id,
+      name: raw.name ?? '',
+      role: User.normaliseRole(raw.role),
+      email: raw.email,
+      avatar: raw.avatar ?? '',
+      picture: raw.picture ?? null,
+      contactInfo: raw.contactInfo ?? '',
+      lastActive: raw.lastActive ?? null,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+      educatorIds: User.collectUniqueIds([
+        User.extractIdsFromEntries(raw.educators, 'educator'),
+        User.extractIdsFromEntries(raw.educators, 'educatorId'),
+      ]),
+      parentIds: User.collectUniqueIds([
+        User.extractIdsFromEntries(raw.parents, 'parent'),
+        User.extractIdsFromEntries(raw.parents, 'parentId'),
+      ]),
+      studentIds: User.collectUniqueIds([
+        User.extractIdsFromEntries(raw.students, 'student'),
+        User.extractIdsFromEntries(raw.students, 'studentId'),
+        User.extractIdsFromEntries(raw.children, 'student'),
+        User.extractIdsFromEntries(raw.children, 'studentId'),
+      ]),
+    });
+  }
+
+  static create(data: UserInit): User {
+    return new User({
+      ...data,
+      role: User.normaliseRole(data.role),
+    });
   }
 
   /**
@@ -163,6 +217,10 @@ export class User extends BaseModel {
       contactInfo: this.contactInfo,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+      lastActive: this.lastActive ?? null,
+      educatorIds: [...this.educatorIds],
+      parentIds: [...this.parentIds],
+      studentIds: [...this.studentIds],
     };
   }
 
@@ -179,8 +237,12 @@ export class User extends BaseModel {
       avatar: this.avatar,
       picture: this.picture ?? null,
       contactInfo: this.contactInfo,
+      educatorIds: [...this.educatorIds],
+      parentIds: [...this.parentIds],
+      studentIds: [...this.studentIds],
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
+      ...(this.lastActive && { lastActive: this.lastActive }),
     });
   }
 
@@ -198,6 +260,10 @@ export class User extends BaseModel {
       avatar: updates.avatar ?? this.avatar,
       picture: updates.picture ?? this.picture ?? null,
       contactInfo: updates.contactInfo ?? this.contactInfo,
+      lastActive: updates.lastActive ?? this.lastActive ?? null,
+      educatorIds: updates.educatorIds ?? this.educatorIds,
+      parentIds: updates.parentIds ?? this.parentIds,
+      studentIds: updates.studentIds ?? this.studentIds,
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
     });
@@ -211,5 +277,75 @@ export class User extends BaseModel {
   private isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  }
+
+  private static extractIdsFromEntries(
+    entries: RelationEntries,
+    key: 'student' | 'educator' | 'parent' | 'studentId' | 'educatorId' | 'parentId',
+  ): string[] {
+    if (!entries) {
+      return [];
+    }
+
+    const collectFromValue = (value: unknown): string | null => {
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+      if (value && typeof value === 'object' && 'id' in value) {
+        const candidate = (value as { id?: unknown }).id;
+        if (typeof candidate === 'string' && candidate.trim()) {
+          return candidate.trim();
+        }
+      }
+      return null;
+    };
+
+    const processEntry = (entry: unknown): string[] => {
+      if (!entry || typeof entry !== 'object') {
+        return [];
+      }
+      const container = entry as Record<string, unknown>;
+      const raw = container[key];
+
+      if (Array.isArray(raw)) {
+        return raw.map(collectFromValue).filter((id): id is string => Boolean(id));
+      }
+
+      const single = collectFromValue(raw);
+      return single ? [single] : [];
+    };
+
+    if (Array.isArray(entries)) {
+      return entries.flatMap(processEntry);
+    }
+
+    const items = (entries as { items?: unknown }).items;
+    if (Array.isArray(items)) {
+      return items.flatMap(processEntry);
+    }
+
+    return processEntry(entries);
+  }
+
+  private static collectUniqueIds(groups: Array<string[] | null | undefined>): string[] {
+    const bucket = new Set<string>();
+    groups.forEach((group) => {
+      group?.forEach((value) => {
+        const trimmed = value?.trim();
+        if (trimmed) {
+          bucket.add(trimmed);
+        }
+      });
+    });
+    return Array.from(bucket);
+  }
+
+  private static normaliseRole(role: UserRole | string | null | undefined): UserRole {
+    if (typeof role === 'string') {
+      if (Object.values(UserRole).includes(role as UserRole)) {
+        return role as UserRole;
+      }
+    }
+    return UserRole.UNKNOWN;
   }
 }

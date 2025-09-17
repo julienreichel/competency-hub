@@ -7,10 +7,10 @@
 </template>
 
 <script setup lang="ts">
+import { UserRole } from 'src/models/User';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import StatCard from '../ui/StatCard.vue';
-import { UserRole } from 'src/models/User';
 
 type StatsUser = {
   role: UserRole;

@@ -14,11 +14,37 @@ const schema = a
         picture: a.string(),
         contactInfo: a.string(),
         lastActive: a.string(),
+        educators: a.hasMany('TeachingAssignment', 'studentId'),
+        students: a.hasMany('TeachingAssignment', 'educatorId'),
+        parents: a.hasMany('ParentLink', 'studentId'),
+        children: a.hasMany('ParentLink', 'parentId'),
       })
       .authorization((allow) => [
-        allow.owner(),
+        allow.authenticated().to(['read']),
+        allow.owner().to(['read', 'update']),
         allow.groups(['Admin']).to(['create', 'read', 'update', 'delete']),
-        allow.groups(['Educator']).to(['read']),
+      ]),
+    TeachingAssignment: a
+      .model({
+        studentId: a.id().required(),
+        student: a.belongsTo('User', 'studentId'),
+        educatorId: a.id().required(),
+        educator: a.belongsTo('User', 'educatorId'),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read', 'create', 'delete']),
+        allow.groups(['Admin']).to(['create', 'read', 'update', 'delete']),
+      ]),
+    ParentLink: a
+      .model({
+        studentId: a.id().required(),
+        student: a.belongsTo('User', 'studentId'),
+        parentId: a.id().required(),
+        parent: a.belongsTo('User', 'parentId'),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.groups(['Admin']).to(['create', 'read', 'update', 'delete']),
       ]),
     Competency: a
       .model({

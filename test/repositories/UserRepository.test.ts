@@ -8,10 +8,17 @@ vi.mock('../../src/models/base/GraphQLClient', () => ({
   graphQLClient: {
     createUser: vi.fn(),
     getUser: vi.fn(),
+    getUserWithRelations: vi.fn(),
     listUsers: vi.fn(),
     updateUser: vi.fn(),
     deleteUser: vi.fn(),
     addUserToGroup: vi.fn(),
+    listTeachingAssignments: vi.fn(),
+    createTeachingAssignment: vi.fn(),
+    deleteTeachingAssignment: vi.fn(),
+    listParentLinks: vi.fn(),
+    createParentLink: vi.fn(),
+    deleteParentLink: vi.fn(),
   },
 }));
 
@@ -20,10 +27,17 @@ describe('UserRepository', () => {
   const mockGraphQLClient = graphQLClient as unknown as {
     createUser: ReturnType<typeof vi.fn>;
     getUser: ReturnType<typeof vi.fn>;
+    getUserWithRelations: ReturnType<typeof vi.fn>;
     listUsers: ReturnType<typeof vi.fn>;
     updateUser: ReturnType<typeof vi.fn>;
     deleteUser: ReturnType<typeof vi.fn>;
     addUserToGroup: ReturnType<typeof vi.fn>;
+    listTeachingAssignments: ReturnType<typeof vi.fn>;
+    createTeachingAssignment: ReturnType<typeof vi.fn>;
+    deleteTeachingAssignment: ReturnType<typeof vi.fn>;
+    listParentLinks: ReturnType<typeof vi.fn>;
+    createParentLink: ReturnType<typeof vi.fn>;
+    deleteParentLink: ReturnType<typeof vi.fn>;
   };
 
   const validUserData = {
@@ -49,6 +63,8 @@ describe('UserRepository', () => {
   beforeEach(() => {
     userRepository = new UserRepository();
     vi.clearAllMocks();
+    mockGraphQLClient.listTeachingAssignments.mockResolvedValue([]);
+    mockGraphQLClient.listParentLinks.mockResolvedValue([]);
   });
 
   describe('create', () => {
@@ -74,27 +90,27 @@ describe('UserRepository', () => {
 
   describe('findById', () => {
     it('should find user by id and return User instance', async () => {
-      mockGraphQLClient.getUser.mockResolvedValue(validUserData);
+      mockGraphQLClient.getUserWithRelations.mockResolvedValue(validUserData);
 
       const result = await userRepository.findById('user-1');
 
-      expect(mockGraphQLClient.getUser).toHaveBeenCalledWith('user-1');
+      expect(mockGraphQLClient.getUserWithRelations).toHaveBeenCalledWith('user-1');
       expect(result).toBeInstanceOf(User);
       expect(result?.id).toBe('user-1');
     });
 
     it('should return null when user not found', async () => {
-      mockGraphQLClient.getUser.mockResolvedValue(null);
+      mockGraphQLClient.getUserWithRelations.mockResolvedValue(null);
 
       const result = await userRepository.findById('nonexistent-id');
 
-      expect(mockGraphQLClient.getUser).toHaveBeenCalledWith('nonexistent-id');
+      expect(mockGraphQLClient.getUserWithRelations).toHaveBeenCalledWith('nonexistent-id');
       expect(result).toBeNull();
     });
 
     it('should handle GraphQL client errors', async () => {
       const error = new Error('GraphQL error');
-      mockGraphQLClient.getUser.mockRejectedValue(error);
+      mockGraphQLClient.getUserWithRelations.mockRejectedValue(error);
 
       await expect(userRepository.findById('user-1')).rejects.toThrow('GraphQL error');
     });
@@ -147,6 +163,7 @@ describe('UserRepository', () => {
       const updateData = { name: 'Updated Name' };
       const updatedUserData = { ...validUserData, name: 'Updated Name' };
       mockGraphQLClient.updateUser.mockResolvedValue(updatedUserData);
+      mockGraphQLClient.getUserWithRelations.mockResolvedValue(updatedUserData);
 
       const result = await userRepository.update('john@example.com', updateData);
 
@@ -237,13 +254,14 @@ describe('UserRepository', () => {
       expect(createdUser).toBeInstanceOf(User);
 
       // Read
-      mockGraphQLClient.getUser.mockResolvedValue(validUserData);
+      mockGraphQLClient.getUserWithRelations.mockResolvedValue(validUserData);
       const foundUser = await userRepository.findById('user-1');
       expect(foundUser).toBeInstanceOf(User);
 
       // Update
       const updatedData = { ...validUserData, name: 'Updated Name' };
       mockGraphQLClient.updateUser.mockResolvedValue(updatedData);
+      mockGraphQLClient.getUserWithRelations.mockResolvedValue(updatedData);
       const updatedUser = await userRepository.update('user-1', { name: 'Updated Name' });
       expect(updatedUser.name).toBe('Updated Name');
 
@@ -267,19 +285,19 @@ describe('UserRepository', () => {
         avatar: 'avatar',
         contactInfo: 'contact',
       };
-      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(updatedUser);
-      const repo = new UserRepository();
-      const result = await repo.addUserToGroup('user-1', 'Admin');
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(graphQLClient.addUserToGroup).toHaveBeenCalledWith('user-1', 'Admin');
+      mockGraphQLClient.addUserToGroup.mockResolvedValue(updatedUser);
+      mockGraphQLClient.getUserWithRelations.mockResolvedValue(updatedUser);
+
+      const result = await userRepository.addUserToGroup('user-1', 'Admin');
+
+      expect(mockGraphQLClient.addUserToGroup).toHaveBeenCalledWith('user-1', 'Admin');
       expect(result).toBeInstanceOf(User);
       expect(result?.id).toBe('user-1');
     });
 
     it('addUserToGroup returns null on failure', async () => {
-      graphQLClient.addUserToGroup = vi.fn().mockResolvedValue(null);
-      const repo = new UserRepository();
-      const result = await repo.addUserToGroup('user-1', 'Admin');
+      mockGraphQLClient.addUserToGroup.mockResolvedValue(null);
+      const result = await userRepository.addUserToGroup('user-1', 'Admin');
       expect(result).toBeNull();
     });
   });

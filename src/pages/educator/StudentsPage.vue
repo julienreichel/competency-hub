@@ -1,0 +1,227 @@
+<template>
+  <q-page class="q-pa-lg">
+    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
+      <q-icon name="groups" />
+      <span>{{ $t('educator.myStudentsTitle') }}</span>
+    </div>
+
+    <q-card flat bordered>
+      <q-card-section class="row items-center q-col-gutter-md">
+        <div class="col-12 col-md-6">
+          <q-input
+            v-model="searchTerm"
+            :label="$t('educator.searchStudents')"
+            filled
+            dense
+            clearable
+          >
+            <template #append>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="col-auto">
+          <q-btn
+            outline
+            color="primary"
+            icon="refresh"
+            :label="$t('common.refresh')"
+            :loading="loading"
+            @click="refreshUsers"
+          />
+        </div>
+      </q-card-section>
+
+      <q-separator />
+
+      <q-tabs v-model="activeTab" align="justify" class="text-primary">
+        <q-tab name="my" icon="person" :label="$t('educator.myStudentsTab')" />
+        <q-tab name="all" icon="diversity_3" :label="$t('educator.allStudentsTab')" />
+      </q-tabs>
+
+      <q-separator />
+
+      <q-tab-panels v-model="activeTab" animated>
+        <q-tab-panel name="my" class="q-pa-none">
+          <student-assignments-table
+            :students="filteredMyStudents"
+            :user-map="userMap"
+            :loading="loading"
+            :current-educator-id="currentEducatorId"
+            :empty-label="$t('educator.noMyStudents')"
+            @assign="handleAssign"
+            @unassign="handleUnassign"
+            @view="openStudentDialog"
+          />
+        </q-tab-panel>
+
+        <q-tab-panel name="all" class="q-pa-none">
+          <student-assignments-table
+            :students="filteredAllStudents"
+            :user-map="userMap"
+            :loading="loading"
+            :current-educator-id="currentEducatorId"
+            :empty-label="$t('educator.noStudentsFound')"
+            @assign="handleAssign"
+            @unassign="handleUnassign"
+            @view="openStudentDialog"
+          />
+        </q-tab-panel>
+      </q-tab-panels>
+    </q-card>
+
+    <user-details-dialog
+      v-model="showStudentDialog"
+      :user="selectedStudentForDialog"
+      :all-users="allUsers"
+      :can-manage-parents="false"
+    />
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import { useQuasar } from 'quasar';
+import UserDetailsDialog from 'src/components/admin/UserDetailsDialog.vue';
+import StudentAssignmentsTable from 'src/components/educator/StudentAssignmentsTable.vue';
+import { useAuth } from 'src/composables/useAuth';
+import { useUsers } from 'src/composables/useUsers';
+import type { User } from 'src/models/User';
+import { UserRole } from 'src/models/User';
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const activeTab = ref<'my' | 'all'>('my');
+const searchTerm = ref('');
+const allUsers = ref<User[]>([]);
+const showStudentDialog = ref(false);
+const selectedStudentForDialog = ref<User | null>(null);
+
+const { assignEducatorToStudent, unassignEducatorFromStudent, fetchUsers, loading, error } =
+  useUsers();
+const { userId } = useAuth();
+const $q = useQuasar();
+const { t } = useI18n();
+
+const currentEducatorId = computed(() => {
+  const id = userId.value;
+  return id && id !== 'undefined' ? id : null;
+});
+
+const userMap = computed<Map<string, User>>(
+  () => new Map<string, User>(allUsers.value.map((user) => [user.id, user] as [string, User])),
+);
+
+const students = computed<User[]>(
+  () => allUsers.value.filter((user) => user.role === UserRole.STUDENT) as User[],
+);
+
+const myStudents = computed(() => {
+  if (!currentEducatorId.value) {
+    return [] as User[];
+  }
+  return students.value.filter((student) =>
+    (student.educatorIds ?? []).includes(currentEducatorId.value!),
+  );
+});
+
+const normalizedSearch = computed(() => searchTerm.value.trim().toLowerCase());
+
+function filterBySearch(collection: User[]): User[] {
+  if (!normalizedSearch.value) {
+    return collection;
+  }
+  return collection.filter((student) => {
+    const haystack = `${student.name} ${student.email}`.toLowerCase();
+    return haystack.includes(normalizedSearch.value);
+  });
+}
+
+const filteredMyStudents = computed<User[]>(() => filterBySearch(myStudents.value));
+const filteredAllStudents = computed<User[]>(() => filterBySearch(students.value));
+
+async function loadUsers(): Promise<void> {
+  const fetched = await fetchUsers();
+  allUsers.value = fetched;
+}
+
+async function refreshUsers(): Promise<void> {
+  await loadUsers();
+  if (error.value) {
+    $q.notify({ type: 'negative', message: error.value, position: 'top' });
+  } else {
+    $q.notify({ type: 'positive', message: t('educator.refreshSuccess'), position: 'top' });
+  }
+}
+
+function updateUserInState(updated: User | null): void {
+  if (!updated) return;
+  const index = allUsers.value.findIndex((candidate) => candidate.id === updated.id);
+  if (index !== -1) {
+    allUsers.value.splice(index, 1, updated);
+  } else {
+    allUsers.value.push(updated);
+  }
+}
+
+function updateDialogUser(updated: User | null): void {
+  if (!updated || !selectedStudentForDialog.value) {
+    return;
+  }
+  if (selectedStudentForDialog.value.id === updated.id) {
+    selectedStudentForDialog.value = updated;
+  }
+}
+
+async function handleAssign(studentId: string): Promise<void> {
+  if (!currentEducatorId.value) {
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    return;
+  }
+  const { student, educator } = await assignEducatorToStudent(studentId, currentEducatorId.value);
+  if (!student) {
+    if (error.value) {
+      $q.notify({ type: 'negative', message: error.value, position: 'top' });
+    }
+    return;
+  }
+  updateUserInState(student);
+  updateUserInState(educator);
+  updateDialogUser(student);
+  $q.notify({ type: 'positive', message: t('educator.assignSuccess'), position: 'top' });
+}
+
+async function handleUnassign(studentId: string): Promise<void> {
+  if (!currentEducatorId.value) {
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    return;
+  }
+  const { student, educator } = await unassignEducatorFromStudent(
+    studentId,
+    currentEducatorId.value,
+  );
+  if (!student) {
+    if (error.value) {
+      $q.notify({ type: 'negative', message: error.value, position: 'top' });
+    }
+    return;
+  }
+  updateUserInState(student);
+  updateUserInState(educator);
+  updateDialogUser(student);
+  $q.notify({ type: 'positive', message: t('educator.unassignSuccess'), position: 'top' });
+}
+
+function openStudentDialog(studentId: string): void {
+  const student = userMap.value.get(studentId);
+  if (!student) {
+    return;
+  }
+  selectedStudentForDialog.value = student;
+  showStudentDialog.value = true;
+}
+
+onMounted(() => {
+  void loadUsers();
+});
+</script>

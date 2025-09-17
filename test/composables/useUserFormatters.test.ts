@@ -7,7 +7,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
 
   describe('When administrators need to identify users quickly', () => {
     it('should create recognizable initials from user object for user identification', () => {
-      const user = new User({
+      const user = User.create({
         id: '1',
         name: 'John Doe',
         role: UserRole.STUDENT,
@@ -19,7 +19,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
     });
 
     it('should handle single name from user object', () => {
-      const user = new User({
+      const user = User.create({
         id: '2',
         name: 'Madonna',
         role: UserRole.STUDENT,
@@ -31,7 +31,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
     });
 
     it('should handle multiple names from user object', () => {
-      const user = new User({
+      const user = User.create({
         id: '3',
         name: 'Mary Jane Watson',
         role: UserRole.STUDENT,
@@ -43,7 +43,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
     });
 
     it('should handle names with extra spaces from user object', () => {
-      const user = new User({
+      const user = User.create({
         id: '5',
         name: '  John   Doe  ',
         role: UserRole.STUDENT,
@@ -125,7 +125,7 @@ describe('useUserFormatters - User Experience Helpers', () => {
   describe('Accessibility and User Experience', () => {
     it('should provide consistent initials for screen reader compatibility', () => {
       // Screen readers get predictable content
-      const user = new User({
+      const user = User.create({
         id: '6',
         name: 'Alice Johnson',
         role: UserRole.STUDENT,

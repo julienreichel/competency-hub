@@ -83,6 +83,13 @@
 
         <template v-if="hasRole('Educator')">
           <essential-link
+            title="My Students"
+            caption="Manage assigned students"
+            icon="groups"
+            link="/educator/students"
+          />
+
+          <essential-link
             title="My Classes"
             caption="Manage your students"
             icon="school"

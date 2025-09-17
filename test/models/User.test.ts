@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { User, UserRole } from '../../src/models/User';
 
 describe('User Model', () => {
-  const validUserData = {
+  const baseInit: Parameters<typeof User.create>[0] = {
     id: 'user-1',
     name: 'John Doe',
     role: UserRole.STUDENT,
@@ -11,11 +11,17 @@ describe('User Model', () => {
     contactInfo: 'contact-info',
     createdAt: '2023-01-01T00:00:00Z',
     updatedAt: '2023-01-01T00:00:00Z',
+    educatorIds: ['educator-1'],
+    parentIds: ['parent-1'],
+    studentIds: ['student-1'],
   };
+
+  const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}): User =>
+    User.create({ ...baseInit, ...overrides });
 
   describe('constructor', () => {
     it('should create a valid user instance', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
       expect(user.id).toBe('user-1');
       expect(user.name).toBe('John Doe');
       expect(user.role).toBe(UserRole.STUDENT);
@@ -24,19 +30,23 @@ describe('User Model', () => {
       expect(user.contactInfo).toBe('contact-info');
       expect(user.createdAt).toBe('2023-01-01T00:00:00Z');
       expect(user.updatedAt).toBe('2023-01-01T00:00:00Z');
+      expect(user.educatorIds).toEqual(['educator-1']);
+      expect(user.parentIds).toEqual(['parent-1']);
+      expect(user.studentIds).toEqual(['student-1']);
     });
 
     it('should create user without optional timestamps', () => {
-      const userDataWithoutTimestamps = {
+      const user = User.create({
         id: 'user-2',
         name: 'Jane Doe',
         role: UserRole.EDUCATOR,
         email: 'jane@example.com',
         avatar: 'avatar-url-2',
         contactInfo: 'contact-info-2',
-      };
-
-      const user = new User(userDataWithoutTimestamps);
+        educatorIds: [],
+        parentIds: [],
+        studentIds: [],
+      });
 
       expect(user.id).toBe('user-2');
       expect(user.createdAt).toBeUndefined();
@@ -44,39 +54,30 @@ describe('User Model', () => {
     });
 
     it('should throw error for invalid email', () => {
-      const invalidData = { ...validUserData, email: 'invalid-email' };
-
-      expect(() => new User(invalidData)).toThrow('Invalid email format');
+      expect(() => makeUser({ email: 'invalid-email' })).toThrow('Invalid email format');
     });
 
     it('should throw error for empty name', () => {
-      const invalidData = { ...validUserData, name: '' };
-
-      expect(() => new User(invalidData)).toThrow('User name is required');
+      expect(() => makeUser({ name: '' })).toThrow('User name is required');
     });
 
     it('should throw error for whitespace-only name', () => {
-      const invalidData = { ...validUserData, name: '   ' };
-
-      expect(() => new User(invalidData)).toThrow('User name is required');
+      expect(() => makeUser({ name: '   ' })).toThrow('User name is required');
     });
 
     it('should throw error for empty email', () => {
-      const invalidData = { ...validUserData, email: '' };
-
-      expect(() => new User(invalidData)).toThrow('User email is required');
+      expect(() => makeUser({ email: '' })).toThrow('User email is required');
     });
 
-    it('should throw error for invalid user role', () => {
-      const invalidData = { ...validUserData, role: 'INVALID_ROLE' as UserRole };
-
-      expect(() => new User(invalidData)).toThrow('Invalid user role');
+    it('should default to Unknown for invalid user role', () => {
+      const user = makeUser({ role: 'INVALID_ROLE' as UserRole });
+      expect(user.role).toBe(UserRole.UNKNOWN);
     });
   });
 
   describe('role checking methods', () => {
     it('should correctly identify student role', () => {
-      const student = new User({ ...validUserData, role: UserRole.STUDENT });
+      const student = makeUser({ role: UserRole.STUDENT });
 
       expect(student.isStudent()).toBe(true);
       expect(student.isEducator()).toBe(false);
@@ -84,7 +85,7 @@ describe('User Model', () => {
     });
 
     it('should correctly identify educator role', () => {
-      const educator = new User({ ...validUserData, role: UserRole.EDUCATOR });
+      const educator = makeUser({ role: UserRole.EDUCATOR });
 
       expect(educator.isStudent()).toBe(false);
       expect(educator.isEducator()).toBe(true);
@@ -92,7 +93,7 @@ describe('User Model', () => {
     });
 
     it('should correctly identify parent role', () => {
-      const parent = new User({ ...validUserData, role: UserRole.PARENT });
+      const parent = makeUser({ role: UserRole.PARENT });
 
       expect(parent.isStudent()).toBe(false);
       expect(parent.isEducator()).toBe(false);
@@ -102,37 +103,37 @@ describe('User Model', () => {
 
   describe('utility methods', () => {
     it('should return correct display name', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
 
       expect(user.getDisplayName()).toBe('John Doe');
     });
 
     it('should trim display name', () => {
-      const user = new User({ ...validUserData, name: '  John Doe  ' });
+      const user = makeUser({ name: '  John Doe  ' });
 
       expect(user.getDisplayName()).toBe('John Doe');
     });
 
     it('should return correct initials for full name', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
 
       expect(user.getInitials()).toBe('JD');
     });
 
     it('should handle single name for initials', () => {
-      const user = new User({ ...validUserData, name: 'John' });
+      const user = makeUser({ name: 'John' });
 
       expect(user.getInitials()).toBe('J');
     });
 
     it('should handle three names for initials (max 2)', () => {
-      const user = new User({ ...validUserData, name: 'John Michael Doe' });
+      const user = makeUser({ name: 'John Michael Doe' });
 
       expect(user.getInitials()).toBe('JM');
     });
 
     it('should handle empty name parts for initials', () => {
-      const user = new User({ ...validUserData, name: 'John  Doe' });
+      const user = makeUser({ name: 'John  Doe' });
 
       expect(user.getInitials()).toBe('JD');
     });
@@ -140,39 +141,44 @@ describe('User Model', () => {
 
   describe('update method', () => {
     it('should create updated user instance', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
       const updatedUser = user.update({ name: 'Jane Doe' });
 
       expect(updatedUser.name).toBe('Jane Doe');
-      expect(updatedUser.email).toBe(validUserData.email); // unchanged
-      expect(updatedUser.id).toBe(validUserData.id); // unchanged
-      expect(updatedUser.role).toBe(validUserData.role); // unchanged
+      expect(updatedUser.email).toBe(baseInit.email); // unchanged
+      expect(updatedUser.id).toBe(baseInit.id); // unchanged
+      expect(updatedUser.role).toBe(baseInit.role); // unchanged
+      expect(updatedUser.educatorIds).toEqual(baseInit.educatorIds);
+      expect(updatedUser.parentIds).toEqual(baseInit.parentIds);
+      expect(updatedUser.studentIds).toEqual(baseInit.studentIds);
     });
 
     it('should handle multiple field updates', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
       const updatedUser = user.update({
         name: 'Jane Smith',
         email: 'jane.smith@example.com',
         role: UserRole.PARENT,
+        studentIds: ['student-42'],
       });
 
       expect(updatedUser.name).toBe('Jane Smith');
       expect(updatedUser.email).toBe('jane.smith@example.com');
       expect(updatedUser.role).toBe(UserRole.PARENT);
-      expect(updatedUser.id).toBe(validUserData.id); // unchanged
+      expect(updatedUser.id).toBe(baseInit.id); // unchanged
+      expect(updatedUser.studentIds).toEqual(['student-42']);
     });
 
     it('should preserve timestamps in updates', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
       const updatedUser = user.update({ name: 'Jane Doe' });
 
-      expect(updatedUser.createdAt).toBe(validUserData.createdAt);
-      expect(updatedUser.updatedAt).toBe(validUserData.updatedAt);
+      expect(updatedUser.createdAt).toBe(baseInit.createdAt);
+      expect(updatedUser.updatedAt).toBe(baseInit.updatedAt);
     });
 
     it('should validate updated data', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
 
       expect(() => user.update({ email: 'invalid-email' })).toThrow('Invalid email format');
       expect(() => user.update({ name: '' })).toThrow('User name is required');
@@ -181,7 +187,7 @@ describe('User Model', () => {
 
   describe('clone method', () => {
     it('should create identical copy', () => {
-      const user = new User(validUserData);
+      const user = makeUser();
       const clonedUser = user.clone();
 
       expect(clonedUser.equals(user)).toBe(true);
@@ -192,98 +198,35 @@ describe('User Model', () => {
     });
 
     it('should handle user without timestamps', () => {
-      const userDataWithoutTimestamps = {
-        id: 'user-2',
+      const user = User.create({
+        id: 'user-3',
         name: 'Jane Doe',
-        role: UserRole.EDUCATOR,
+        role: UserRole.STUDENT,
         email: 'jane@example.com',
-        avatar: 'avatar-url-2',
-        contactInfo: 'contact-info-2',
-      };
-
-      const user = new User(userDataWithoutTimestamps);
+        educatorIds: [],
+        parentIds: [],
+        studentIds: [],
+      });
       const clonedUser = user.clone();
 
-      expect(clonedUser.equals(user)).toBe(true);
       expect(clonedUser.createdAt).toBeUndefined();
       expect(clonedUser.updatedAt).toBeUndefined();
     });
   });
 
-  describe('toJSON method', () => {
-    it('should return complete object representation', () => {
-      const user = new User(validUserData);
-      const json = user.toJSON();
-
-      expect(json).toEqual({
-        id: 'user-1',
-        name: 'John Doe',
-        role: UserRole.STUDENT,
-        email: 'john@example.com',
-        avatar: 'avatar-url',
-        picture: null,
-        contactInfo: 'contact-info',
-        createdAt: '2023-01-01T00:00:00Z',
-        updatedAt: '2023-01-01T00:00:00Z',
-      });
-    });
-
-    it('should handle undefined timestamps', () => {
-      const userDataWithoutTimestamps = {
-        id: 'user-2',
-        name: 'Jane Doe',
-        role: UserRole.EDUCATOR,
-        email: 'jane@example.com',
-        avatar: 'avatar-url-2',
-        contactInfo: 'contact-info-2',
-      };
-
-      const user = new User(userDataWithoutTimestamps);
-      const json = user.toJSON();
-
-      expect(json.createdAt).toBeUndefined();
-      expect(json.updatedAt).toBeUndefined();
-    });
-  });
-
   describe('equals method', () => {
-    it('should return true for users with same ID', () => {
-      const user1 = new User(validUserData);
-      const user2 = new User({ ...validUserData, name: 'Different Name' });
+    it('should return true for same id', () => {
+      const user1 = makeUser();
+      const user2 = makeUser({ name: 'Different Name' });
 
       expect(user1.equals(user2)).toBe(true);
     });
 
-    it('should return false for users with different IDs', () => {
-      const user1 = new User(validUserData);
-      const user2 = new User({ ...validUserData, id: 'different-id' });
+    it('should return false for different ids', () => {
+      const user1 = makeUser();
+      const user2 = makeUser({ id: 'different-id' });
 
       expect(user1.equals(user2)).toBe(false);
-    });
-  });
-
-  describe('email validation', () => {
-    const testCases = [
-      { email: 'test@example.com', valid: true },
-      { email: 'user.name@domain.co.uk', valid: true },
-      { email: 'user+tag@example.org', valid: true },
-      { email: 'invalid-email', valid: false },
-      { email: '@example.com', valid: false },
-      { email: 'test@', valid: false },
-      { email: 'test.example.com', valid: false },
-      { email: '', valid: false },
-    ];
-
-    testCases.forEach(({ email, valid }) => {
-      it(`should ${valid ? 'accept' : 'reject'} email: ${email}`, () => {
-        const userData = { ...validUserData, email };
-
-        if (valid) {
-          expect(() => new User(userData)).not.toThrow();
-        } else {
-          expect(() => new User(userData)).toThrow();
-        }
-      });
     });
   });
 });

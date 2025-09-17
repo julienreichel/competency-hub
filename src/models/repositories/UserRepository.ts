@@ -1,6 +1,7 @@
+import type { Schema } from '../../../amplify/data/resource';
 import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
-import { User, type CreateUserData, type UpdateUserData, type UserGraphQLData } from '../User';
+import { User, type CreateUserData, type UpdateUserData } from '../User';
 /**
  * User filter type for queries
  */
@@ -11,6 +12,9 @@ interface UserFilter extends Record<string, unknown> {
 export class UserRepository
   implements Repository<User, CreateUserData, UpdateUserData, UserFilter>
 {
+  private readonly toUser = (raw: Schema['User']['type'] | null): User | null =>
+    raw ? User.fromAmplify(raw) : null;
+
   /**
    * Create a new user
    * @param data - User creation data
@@ -18,7 +22,10 @@ export class UserRepository
    */
   async create(data: CreateUserData): Promise<User> {
     const rawUser = await graphQLClient.createUser(data);
-    return new User(rawUser as UserGraphQLData);
+    if (!rawUser) {
+      throw new Error('Failed to create user');
+    }
+    return User.fromAmplify(rawUser);
   }
 
   /**
@@ -27,8 +34,8 @@ export class UserRepository
    * @returns Promise with User instance or null if not found
    */
   async findById(id: string): Promise<User | null> {
-    const rawUser = await graphQLClient.getUser(id);
-    return rawUser ? new User(rawUser as UserGraphQLData) : null;
+    const rawUser = await graphQLClient.getUserWithRelations(id);
+    return this.toUser(rawUser);
   }
 
   /**
@@ -38,7 +45,7 @@ export class UserRepository
    */
   async findAll(filter?: UserFilter): Promise<User[]> {
     const rawUsers = await graphQLClient.listUsers(filter);
-    return rawUsers.map((rawUser) => new User(rawUser as UserGraphQLData));
+    return rawUsers.map((rawUser) => User.fromAmplify(rawUser));
   }
 
   /**
@@ -49,7 +56,10 @@ export class UserRepository
    */
   async update(id: string, data: UpdateUserData): Promise<User> {
     const rawUser = await graphQLClient.updateUser(id, data);
-    return new User(rawUser as UserGraphQLData);
+    if (!rawUser) {
+      throw new Error(`Failed to update user with id ${id}`);
+    }
+    return (await this.findById(id)) ?? User.fromAmplify(rawUser);
   }
 
   /**
@@ -59,7 +69,10 @@ export class UserRepository
    */
   async delete(id: string): Promise<User> {
     const rawUser = await graphQLClient.deleteUser(id);
-    return new User(rawUser as UserGraphQLData);
+    if (!rawUser) {
+      throw new Error(`Failed to delete user with id ${id}`);
+    }
+    return User.fromAmplify(rawUser);
   }
 
   /**
@@ -87,7 +100,93 @@ export class UserRepository
   async addUserToGroup(userId: string, groupName: string): Promise<User | null> {
     const rawUser = await graphQLClient.addUserToGroup(userId, groupName);
     if (!rawUser) return null;
-    return new User(rawUser as UserGraphQLData);
+    return (await this.findById(userId)) ?? User.fromAmplify(rawUser);
+  }
+
+  async linkEducatorToStudent(
+    studentId: string,
+    educatorId: string,
+  ): Promise<{ student: User | null; educator: User | null }> {
+    const existing = await graphQLClient.listTeachingAssignments({
+      studentId: { eq: studentId },
+      educatorId: { eq: educatorId },
+    });
+
+    if (existing.length === 0) {
+      await graphQLClient.createTeachingAssignment({ studentId, educatorId });
+    }
+
+    const [student, educator] = await Promise.all([
+      this.findById(studentId),
+      this.findById(educatorId),
+    ]);
+
+    return { student, educator };
+  }
+
+  async unlinkEducatorFromStudent(
+    studentId: string,
+    educatorId: string,
+  ): Promise<{ student: User | null; educator: User | null }> {
+    const matches = await graphQLClient.listTeachingAssignments({
+      studentId: { eq: studentId },
+      educatorId: { eq: educatorId },
+    });
+
+    await Promise.all(
+      matches
+        .filter((assignment) => assignment.id)
+        .map((assignment) => graphQLClient.deleteTeachingAssignment(assignment.id)),
+    );
+
+    const [student, educator] = await Promise.all([
+      this.findById(studentId),
+      this.findById(educatorId),
+    ]);
+
+    return { student, educator };
+  }
+
+  async linkParentToStudent(
+    studentId: string,
+    parentId: string,
+  ): Promise<{ student: User | null; parent: User | null }> {
+    const existing = await graphQLClient.listParentLinks({
+      studentId: { eq: studentId },
+      parentId: { eq: parentId },
+    });
+
+    if (existing.length === 0) {
+      await graphQLClient.createParentLink({ studentId, parentId });
+    }
+
+    const [student, parent] = await Promise.all([
+      this.findById(studentId),
+      this.findById(parentId),
+    ]);
+
+    return { student, parent };
+  }
+
+  async unlinkParentFromStudent(
+    studentId: string,
+    parentId: string,
+  ): Promise<{ student: User | null; parent: User | null }> {
+    const matches = await graphQLClient.listParentLinks({
+      studentId: { eq: studentId },
+      parentId: { eq: parentId },
+    });
+
+    await Promise.all(
+      matches.filter((link) => link.id).map((link) => graphQLClient.deleteParentLink(link.id)),
+    );
+
+    const [student, parent] = await Promise.all([
+      this.findById(studentId),
+      this.findById(parentId),
+    ]);
+
+    return { student, parent };
   }
 }
 

@@ -83,6 +83,40 @@ export class GraphQLClient {
     }
   }
 
+  async getUserWithRelations(id: string): Promise<Schema['User']['type'] | null> {
+    try {
+      const result = await this.client.models.User.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'name',
+            'role',
+            'email',
+            'avatar',
+            'picture',
+            'contactInfo',
+            'lastActive',
+            'createdAt',
+            'updatedAt',
+            'educators.educator.*',
+            'students.student.*',
+            'parents.parent.*',
+            'children.student.*',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['User']['type'];
+    } catch (error) {
+      console.error(`Error getting User with relations id ${id}:`, error);
+      throw error;
+    }
+  }
+
   /**
    * List User records with optional filtering
    * @param filter - Optional filter criteria
@@ -153,6 +187,118 @@ export class GraphQLClient {
       return result.data;
     } catch (error) {
       console.error(`Error deleting User with id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async listTeachingAssignments(
+    filter?: Record<string, unknown>,
+  ): Promise<Schema['TeachingAssignment']['type'][]> {
+    try {
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.TeachingAssignment.list(options);
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error listing TeachingAssignments:', error);
+      throw error;
+    }
+  }
+
+  async createTeachingAssignment(data: {
+    studentId: string;
+    educatorId: string;
+  }): Promise<Schema['TeachingAssignment']['type'] | null> {
+    try {
+      const result = await this.client.models.TeachingAssignment.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating TeachingAssignment:', error);
+      throw error;
+    }
+  }
+
+  async deleteTeachingAssignment(id: string): Promise<Schema['TeachingAssignment']['type'] | null> {
+    try {
+      const result = await this.client.models.TeachingAssignment.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting TeachingAssignment with id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async listParentLinks(filter?: Record<string, unknown>): Promise<Schema['ParentLink']['type'][]> {
+    try {
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.ParentLink.list(options);
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error listing ParentLinks:', error);
+      throw error;
+    }
+  }
+
+  async createParentLink(data: {
+    studentId: string;
+    parentId: string;
+  }): Promise<Schema['ParentLink']['type'] | null> {
+    try {
+      const result = await this.client.models.ParentLink.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating ParentLink:', error);
+      throw error;
+    }
+  }
+
+  async deleteParentLink(id: string): Promise<Schema['ParentLink']['type'] | null> {
+    try {
+      const result = await this.client.models.ParentLink.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting ParentLink with id ${id}:`, error);
       throw error;
     }
   }

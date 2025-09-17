@@ -1,6 +1,5 @@
 import { userRepository } from 'src/models/repositories/UserRepository';
-import type { User } from 'src/models/User';
-import { UserRole } from 'src/models/User';
+import { User, UserRole } from 'src/models/User';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUserFormatters } from '../../src/composables/useUserFormatters';
 import { useUsers } from '../../src/composables/useUsers';
@@ -12,6 +11,26 @@ vi.mock('aws-amplify/storage', () => ({
 import { getUrl } from 'aws-amplify/storage';
 const mockedGetUrl = vi.mocked(getUrl);
 
+const baseUserData = {
+  id: 'user-base',
+  name: 'Test User',
+  role: UserRole.STUDENT,
+  email: 'user@example.com',
+  avatar: '',
+  picture: null,
+  contactInfo: '',
+  educatorIds: [] as string[],
+  parentIds: [] as string[],
+  studentIds: [] as string[],
+};
+
+function buildUser(overrides: Partial<typeof baseUserData>): User {
+  return User.create({
+    ...baseUserData,
+    ...overrides,
+  });
+}
+
 const mockUsers = [
   {
     id: '1',
@@ -20,6 +39,9 @@ const mockUsers = [
     email: 'alice@example.com',
     avatar: '',
     contactInfo: '',
+    educatorIds: [],
+    parentIds: [],
+    studentIds: [],
   },
   {
     id: '2',
@@ -28,6 +50,9 @@ const mockUsers = [
     email: 'bob@example.com',
     avatar: '',
     contactInfo: '',
+    educatorIds: [],
+    parentIds: [],
+    studentIds: [],
   },
 ];
 
@@ -222,6 +247,169 @@ describe('useUsers - User Behavior', () => {
 
       expect(addUserToGroupSpy).toHaveBeenCalledWith('user-1', UserRole.EDUCATOR);
     });
+  });
+
+  describe('assignment helpers', () => {
+    it('assigns an educator to a student and updates both records', async () => {
+      const student = buildUser({ id: 'student-1', role: UserRole.STUDENT, educatorIds: [] });
+      const educator = buildUser({
+        id: 'educator-1',
+        role: UserRole.EDUCATOR,
+        studentIds: [],
+      });
+
+      vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
+        if (id === 'student-1') return Promise.resolve(student);
+        if (id === 'educator-1') return Promise.resolve(educator);
+        return Promise.resolve(null);
+      });
+
+      const linkSpy = vi.spyOn(userRepository, 'linkEducatorToStudent').mockResolvedValue({
+        student: buildUser({
+          id: 'student-1',
+          role: UserRole.STUDENT,
+          educatorIds: ['educator-1'],
+        }),
+        educator: buildUser({
+          id: 'educator-1',
+          role: UserRole.EDUCATOR,
+          studentIds: ['student-1'],
+        }),
+      });
+
+      const { assignEducatorToStudent } = useUsers();
+
+      const result = await assignEducatorToStudent('student-1', 'educator-1');
+
+      expect(result.student?.educatorIds).toEqual(['educator-1']);
+      expect(result.educator?.studentIds).toEqual(['student-1']);
+      expect(linkSpy).toHaveBeenCalledWith('student-1', 'educator-1');
+    });
+
+    it('unassigns an educator from a student', async () => {
+      const student = buildUser({
+        id: 'student-1',
+        role: UserRole.STUDENT,
+        educatorIds: ['educator-1'],
+      });
+      const educator = buildUser({
+        id: 'educator-1',
+        role: UserRole.EDUCATOR,
+        studentIds: ['student-1'],
+      });
+
+      vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
+        if (id === 'student-1') return Promise.resolve(student);
+        if (id === 'educator-1') return Promise.resolve(educator);
+        return Promise.resolve(null);
+      });
+
+      const unlinkSpy = vi.spyOn(userRepository, 'unlinkEducatorFromStudent').mockResolvedValue({
+        student: buildUser({
+          id: 'student-1',
+          role: UserRole.STUDENT,
+          educatorIds: [],
+        }),
+        educator: buildUser({
+          id: 'educator-1',
+          role: UserRole.EDUCATOR,
+          studentIds: [],
+        }),
+      });
+
+      const { unassignEducatorFromStudent } = useUsers();
+
+      const result = await unassignEducatorFromStudent('student-1', 'educator-1');
+
+      expect(result.student?.educatorIds).toEqual([]);
+      expect(result.educator?.studentIds).toEqual([]);
+      expect(unlinkSpy).toHaveBeenCalledWith('student-1', 'educator-1');
+    });
+
+    it('assigns and removes parents for a student', async () => {
+      const student = buildUser({ id: 'student-1', role: UserRole.STUDENT, parentIds: [] });
+      const parent = buildUser({ id: 'parent-1', role: UserRole.PARENT, studentIds: [] });
+
+      const findByIdSpy = vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
+        if (id === 'student-1') return Promise.resolve(student);
+        if (id === 'parent-1') return Promise.resolve(parent);
+        return Promise.resolve(null);
+      });
+
+      const linkParentSpy = vi.spyOn(userRepository, 'linkParentToStudent').mockResolvedValue({
+        student: buildUser({
+          id: 'student-1',
+          role: UserRole.STUDENT,
+          parentIds: ['parent-1'],
+        }),
+        parent: buildUser({
+          id: 'parent-1',
+          role: UserRole.PARENT,
+          studentIds: ['student-1'],
+        }),
+      });
+      const unlinkParentSpy = vi
+        .spyOn(userRepository, 'unlinkParentFromStudent')
+        .mockResolvedValue({
+          student: buildUser({
+            id: 'student-1',
+            role: UserRole.STUDENT,
+            parentIds: [],
+          }),
+          parent: buildUser({
+            id: 'parent-1',
+            role: UserRole.PARENT,
+            studentIds: [],
+          }),
+        });
+
+      const { assignParentToStudent, removeParentFromStudent } = useUsers();
+
+      const assignmentResult = await assignParentToStudent('student-1', 'parent-1');
+
+      expect(assignmentResult.student?.parentIds).toEqual(['parent-1']);
+      expect(assignmentResult.parent?.studentIds).toEqual(['student-1']);
+
+      // Simulate updated users for removal
+      findByIdSpy.mockImplementation((id: string) => {
+        if (id === 'student-1')
+          return Promise.resolve(
+            buildUser({ id: 'student-1', role: UserRole.STUDENT, parentIds: ['parent-1'] }),
+          );
+        if (id === 'parent-1')
+          return Promise.resolve(
+            buildUser({ id: 'parent-1', role: UserRole.PARENT, studentIds: ['student-1'] }),
+          );
+        return Promise.resolve(null);
+      });
+
+      const removalResult = await removeParentFromStudent('student-1', 'parent-1');
+      expect(removalResult.student?.parentIds).toEqual([]);
+      expect(removalResult.parent?.studentIds).toEqual([]);
+
+      expect(findByIdSpy).toHaveBeenCalledTimes(4);
+      expect(linkParentSpy).toHaveBeenCalledWith('student-1', 'parent-1');
+      expect(unlinkParentSpy).toHaveBeenCalledWith('student-1', 'parent-1');
+    });
+  });
+
+  it('retrieves multiple users by ids', async () => {
+    const alice = buildUser({ id: 'alice', role: UserRole.STUDENT });
+    const bob = buildUser({ id: 'bob', role: UserRole.EDUCATOR });
+
+    vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
+      if (id === 'alice') return Promise.resolve(alice);
+      if (id === 'bob') return Promise.resolve(bob);
+      return Promise.resolve(null);
+    });
+
+    const { getUsersByIds } = useUsers();
+
+    const results = await getUsersByIds(['alice', 'missing', 'bob']);
+
+    expect(results).toHaveLength(2);
+    expect(results[0]?.id).toBe('alice');
+    expect(results[1]?.id).toBe('bob');
   });
 
   describe('resolvePictureUrl', () => {

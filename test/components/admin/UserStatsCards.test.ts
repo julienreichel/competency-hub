@@ -1,13 +1,14 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import UserStatsCards from '../../../src/components/admin/UserStatsCards.vue';
-import { withQuasarBrowser } from '../../browser-test-utils';
+import type { User } from '../../../src/models/User';
 import { UserRole } from '../../../src/models/User';
+import { withQuasarBrowser } from '../../browser-test-utils';
 
 describe('UserStatsCards - User Behavior', () => {
   const createUser = (
     overrides: Partial<{ role: UserRole; createdAt?: string; lastActive?: string }> = {},
-  ) => ({
+  ): Partial<User> => ({
     role: UserRole.STUDENT,
     createdAt: new Date('2024-01-10T10:00:00Z').toISOString(),
     lastActive: new Date().toISOString(),

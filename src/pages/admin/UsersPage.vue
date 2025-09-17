@@ -65,7 +65,17 @@
     <user-details-dialog
       v-model="showUserDialog"
       :user="selectedUserForDialog"
+      :all-users="users"
+      :current-educator-id="currentEducatorId"
+      :can-manage-parents="canManageParents"
+      :can-manage-educators="canManageEducators"
       @close="closeUserDialog"
+      @add-educator="handleAddEducator"
+      @remove-educator="handleRemoveEducator"
+      @assign-parent="handleAssignParent"
+      @remove-parent="handleRemoveParent"
+      @assign-educator="handleAssignEducatorFromDialog"
+      @unassign-educator="handleUnassignEducatorFromDialog"
     />
 
     <edit-user-dialog
@@ -88,6 +98,7 @@ import UserDetailsDialog from 'src/components/admin/UserDetailsDialog.vue';
 import UserStatsCards from 'src/components/admin/UserStatsCards.vue';
 import RoleChip from 'src/components/ui/RoleChip.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
+import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -137,7 +148,28 @@ const columns = [
   { name: 'actions', label: 'Actions', field: 'actions', align: 'center' as const },
 ];
 
-const { fetchUsers, updateUser, addUserToGroup } = useUsers();
+const {
+  fetchUsers,
+  updateUser,
+  addUserToGroup,
+  assignParentToStudent,
+  removeParentFromStudent,
+  assignEducatorToStudent,
+  unassignEducatorFromStudent,
+  error,
+} = useUsers();
+
+const { userId, hasRole } = useAuth();
+
+const currentEducatorId = computed(() => {
+  if (!hasRole(UserRole.EDUCATOR)) {
+    return null;
+  }
+  const id = userId.value;
+  return id && id !== 'undefined' ? id : null;
+});
+const canManageParents = computed(() => hasRole(UserRole.ADMIN));
+const canManageEducators = computed(() => hasRole(UserRole.ADMIN));
 
 onMounted(async () => {
   users.value = await fetchUsers();
@@ -157,6 +189,27 @@ const filteredUsers = computed(() => {
 
 function onRoleFilterUpdate(val: string | null): void {
   roleFilter.value = (val as UserRole) ?? null;
+}
+
+function updateUserInState(updatedUser: User | null): void {
+  if (!updatedUser) {
+    return;
+  }
+  const index = users.value.findIndex((candidate) => candidate.id === updatedUser.id);
+  if (index !== -1) {
+    users.value.splice(index, 1, updatedUser);
+  } else {
+    users.value.push(updatedUser);
+  }
+}
+
+function updateDialogUser(updatedUser: User | null): void {
+  if (!updatedUser || !selectedUserForDialog.value) {
+    return;
+  }
+  if (selectedUserForDialog.value.id === updatedUser.id) {
+    selectedUserForDialog.value = updatedUser;
+  }
 }
 
 function viewUser(user: User): void {
@@ -194,13 +247,8 @@ async function handleEditSaved(payload: {
   });
 
   if (updatedUser) {
-    const index = users.value.findIndex((candidate) => candidate.id === updatedUser.id);
-    if (index !== -1) {
-      users.value.splice(index, 1, updatedUser);
-    }
-    if (selectedUserForDialog.value?.id === updatedUser.id) {
-      selectedUserForDialog.value = updatedUser;
-    }
+    updateUserInState(updatedUser);
+    updateDialogUser(updatedUser);
   }
 
   selectedUserForEdit.value = null;
@@ -210,6 +258,161 @@ async function handleEditSaved(payload: {
 function handleEditCanceled(): void {
   selectedUserForEdit.value = null;
   showEditDialog.value = false;
+}
+
+async function handleAssignParent(payload: { studentId: string; parentId: string }): Promise<void> {
+  const { student, parent } = await assignParentToStudent(payload.studentId, payload.parentId);
+
+  if (!student) {
+    $q.notify({
+      type: 'negative',
+      message: error.value ?? t('educator.assignParentError'),
+      position: 'top',
+    });
+    return;
+  }
+
+  updateUserInState(student);
+  updateUserInState(parent);
+  updateDialogUser(student);
+
+  $q.notify({
+    type: 'positive',
+    message: t('educator.parentAssignSuccess'),
+    position: 'top',
+  });
+}
+
+async function handleAddEducator(payload: {
+  studentId: string;
+  educatorId: string;
+}): Promise<void> {
+  const { student, educator } = await assignEducatorToStudent(
+    payload.studentId,
+    payload.educatorId,
+  );
+
+  if (!student) {
+    $q.notify({
+      type: 'negative',
+      message: error.value ?? t('educator.assignEducatorError'),
+      position: 'top',
+    });
+    return;
+  }
+
+  updateUserInState(student);
+  updateUserInState(educator);
+  updateDialogUser(student);
+
+  $q.notify({
+    type: 'positive',
+    message: t('educator.assignEducatorSuccess'),
+    position: 'top',
+  });
+}
+
+async function handleRemoveParent(payload: { studentId: string; parentId: string }): Promise<void> {
+  const { student, parent } = await removeParentFromStudent(payload.studentId, payload.parentId);
+
+  if (!student) {
+    $q.notify({
+      type: 'negative',
+      message: error.value ?? t('educator.removeParentError'),
+      position: 'top',
+    });
+    return;
+  }
+
+  updateUserInState(student);
+  updateUserInState(parent);
+  updateDialogUser(student);
+
+  $q.notify({
+    type: 'positive',
+    message: t('educator.parentRemoveSuccess'),
+    position: 'top',
+  });
+}
+
+async function handleRemoveEducator(payload: {
+  studentId: string;
+  educatorId: string;
+}): Promise<void> {
+  const { student, educator } = await unassignEducatorFromStudent(
+    payload.studentId,
+    payload.educatorId,
+  );
+
+  if (!student) {
+    $q.notify({
+      type: 'negative',
+      message: error.value ?? t('educator.removeEducatorError'),
+      position: 'top',
+    });
+    return;
+  }
+
+  updateUserInState(student);
+  updateUserInState(educator);
+  updateDialogUser(student);
+
+  $q.notify({
+    type: 'positive',
+    message: t('educator.removeEducatorSuccess'),
+    position: 'top',
+  });
+}
+
+async function handleAssignEducatorFromDialog(studentId: string): Promise<void> {
+  if (!currentEducatorId.value) {
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    return;
+  }
+
+  const { student, educator } = await assignEducatorToStudent(studentId, currentEducatorId.value);
+
+  if (!student) {
+    $q.notify({
+      type: 'negative',
+      message: error.value ?? t('educator.assignError'),
+      position: 'top',
+    });
+    return;
+  }
+
+  updateUserInState(student);
+  updateUserInState(educator);
+  updateDialogUser(student);
+
+  $q.notify({ type: 'positive', message: t('educator.assignSuccess'), position: 'top' });
+}
+
+async function handleUnassignEducatorFromDialog(studentId: string): Promise<void> {
+  if (!currentEducatorId.value) {
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    return;
+  }
+
+  const { student, educator } = await unassignEducatorFromStudent(
+    studentId,
+    currentEducatorId.value,
+  );
+
+  if (!student) {
+    $q.notify({
+      type: 'negative',
+      message: error.value ?? t('educator.unassignError'),
+      position: 'top',
+    });
+    return;
+  }
+
+  updateUserInState(student);
+  updateUserInState(educator);
+  updateDialogUser(student);
+
+  $q.notify({ type: 'positive', message: t('educator.unassignSuccess'), position: 'top' });
 }
 
 async function performBulkRoleChange(targetRole: UserRole): Promise<void> {

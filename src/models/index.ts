@@ -1,6 +1,6 @@
 // Export all models
 export { User, UserRole } from './User';
-export type { CreateUserData, UpdateUserData, UserGraphQLData } from './User';
+export type { CreateUserData, UpdateUserData } from './User';
 
 export { Competency, CompetencyStatus } from './Competency';
 export type {
