@@ -2,12 +2,17 @@
 export { User, UserRole } from './User';
 export type { CreateUserData, UpdateUserData } from './User';
 
-export { Competency, CompetencyStatus } from './Competency';
+export { Competency, SubCompetency, CompetencyResource, ResourceType } from './Competency';
 export type {
-  CreateCompetencyData,
-  UpdateCompetencyData,
-  CompetencyGraphQLData,
+  CreateCompetencyInput,
+  UpdateCompetencyInput,
+  CreateSubCompetencyInput,
+  UpdateSubCompetencyInput,
+  CreateResourceInput,
+  UpdateResourceInput,
 } from './Competency';
+export { Domain } from './Domain';
+export type { DomainInit } from './Domain';
 
 // Export base classes
 export { BaseModel } from './base/BaseModel';
@@ -16,4 +21,10 @@ export { GraphQLClient, graphQLClient } from './base/GraphQLClient';
 
 // Export repositories
 export { UserRepository, userRepository } from './repositories/UserRepository';
+export { DomainRepository, domainRepository } from './repositories/DomainRepository';
 export { CompetencyRepository, competencyRepository } from './repositories/CompetencyRepository';
+export {
+  SubCompetencyRepository,
+  subCompetencyRepository,
+} from './repositories/SubCompetencyRepository';
+export { ResourceRepository, resourceRepository } from './repositories/ResourceRepository';

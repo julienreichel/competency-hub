@@ -303,17 +303,130 @@ export class GraphQLClient {
     }
   }
 
-  /**
-   * Create a new Competency record
-   * @param data - The competency data to create
-   * @returns Promise with the created record
-   */
+  async createDomain(
+    data: Schema['Domain']['createType'],
+  ): Promise<Schema['Domain']['type'] | null> {
+    try {
+      const result = await this.client.models.Domain.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating Domain:', error);
+      throw error;
+    }
+  }
+
+  async updateDomain(
+    data: Schema['Domain']['updateType'],
+  ): Promise<Schema['Domain']['type'] | null> {
+    try {
+      const result = await this.client.models.Domain.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating Domain:', error);
+      throw error;
+    }
+  }
+
+  async deleteDomain(id: string): Promise<Schema['Domain']['type'] | null> {
+    try {
+      const result = await this.client.models.Domain.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting Domain with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getDomain(id: string): Promise<Schema['Domain']['type'] | null> {
+    try {
+      const result = await this.client.models.Domain.get(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error getting Domain with id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getDomainWithHierarchy(id: string): Promise<Schema['Domain']['type'] | null> {
+    try {
+      const result = await this.client.models.Domain.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'name',
+            'colorCode',
+            'createdAt',
+            'updatedAt',
+            'competencies.*',
+            'competencies.subCompetencies.*',
+            'competencies.subCompetencies.resources.*',
+            'competencies.subCompetencies.resources.person.*',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['Domain']['type'];
+    } catch (error) {
+      console.error(`Error getting Domain hierarchy for id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async listDomains(filter?: Record<string, unknown>): Promise<Schema['Domain']['type'][]> {
+    try {
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.Domain.list(options);
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error listing Domains:', error);
+      throw error;
+    }
+  }
+
   async createCompetency(
-    data: Record<string, unknown>,
+    data: Schema['Competency']['createType'],
   ): Promise<Schema['Competency']['type'] | null> {
     try {
       const result = await this.client.models.Competency.create(data, {
-        authMode: 'identityPool',
+        authMode: 'userPool',
       });
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
@@ -325,17 +438,47 @@ export class GraphQLClient {
     }
   }
 
-  /**
-   * Get a Competency record by ID
-   * @param id - The record ID
-   * @returns Promise with the record or null
-   */
+  async updateCompetency(
+    data: Schema['Competency']['updateType'],
+  ): Promise<Schema['Competency']['type'] | null> {
+    try {
+      const result = await this.client.models.Competency.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating Competency:', error);
+      throw error;
+    }
+  }
+
+  async deleteCompetency(id: string): Promise<Schema['Competency']['type'] | null> {
+    try {
+      const result = await this.client.models.Competency.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting Competency with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
   async getCompetency(id: string): Promise<Schema['Competency']['type'] | null> {
     try {
       const result = await this.client.models.Competency.get(
         { id },
         {
-          authMode: 'identityPool',
+          authMode: 'userPool',
         },
       );
       if (result.errors) {
@@ -348,17 +491,42 @@ export class GraphQLClient {
     }
   }
 
-  /**
-   * List all Competency records
-   * @param filter - Optional filter criteria
-   * @returns Promise with array of records
-   */
+  async getCompetencyWithDetails(id: string): Promise<Schema['Competency']['type'] | null> {
+    try {
+      const result = await this.client.models.Competency.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'domainId',
+            'name',
+            'description',
+            'objectives',
+            'createdAt',
+            'updatedAt',
+            'subCompetencies.*',
+            'subCompetencies.resources.*',
+            'subCompetencies.resources.person.*',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['Competency']['type'];
+    } catch (error) {
+      console.error(`Error getting Competency details for ID ${id}:`, error);
+      throw error;
+    }
+  }
+
   async listCompetencies(
     filter?: Record<string, unknown>,
   ): Promise<Schema['Competency']['type'][]> {
     try {
-      const options: { authMode: 'identityPool'; filter?: Record<string, unknown> } = {
-        authMode: 'identityPool',
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
       };
       if (filter) {
         options.filter = filter;
@@ -374,44 +542,97 @@ export class GraphQLClient {
     }
   }
 
-  /**
-   * Update a Competency record
-   * @param id - The record ID
-   * @param data - The data to update
-   * @returns Promise with the updated record
-   */
-  async updateCompetency(
-    id: string,
-    data: Record<string, unknown>,
-  ): Promise<Schema['Competency']['type'] | null> {
+  async createSubCompetency(
+    data: Schema['SubCompetency']['createType'],
+  ): Promise<Schema['SubCompetency']['type'] | null> {
     try {
-      const result = await this.client.models.Competency.update(
-        { id, ...data },
-        {
-          authMode: 'identityPool',
-        },
-      );
+      const result = await this.client.models.SubCompetency.create(data, {
+        authMode: 'userPool',
+      });
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
       return result.data;
     } catch (error) {
-      console.error(`Error updating Competency with ID ${id}:`, error);
+      console.error('Error creating SubCompetency:', error);
       throw error;
     }
   }
 
-  /**
-   * Delete a Competency record
-   * @param id - The record ID
-   * @returns Promise with the deleted record
-   */
-  async deleteCompetency(id: string): Promise<Schema['Competency']['type'] | null> {
+  async getSubCompetency(id: string): Promise<Schema['SubCompetency']['type'] | null> {
     try {
-      const result = await this.client.models.Competency.delete(
+      const result = await this.client.models.SubCompetency.get(
         { id },
         {
-          authMode: 'identityPool',
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'competencyId',
+            'name',
+            'description',
+            'objectives',
+            'order',
+            'createdAt',
+            'updatedAt',
+            'resources.*',
+            'resources.person.*',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['SubCompetency']['type'];
+    } catch (error) {
+      console.error(`Error getting SubCompetency with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async listSubCompetencies(
+    filter?: Record<string, unknown>,
+  ): Promise<Schema['SubCompetency']['type'][]> {
+    try {
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.SubCompetency.list(options);
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error listing SubCompetencies:', error);
+      throw error;
+    }
+  }
+
+  async updateSubCompetency(
+    data: Schema['SubCompetency']['updateType'],
+  ): Promise<Schema['SubCompetency']['type'] | null> {
+    try {
+      const result = await this.client.models.SubCompetency.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating SubCompetency:', error);
+      throw error;
+    }
+  }
+
+  async deleteSubCompetency(id: string): Promise<Schema['SubCompetency']['type'] | null> {
+    try {
+      const result = await this.client.models.SubCompetency.delete(
+        { id },
+        {
+          authMode: 'userPool',
         },
       );
       if (result.errors) {
@@ -419,7 +640,108 @@ export class GraphQLClient {
       }
       return result.data;
     } catch (error) {
-      console.error(`Error deleting Competency with ID ${id}:`, error);
+      console.error(`Error deleting SubCompetency with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async createResource(
+    data: Schema['Resource']['createType'],
+  ): Promise<Schema['Resource']['type'] | null> {
+    try {
+      const result = await this.client.models.Resource.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating Resource:', error);
+      throw error;
+    }
+  }
+
+  async updateResource(
+    data: Schema['Resource']['updateType'],
+  ): Promise<Schema['Resource']['type'] | null> {
+    try {
+      const result = await this.client.models.Resource.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating Resource:', error);
+      throw error;
+    }
+  }
+
+  async deleteResource(id: string): Promise<Schema['Resource']['type'] | null> {
+    try {
+      const result = await this.client.models.Resource.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting Resource with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getResource(id: string): Promise<Schema['Resource']['type'] | null> {
+    try {
+      const result = await this.client.models.Resource.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'subCompetencyId',
+            'type',
+            'title',
+            'description',
+            'url',
+            'personUserId',
+            'person.*',
+            'createdAt',
+            'updatedAt',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['Resource']['type'];
+    } catch (error) {
+      console.error(`Error getting Resource with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async listResources(filter?: Record<string, unknown>): Promise<Schema['Resource']['type'][]> {
+    try {
+      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+        authMode: 'userPool',
+      };
+      if (filter) {
+        options.filter = filter;
+      }
+      const result = await this.client.models.Resource.list(options);
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error listing Resources:', error);
       throw error;
     }
   }

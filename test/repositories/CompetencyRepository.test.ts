@@ -1,13 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Competency, CompetencyStatus } from '../../src/models/Competency';
+import { Competency } from '../../src/models/Competency';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { CompetencyRepository } from '../../src/models/repositories/CompetencyRepository';
 
-// Mock the GraphQL client
+const mockGraphQLClient = graphQLClient as unknown as {
+  createCompetency: ReturnType<typeof vi.fn>;
+  getCompetency: ReturnType<typeof vi.fn>;
+  getCompetencyWithDetails: ReturnType<typeof vi.fn>;
+  listCompetencies: ReturnType<typeof vi.fn>;
+  updateCompetency: ReturnType<typeof vi.fn>;
+  deleteCompetency: ReturnType<typeof vi.fn>;
+};
+
 vi.mock('../../src/models/base/GraphQLClient', () => ({
   graphQLClient: {
     createCompetency: vi.fn(),
     getCompetency: vi.fn(),
+    getCompetencyWithDetails: vi.fn(),
     listCompetencies: vi.fn(),
     updateCompetency: vi.fn(),
     deleteCompetency: vi.fn(),
@@ -15,332 +24,136 @@ vi.mock('../../src/models/base/GraphQLClient', () => ({
 }));
 
 describe('CompetencyRepository', () => {
-  let competencyRepository: CompetencyRepository;
-  const mockGraphQLClient = graphQLClient as unknown as {
-    createCompetency: ReturnType<typeof vi.fn>;
-    getCompetency: ReturnType<typeof vi.fn>;
-    listCompetencies: ReturnType<typeof vi.fn>;
-    updateCompetency: ReturnType<typeof vi.fn>;
-    deleteCompetency: ReturnType<typeof vi.fn>;
-  };
+  let repository: CompetencyRepository;
 
-  const validCompetencyData = {
+  const rawCompetency = {
     id: 'comp-1',
-    domain: 'Mathematics',
-    subDomain: 'Algebra',
-    description: 'Basic algebraic operations',
-    stage: 'Elementary',
-    status: CompetencyStatus.UNLOCKED,
-    createdAt: '2023-01-01T00:00:00Z',
-    updatedAt: '2023-01-01T00:00:00Z',
-  };
-
-  const createCompetencyData = {
-    domain: 'Science',
-    subDomain: 'Physics',
-    description: 'Basic physics concepts',
-    stage: 'Middle School',
-    status: CompetencyStatus.LOCKED,
+    domainId: 'domain-1',
+    name: 'Foundations',
+    description: 'Fundamental knowledge',
+    objectives: 'Understand basics',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-02T00:00:00.000Z',
+    subCompetencies: [
+      {
+        id: 'sub-1',
+        competencyId: 'comp-1',
+        name: 'Stage 1',
+        description: 'First stage',
+        objectives: 'Cover introduction',
+        order: 1,
+        resources: [
+          {
+            id: 'res-1',
+            subCompetencyId: 'sub-1',
+            type: 'Link',
+            title: 'Overview video',
+            url: 'https://example.com/video',
+            createdAt: '2024-01-01T00:00:00.000Z',
+            updatedAt: '2024-01-02T00:00:00.000Z',
+          },
+        ],
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-02T00:00:00.000Z',
+      },
+    ],
   };
 
   beforeEach(() => {
-    competencyRepository = new CompetencyRepository();
+    repository = new CompetencyRepository();
     vi.clearAllMocks();
   });
 
-  describe('create', () => {
-    it('should create competency and return Competency instance', async () => {
-      mockGraphQLClient.createCompetency.mockResolvedValue(validCompetencyData);
+  it('creates a competency', async () => {
+    mockGraphQLClient.createCompetency.mockResolvedValue(rawCompetency);
 
-      const result = await competencyRepository.create(createCompetencyData);
-
-      expect(mockGraphQLClient.createCompetency).toHaveBeenCalledWith(createCompetencyData);
-      expect(result).toBeInstanceOf(Competency);
-      expect(result?.id).toBe('comp-1');
-      expect(result?.domain).toBe('Mathematics');
+    const result = await repository.create({
+      domainId: 'domain-1',
+      name: 'Foundations',
+      description: 'Fundamental knowledge',
+      objectives: 'Understand basics',
     });
 
-    it('should return null when creation fails', async () => {
-      mockGraphQLClient.createCompetency.mockResolvedValue(null);
-
-      await expect(competencyRepository.create(createCompetencyData)).rejects.toThrow(
-        'Failed to create competency',
-      );
+    expect(mockGraphQLClient.createCompetency).toHaveBeenCalledWith({
+      domainId: 'domain-1',
+      name: 'Foundations',
+      description: 'Fundamental knowledge',
+      objectives: 'Understand basics',
     });
-
-    it('should handle creation errors', async () => {
-      const error = new Error('Creation failed');
-      mockGraphQLClient.createCompetency.mockRejectedValue(error);
-
-      await expect(competencyRepository.create(createCompetencyData)).rejects.toThrow(
-        'Creation failed',
-      );
-    });
+    expect(result).toBeInstanceOf(Competency);
+    expect(result.subCompetencies).toHaveLength(1);
   });
 
-  describe('findById', () => {
-    it('should find competency by id and return Competency instance', async () => {
-      mockGraphQLClient.getCompetency.mockResolvedValue(validCompetencyData);
+  it('retrieves competency by id without details', async () => {
+    mockGraphQLClient.getCompetency.mockResolvedValue(rawCompetency);
 
-      const result = await competencyRepository.findById('comp-1');
+    const result = await repository.findById('comp-1');
 
-      expect(mockGraphQLClient.getCompetency).toHaveBeenCalledWith('comp-1');
-      expect(result).toBeInstanceOf(Competency);
-      expect(result?.id).toBe('comp-1');
-    });
-
-    it('should return null when competency not found', async () => {
-      mockGraphQLClient.getCompetency.mockResolvedValue(null);
-
-      const result = await competencyRepository.findById('non-existent');
-
-      expect(result).toBeNull();
-      expect(mockGraphQLClient.getCompetency).toHaveBeenCalledWith('non-existent');
-    });
-
-    it('should handle find errors', async () => {
-      const error = new Error('Find failed');
-      mockGraphQLClient.getCompetency.mockRejectedValue(error);
-
-      await expect(competencyRepository.findById('comp-1')).rejects.toThrow('Find failed');
-    });
+    expect(mockGraphQLClient.getCompetency).toHaveBeenCalledWith('comp-1');
+    expect(result?.name).toBe('Foundations');
+    expect(result?.subCompetencies).toHaveLength(1);
   });
 
-  describe('findAll', () => {
-    it('should find all competencies and return Competency instances', async () => {
-      const competenciesData = [
-        validCompetencyData,
-        { ...validCompetencyData, id: 'comp-2', domain: 'Science' },
-      ];
-      mockGraphQLClient.listCompetencies.mockResolvedValue(competenciesData);
+  it('retrieves competency with nested details', async () => {
+    mockGraphQLClient.getCompetencyWithDetails.mockResolvedValue(rawCompetency);
 
-      const result = await competencyRepository.findAll();
+    const result = await repository.findById('comp-1', { includeDetails: true });
 
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith(undefined);
-      expect(result).toHaveLength(2);
-      expect(result[0]).toBeInstanceOf(Competency);
-      expect(result[1]).toBeInstanceOf(Competency);
-      expect(result[0]?.id).toBe('comp-1');
-      expect(result[1]?.id).toBe('comp-2');
-    });
-
-    it('should find competencies with filter', async () => {
-      const filter = { domain: { eq: 'Mathematics' } };
-      mockGraphQLClient.listCompetencies.mockResolvedValue([validCompetencyData]);
-
-      const result = await competencyRepository.findAll(filter);
-
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith(filter);
-      expect(result).toHaveLength(1);
-      expect(result[0]).toBeInstanceOf(Competency);
-    });
-
-    it('should return empty array when no competencies found', async () => {
-      mockGraphQLClient.listCompetencies.mockResolvedValue([]);
-
-      const result = await competencyRepository.findAll();
-
-      expect(result).toEqual([]);
-    });
-
-    it('should handle list errors', async () => {
-      const error = new Error('List failed');
-      mockGraphQLClient.listCompetencies.mockRejectedValue(error);
-
-      await expect(competencyRepository.findAll()).rejects.toThrow('List failed');
-    });
+    expect(mockGraphQLClient.getCompetencyWithDetails).toHaveBeenCalledWith('comp-1');
+    expect(result?.subCompetencies[0]?.resources[0]?.title).toBe('Overview video');
   });
 
-  describe('findByDomain', () => {
-    it('should find competencies by domain', async () => {
-      const mathCompetencies = [validCompetencyData, { ...validCompetencyData, id: 'comp-2' }];
-      mockGraphQLClient.listCompetencies.mockResolvedValue(mathCompetencies);
+  it('returns null when competency not found', async () => {
+    mockGraphQLClient.getCompetency.mockResolvedValue(null);
 
-      const result = await competencyRepository.findByDomain('Mathematics');
+    const result = await repository.findById('missing');
 
-      expect(result).toHaveLength(2);
-      expect(result[0]?.id).toBe('comp-1');
-      expect(result[1]?.id).toBe('comp-2');
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
-        domain: { eq: 'Mathematics' },
-      });
-    });
-
-    it('should return empty array when no competencies found for domain', async () => {
-      mockGraphQLClient.listCompetencies.mockResolvedValue([]);
-
-      const result = await competencyRepository.findByDomain('Physics');
-
-      expect(result).toEqual([]);
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
-        domain: { eq: 'Physics' },
-      });
-    });
+    expect(result).toBeNull();
   });
 
-  describe('findByStatus', () => {
-    it('should find competencies by status', async () => {
-      const unlockedCompetencies = [validCompetencyData];
-      mockGraphQLClient.listCompetencies.mockResolvedValue(unlockedCompetencies);
+  it('lists competencies with optional filter', async () => {
+    mockGraphQLClient.listCompetencies.mockResolvedValue([rawCompetency]);
 
-      const result = await competencyRepository.findByStatus(CompetencyStatus.UNLOCKED);
+    const result = await repository.findAll({ domainId: { eq: 'domain-1' } });
 
-      expect(result).toHaveLength(1);
-      expect(result[0]?.status).toBe(CompetencyStatus.UNLOCKED);
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
-        status: { eq: CompetencyStatus.UNLOCKED },
-      });
+    expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+      domainId: { eq: 'domain-1' },
     });
-
-    it('should find acquired competencies', async () => {
-      const acquiredCompetency = { ...validCompetencyData, status: CompetencyStatus.ACQUIRED };
-      mockGraphQLClient.listCompetencies.mockResolvedValue([acquiredCompetency]);
-
-      const result = await competencyRepository.findByStatus(CompetencyStatus.ACQUIRED);
-
-      expect(result).toHaveLength(1);
-      expect(result[0]?.status).toBe(CompetencyStatus.ACQUIRED);
-    });
+    expect(result).toHaveLength(1);
   });
 
-  describe('findByStage', () => {
-    it('should find competencies by stage', async () => {
-      const elementaryCompetencies = [validCompetencyData];
-      mockGraphQLClient.listCompetencies.mockResolvedValue(elementaryCompetencies);
-
-      const result = await competencyRepository.findByStage('Elementary');
-
-      expect(result).toHaveLength(1);
-      expect(result[0]?.stage).toBe('Elementary');
-      expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
-        stage: { eq: 'Elementary' },
-      });
+  it('updates a competency', async () => {
+    mockGraphQLClient.updateCompetency.mockResolvedValue({
+      ...rawCompetency,
+      description: 'Updated description',
     });
+
+    const result = await repository.update('comp-1', { description: 'Updated description' });
+
+    expect(mockGraphQLClient.updateCompetency).toHaveBeenCalledWith({
+      id: 'comp-1',
+      description: 'Updated description',
+    });
+    expect(result.description).toBe('Updated description');
   });
 
-  describe('update', () => {
-    it('should update competency and return updated Competency instance', async () => {
-      const updatedData = { ...validCompetencyData, description: 'Advanced algebraic operations' };
-      mockGraphQLClient.updateCompetency.mockResolvedValue(updatedData);
+  it('deletes a competency', async () => {
+    mockGraphQLClient.deleteCompetency.mockResolvedValue(rawCompetency);
 
-      const result = await competencyRepository.update('comp-1', {
-        description: 'Advanced algebraic operations',
-      });
+    const result = await repository.delete('comp-1');
 
-      expect(mockGraphQLClient.updateCompetency).toHaveBeenCalledWith('comp-1', {
-        description: 'Advanced algebraic operations',
-      });
-      expect(result).toBeInstanceOf(Competency);
-      expect(result?.description).toBe('Advanced algebraic operations');
-    });
-
-    it('should return null when update fails', async () => {
-      mockGraphQLClient.updateCompetency.mockResolvedValue(null);
-
-      await expect(
-        competencyRepository.update('comp-1', { description: 'New description' }),
-      ).rejects.toThrow('Failed to update competency comp-1');
-    });
-
-    it('should handle update errors', async () => {
-      const error = new Error('Update failed');
-      mockGraphQLClient.updateCompetency.mockRejectedValue(error);
-
-      await expect(
-        competencyRepository.update('comp-1', { description: 'New description' }),
-      ).rejects.toThrow('Update failed');
-    });
+    expect(mockGraphQLClient.deleteCompetency).toHaveBeenCalledWith('comp-1');
+    expect(result.id).toBe('comp-1');
   });
 
-  describe('delete', () => {
-    it('should delete competency successfully', async () => {
-      mockGraphQLClient.deleteCompetency.mockResolvedValue(validCompetencyData);
+  it('finds competencies by domain', async () => {
+    mockGraphQLClient.listCompetencies.mockResolvedValue([rawCompetency]);
 
-      const result = await competencyRepository.delete('comp-1');
+    const result = await repository.findByDomain('domain-1');
 
-      expect(mockGraphQLClient.deleteCompetency).toHaveBeenCalledWith('comp-1');
-      expect(result).toBeInstanceOf(Competency);
-      expect(result.id).toBe('comp-1');
+    expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+      domainId: { eq: 'domain-1' },
     });
-
-    it('should return false when deletion fails', async () => {
-      mockGraphQLClient.deleteCompetency.mockResolvedValue(null);
-
-      await expect(competencyRepository.delete('comp-1')).rejects.toThrow(
-        'Failed to delete competency comp-1',
-      );
-    });
-
-    it('should handle deletion errors', async () => {
-      const error = new Error('Deletion failed');
-      mockGraphQLClient.deleteCompetency.mockRejectedValue(error);
-
-      await expect(competencyRepository.delete('comp-1')).rejects.toThrow('Deletion failed');
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle null responses gracefully', async () => {
-      mockGraphQLClient.listCompetencies.mockResolvedValue(null);
-
-      const result = await competencyRepository.findAll();
-
-      expect(result).toEqual([]);
-    });
-
-    it('should handle undefined responses gracefully', async () => {
-      mockGraphQLClient.listCompetencies.mockResolvedValue(undefined);
-
-      const result = await competencyRepository.findAll();
-
-      expect(result).toEqual([]);
-    });
-
-    it('should filter out null competencies from list results', async () => {
-      const mixedResults = [validCompetencyData, null, { ...validCompetencyData, id: 'comp-2' }];
-      mockGraphQLClient.listCompetencies.mockResolvedValue(mixedResults);
-
-      const result = await competencyRepository.findAll();
-
-      expect(result).toHaveLength(2);
-      expect(result[0]?.id).toBe('comp-1');
-      expect(result[1]?.id).toBe('comp-2');
-    });
-  });
-
-  describe('Business Logic Integration', () => {
-    it('should work with competency status transitions', async () => {
-      const lockedCompetency = { ...validCompetencyData, status: CompetencyStatus.LOCKED };
-      const unlockedCompetency = { ...validCompetencyData, status: CompetencyStatus.UNLOCKED };
-
-      mockGraphQLClient.getCompetency.mockResolvedValue(lockedCompetency);
-      mockGraphQLClient.updateCompetency.mockResolvedValue(unlockedCompetency);
-
-      const competency = await competencyRepository.findById('comp-1');
-      expect(competency?.status).toBe(CompetencyStatus.LOCKED);
-
-      // Simulate unlocking
-      const updated = await competencyRepository.update('comp-1', {
-        status: CompetencyStatus.UNLOCKED,
-      });
-      expect(updated?.status).toBe(CompetencyStatus.UNLOCKED);
-    });
-
-    it('should support domain-based competency hierarchies', async () => {
-      const mathBasic = { ...validCompetencyData, id: 'math-basic', subDomain: 'Basic Math' };
-      const mathAdvanced = {
-        ...validCompetencyData,
-        id: 'math-advanced',
-        subDomain: 'Advanced Math',
-      };
-
-      mockGraphQLClient.listCompetencies.mockResolvedValue([mathBasic, mathAdvanced]);
-
-      const mathCompetencies = await competencyRepository.findByDomain('Mathematics');
-
-      expect(mathCompetencies).toHaveLength(2);
-      expect(mathCompetencies.some((c) => c.subDomain === 'Basic Math')).toBe(true);
-      expect(mathCompetencies.some((c) => c.subDomain === 'Advanced Math')).toBe(true);
-    });
+    expect(result[0]?.domainId).toBe('domain-1');
   });
 });

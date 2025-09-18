@@ -1,267 +1,468 @@
+import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
+import { User, UserRole } from './User';
+import type { UserRelationInit } from './User';
 
-/**
- * Competency status enumeration
- */
-export enum CompetencyStatus {
-  LOCKED = 'LOCKED',
-  UNLOCKED = 'UNLOCKED',
-  ACQUIRED = 'ACQUIRED',
-  IN_PROGRESS = 'IN_PROGRESS',
+type AmplifyCompetency = NonNullable<Schema['Competency']['type']>;
+type AmplifySubCompetency = NonNullable<Schema['SubCompetency']['type']>;
+type AmplifyResource = NonNullable<Schema['Resource']['type']>;
+
+type RelationCollection<T> = T | T[] | { items?: T[] } | { toArray?: () => T[] } | null | undefined;
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object';
+
+function normaliseCollection<T>(input: RelationCollection<T>): T[];
+function normaliseCollection<T>(input: unknown): T[];
+function normaliseCollection<T>(input: unknown): T[] {
+  const candidate = input as RelationCollection<T>;
+
+  if (!candidate) {
+    return [];
+  }
+
+  if (Array.isArray(candidate)) {
+    return candidate.filter((item): item is T => item !== null && item !== undefined);
+  }
+
+  if (typeof candidate === 'object') {
+    const items = (candidate as { items?: unknown }).items;
+    if (Array.isArray(items)) {
+      return items.filter((item): item is T => item !== null && item !== undefined);
+    }
+
+    const toArray = (candidate as { toArray?: () => unknown }).toArray;
+    if (typeof toArray === 'function') {
+      const array = toArray();
+      if (Array.isArray(array)) {
+        return array.filter((item): item is T => item !== null && item !== undefined);
+      }
+    }
+  }
+
+  return [];
 }
 
-// Progress calculation constants
-const PROGRESS_LOCKED = 0;
-const PROGRESS_UNLOCKED = 25;
-const PROGRESS_IN_PROGRESS = 50;
-const PROGRESS_ACQUIRED = 100;
+const hasToJSON = (value: unknown): value is { toJSON: () => unknown } => {
+  if (!isObject(value)) {
+    return false;
+  }
+  return typeof value.toJSON === 'function';
+};
 
-/**
- * Competency data interface for creation
- */
-export interface CreateCompetencyData extends Record<string, unknown> {
-  domain: string;
-  subDomain: string;
-  description: string;
-  stage: string;
-  status: CompetencyStatus;
+const extractUserRelation = (value: unknown): UserRelationInit | null => {
+  if (!value) {
+    return null;
+  }
+
+  const unwrap = (candidate: unknown): Record<string, unknown> | null => {
+    if (!isObject(candidate)) {
+      return null;
+    }
+
+    if (hasToJSON(candidate)) {
+      return unwrap(candidate.toJSON());
+    }
+
+    return candidate;
+  };
+
+  const record = unwrap(value);
+  if (!record) {
+    return null;
+  }
+
+  const id = record.id;
+  if (typeof id !== 'string' || id.trim().length === 0) {
+    return null;
+  }
+
+  const roleCandidate =
+    typeof record.role === 'string'
+      ? Object.values(UserRole).find((candidate) => candidate === record.role)
+      : undefined;
+  const normalisedRole = roleCandidate ?? UserRole.UNKNOWN;
+
+  const email = typeof record.email === 'string' ? record.email : '';
+  const name = typeof record.name === 'string' && record.name.trim().length > 0 ? record.name : id;
+
+  const relation: UserRelationInit = {
+    id,
+    name,
+    role: normalisedRole,
+    email,
+    avatar: typeof record.avatar === 'string' ? record.avatar : '',
+    picture: typeof record.picture === 'string' ? record.picture : null,
+    contactInfo: typeof record.contactInfo === 'string' ? record.contactInfo : '',
+    lastActive: typeof record.lastActive === 'string' ? record.lastActive : null,
+  };
+
+  if (typeof record.createdAt === 'string') {
+    relation.createdAt = record.createdAt;
+  }
+
+  if (typeof record.updatedAt === 'string') {
+    relation.updatedAt = record.updatedAt;
+  }
+
+  return relation;
+};
+
+export enum ResourceType {
+  LINK = 'Link',
+  HUMAN = 'Human',
+  DOCUMENT = 'Document',
+  LOCATION = 'Location',
 }
 
-/**
- * Competency data interface for updates
- */
-export interface UpdateCompetencyData extends Record<string, unknown> {
-  domain?: string;
-  subDomain?: string;
-  description?: string;
-  stage?: string;
-  status?: CompetencyStatus;
-}
-
-/**
- * Raw competency data from GraphQL
- */
-export interface CompetencyGraphQLData {
+export interface ResourceInit extends Record<string, unknown> {
   id: string;
-  domain: string;
-  subDomain: string;
-  description: string;
-  stage: string;
-  status: CompetencyStatus;
+  subCompetencyId: string;
+  type: ResourceType | string;
+  title: string;
+  description?: string | null;
+  url?: string | null;
+  personUserId?: string | null;
+  person?: UserRelationInit | User | null;
   createdAt?: string;
   updatedAt?: string;
 }
 
-/**
- * Competency domain model
- * Encapsulates competency business logic and validation
- */
-export class Competency extends BaseModel {
-  public readonly domain: string;
-  public readonly subDomain: string;
-  public readonly description: string;
-  public readonly stage: string;
-  public readonly status: CompetencyStatus;
+export interface CreateResourceInput extends Record<string, unknown> {
+  subCompetencyId: string;
+  type: ResourceType;
+  title: string;
+  description?: string | null;
+  url?: string | null;
+  personUserId?: string | null;
+}
 
-  constructor(data: CompetencyGraphQLData) {
+export type UpdateResourceInput = Partial<CreateResourceInput>;
+
+export interface SubCompetencyInit extends Record<string, unknown> {
+  id: string;
+  competencyId: string;
+  name: string;
+  description?: string | null;
+  objectives?: string | null;
+  order?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  resources?: Array<ResourceInit | CompetencyResource>;
+}
+
+export interface CreateSubCompetencyInput extends Record<string, unknown> {
+  competencyId: string;
+  name: string;
+  description?: string | null;
+  objectives?: string | null;
+  order?: number;
+}
+
+export type UpdateSubCompetencyInput = Partial<CreateSubCompetencyInput>;
+
+export interface CompetencyInit extends Record<string, unknown> {
+  id: string;
+  domainId: string;
+  name: string;
+  description?: string | null;
+  objectives?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  subCompetencies?: Array<SubCompetencyInit | SubCompetency>;
+}
+
+export interface CreateCompetencyInput extends Record<string, unknown> {
+  domainId: string;
+  name: string;
+  description?: string | null;
+  objectives?: string | null;
+}
+
+export type UpdateCompetencyInput = Partial<CreateCompetencyInput>;
+
+const normaliseResourceType = (type: string | ResourceType): ResourceType => {
+  if (Object.values(ResourceType).includes(type as ResourceType)) {
+    return type as ResourceType;
+  }
+  throw new Error(`Invalid resource type: ${type}`);
+};
+
+export class CompetencyResource extends BaseModel {
+  public readonly subCompetencyId: string;
+  public readonly type: ResourceType;
+  public readonly title: string;
+  public readonly description: string | null;
+  public readonly url: string | null;
+  public readonly personUserId: string | null;
+  public readonly person: User | null;
+
+  constructor(data: ResourceInit) {
     super(data);
-    this.domain = data.domain;
-    this.subDomain = data.subDomain;
-    this.description = data.description;
-    this.stage = data.stage;
-    this.status = data.status;
+    this.subCompetencyId = data.subCompetencyId;
+    this.type = normaliseResourceType(data.type);
+    this.title = data.title;
+    this.description = data.description ?? null;
+    this.url = data.url ?? null;
+    this.personUserId = data.personUserId ?? null;
+
+    if (data.person instanceof User) {
+      this.person = data.person;
+    } else if (data.person) {
+      this.person = User.create(data.person);
+    } else {
+      this.person = null;
+    }
 
     this.validate();
   }
 
-  /**
-   * Validate competency data
-   * @throws Error if validation fails
-   */
+  static fromAmplify(raw: AmplifyResource): CompetencyResource {
+    const personData = extractUserRelation(raw.person);
+
+    return new CompetencyResource({
+      id: raw.id,
+      subCompetencyId: raw.subCompetencyId,
+      type: (raw.type ?? ResourceType.LINK) as string,
+      title: raw.title,
+      description: raw.description ?? null,
+      url: raw.url ?? null,
+      personUserId: raw.personUserId ?? null,
+      person: personData,
+      ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
+      ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
+    });
+  }
+
   validate(): void {
-    if (!this.domain?.trim()) {
-      throw new Error('Competency domain is required');
+    if (!this.title?.trim()) {
+      throw new Error('Resource title is required');
     }
 
-    if (!this.subDomain?.trim()) {
-      throw new Error('Competency sub-domain is required');
+    if (!Object.values(ResourceType).includes(this.type)) {
+      throw new Error('Invalid resource type');
     }
 
-    if (!this.description?.trim()) {
-      throw new Error('Competency description is required');
+    if (this.type === ResourceType.LINK || this.type === ResourceType.DOCUMENT) {
+      if (!this.url?.trim()) {
+        throw new Error('Resource URL is required for link and document types');
+      }
     }
 
-    if (!this.stage?.trim()) {
-      throw new Error('Competency stage is required');
-    }
-
-    if (!Object.values(CompetencyStatus).includes(this.status)) {
-      throw new Error('Invalid competency status');
+    if (this.type === ResourceType.HUMAN && !this.personUserId) {
+      throw new Error('Human resource must reference a user');
     }
   }
 
-  /**
-   * Check if competency is locked
-   * @returns True if status is LOCKED
-   */
-  isLocked(): boolean {
-    return this.status === CompetencyStatus.LOCKED;
-  }
-
-  /**
-   * Check if competency is unlocked
-   * @returns True if status is UNLOCKED
-   */
-  isUnlocked(): boolean {
-    return this.status === CompetencyStatus.UNLOCKED;
-  }
-
-  /**
-   * Check if competency is in progress
-   * @returns True if status is IN_PROGRESS
-   */
-  isInProgress(): boolean {
-    return this.status === CompetencyStatus.IN_PROGRESS;
-  }
-
-  /**
-   * Check if competency is acquired
-   * @returns True if status is ACQUIRED
-   */
-  isAcquired(): boolean {
-    return this.status === CompetencyStatus.ACQUIRED;
-  }
-
-  /**
-   * Check if competency is available for learning
-   * @returns True if status is UNLOCKED or IN_PROGRESS
-   */
-  isAvailable(): boolean {
-    return this.isUnlocked() || this.isInProgress();
-  }
-
-  /**
-   * Get competency full name
-   * @returns Formatted full name (domain > sub-domain)
-   */
-  getFullName(): string {
-    return `${this.domain} > ${this.subDomain}`;
-  }
-
-  /**
-   * Get competency progress percentage
-   * @returns Progress percentage based on status
-   */
-  getProgressPercentage(): number {
-    switch (this.status) {
-      case CompetencyStatus.LOCKED:
-        return PROGRESS_LOCKED;
-      case CompetencyStatus.UNLOCKED:
-        return PROGRESS_UNLOCKED;
-      case CompetencyStatus.IN_PROGRESS:
-        return PROGRESS_IN_PROGRESS;
-      case CompetencyStatus.ACQUIRED:
-        return PROGRESS_ACQUIRED;
-      default:
-        return PROGRESS_LOCKED;
-    }
-  }
-
-  /**
-   * Get status display label
-   * @returns Human-readable status label
-   */
-  getStatusLabel(): string {
-    switch (this.status) {
-      case CompetencyStatus.LOCKED:
-        return 'Locked';
-      case CompetencyStatus.UNLOCKED:
-        return 'Available';
-      case CompetencyStatus.IN_PROGRESS:
-        return 'In Progress';
-      case CompetencyStatus.ACQUIRED:
-        return 'Acquired';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  /**
-   * Convert to JSON representation
-   * @returns Plain object representation
-   */
   toJSON(): Record<string, unknown> {
     return {
       id: this.id,
-      domain: this.domain,
-      subDomain: this.subDomain,
+      subCompetencyId: this.subCompetencyId,
+      type: this.type,
+      title: this.title,
       description: this.description,
-      stage: this.stage,
-      status: this.status,
+      url: this.url,
+      personUserId: this.personUserId,
+      person: this.person ? this.person.toJSON() : null,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
   }
 
-  /**
-   * Clone the competency instance
-   * @returns New Competency instance with the same data
-   */
+  clone(): CompetencyResource {
+    const personInit = this.person ? extractUserRelation(this.person.toJSON()) : null;
+    return new CompetencyResource({
+      id: this.id,
+      subCompetencyId: this.subCompetencyId,
+      type: this.type,
+      title: this.title,
+      description: this.description,
+      url: this.url,
+      personUserId: this.personUserId,
+      person: personInit,
+      ...(this.createdAt ? { createdAt: this.createdAt } : {}),
+      ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
+    });
+  }
+}
+
+export class SubCompetency extends BaseModel {
+  public readonly competencyId: string;
+  public readonly name: string;
+  public readonly description: string | null;
+  public readonly objectives: string | null;
+  public readonly order: number;
+  public readonly resources: CompetencyResource[];
+
+  constructor(data: SubCompetencyInit) {
+    super(data);
+    this.competencyId = data.competencyId;
+    this.name = data.name;
+    this.description = data.description ?? null;
+    this.objectives = data.objectives ?? null;
+    this.order = typeof data.order === 'number' ? data.order : 0;
+    const initialResources = Array.from(data.resources ?? []);
+    this.resources = initialResources.map((resource) =>
+      resource instanceof CompetencyResource ? resource.clone() : new CompetencyResource(resource),
+    );
+
+    this.validate();
+  }
+
+  static fromAmplify(raw: AmplifySubCompetency): SubCompetency {
+    const resources = normaliseCollection<AmplifyResource>(raw.resources).map((resource) =>
+      CompetencyResource.fromAmplify(resource),
+    );
+
+    return new SubCompetency({
+      id: raw.id,
+      competencyId: raw.competencyId,
+      name: raw.name,
+      description: raw.description ?? null,
+      objectives: raw.objectives ?? null,
+      order: typeof raw.order === 'number' ? raw.order : 0,
+      resources,
+      ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
+      ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
+    });
+  }
+
+  validate(): void {
+    if (!this.name?.trim()) {
+      throw new Error('Sub-competency name is required');
+    }
+  }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      id: this.id,
+      competencyId: this.competencyId,
+      name: this.name,
+      description: this.description,
+      objectives: this.objectives,
+      order: this.order,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      resources: this.resources.map((resource) => resource.toJSON()),
+    };
+  }
+
+  clone(): SubCompetency {
+    return new SubCompetency({
+      id: this.id,
+      competencyId: this.competencyId,
+      name: this.name,
+      description: this.description,
+      objectives: this.objectives,
+      order: this.order,
+      ...(this.createdAt ? { createdAt: this.createdAt } : {}),
+      ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
+      resources: this.resources.map((resource) => resource.clone()),
+    });
+  }
+}
+
+export class Competency extends BaseModel {
+  public readonly domainId: string;
+  public readonly name: string;
+  public readonly description: string | null;
+  public readonly objectives: string | null;
+  public readonly subCompetencies: SubCompetency[];
+
+  constructor(data: CompetencyInit) {
+    super(data);
+    this.domainId = data.domainId;
+    this.name = data.name;
+    this.description = data.description ?? null;
+    this.objectives = data.objectives ?? null;
+    const initialSubCompetencies = Array.from(data.subCompetencies ?? []);
+    this.subCompetencies = initialSubCompetencies.map((subCompetency) =>
+      subCompetency instanceof SubCompetency
+        ? subCompetency.clone()
+        : new SubCompetency(subCompetency),
+    );
+
+    this.validate();
+  }
+
+  static fromAmplify(raw: AmplifyCompetency): Competency {
+    const subCompetencies = normaliseCollection<AmplifySubCompetency>(raw.subCompetencies).map(
+      (sub) => SubCompetency.fromAmplify(sub),
+    );
+
+    return new Competency({
+      id: raw.id,
+      domainId: raw.domainId,
+      name: raw.name,
+      description: raw.description ?? null,
+      objectives: raw.objectives ?? null,
+      ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
+      ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
+      subCompetencies,
+    });
+  }
+
+  validate(): void {
+    if (!this.name?.trim()) {
+      throw new Error('Competency name is required');
+    }
+
+    if (!this.domainId?.trim()) {
+      throw new Error('Competency domainId is required');
+    }
+  }
+
+  withUpdatedSubCompetencies(subCompetencies: SubCompetency[]): Competency {
+    return new Competency({
+      id: this.id,
+      domainId: this.domainId,
+      name: this.name,
+      description: this.description,
+      objectives: this.objectives,
+      ...(this.createdAt ? { createdAt: this.createdAt } : {}),
+      ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
+      subCompetencies: subCompetencies.map((sub) => sub.clone()),
+    });
+  }
+
+  toJSON(): Record<string, unknown> {
+    return {
+      id: this.id,
+      domainId: this.domainId,
+      name: this.name,
+      description: this.description,
+      objectives: this.objectives,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      subCompetencies: this.subCompetencies.map((sub) => sub.toJSON()),
+    };
+  }
+
   clone(): Competency {
     return new Competency({
       id: this.id,
-      domain: this.domain,
-      subDomain: this.subDomain,
+      domainId: this.domainId,
+      name: this.name,
       description: this.description,
-      stage: this.stage,
-      status: this.status,
-      ...(this.createdAt && { createdAt: this.createdAt }),
-      ...(this.updatedAt && { updatedAt: this.updatedAt }),
+      objectives: this.objectives,
+      ...(this.createdAt ? { createdAt: this.createdAt } : {}),
+      ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
+      subCompetencies: this.subCompetencies.map((sub) => sub.clone()),
     });
-  }
-
-  /**
-   * Create a new Competency instance with updated data
-   * @param updates - Partial data to update
-   * @returns New Competency instance with updates applied
-   */
-  update(updates: Partial<UpdateCompetencyData>): Competency {
-    return new Competency({
-      id: this.id,
-      domain: updates.domain ?? this.domain,
-      subDomain: updates.subDomain ?? this.subDomain,
-      description: updates.description ?? this.description,
-      stage: updates.stage ?? this.stage,
-      status: updates.status ?? this.status,
-      ...(this.createdAt && { createdAt: this.createdAt }),
-      ...(this.updatedAt && { updatedAt: this.updatedAt }),
-    });
-  }
-
-  /**
-   * Transition to next status (business logic)
-   * @returns New Competency instance with next status
-   * @throws Error if transition is not allowed
-   */
-  transitionToNext(): Competency {
-    let nextStatus: CompetencyStatus;
-
-    switch (this.status) {
-      case CompetencyStatus.LOCKED:
-        nextStatus = CompetencyStatus.UNLOCKED;
-        break;
-      case CompetencyStatus.UNLOCKED:
-        nextStatus = CompetencyStatus.IN_PROGRESS;
-        break;
-      case CompetencyStatus.IN_PROGRESS:
-        nextStatus = CompetencyStatus.ACQUIRED;
-        break;
-      case CompetencyStatus.ACQUIRED:
-        throw new Error('Competency is already acquired');
-      default:
-        throw new Error('Invalid competency status for transition');
-    }
-
-    return this.update({ status: nextStatus });
   }
 }
+
+export const mapResourcesFromAmplify = (resources: unknown): CompetencyResource[] =>
+  normaliseCollection<AmplifyResource>(resources as RelationCollection<AmplifyResource>).map(
+    (resource) => CompetencyResource.fromAmplify(resource),
+  );
+
+export const mapSubCompetenciesFromAmplify = (subCompetencies: unknown): SubCompetency[] =>
+  normaliseCollection<AmplifySubCompetency>(
+    subCompetencies as RelationCollection<AmplifySubCompetency>,
+  ).map((subCompetency) => SubCompetency.fromAmplify(subCompetency));
+
+export const mapCompetenciesFromAmplify = (competencies: unknown): Competency[] =>
+  normaliseCollection<AmplifyCompetency>(competencies as RelationCollection<AmplifyCompetency>).map(
+    (competency) => Competency.fromAmplify(competency),
+  );

@@ -1,160 +1,73 @@
 import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
-import {
-  Competency,
-  CompetencyStatus,
-  type CompetencyGraphQLData,
-  type CreateCompetencyData,
-  type UpdateCompetencyData,
-} from '../Competency';
+import { Competency, type CreateCompetencyInput, type UpdateCompetencyInput } from '../Competency';
 
-/**
- * Competency filter type for queries
- */
 interface CompetencyFilter extends Record<string, unknown> {
-  domain?: { eq: string };
-  subDomain?: { eq: string };
-  status?: { eq: CompetencyStatus };
-  stage?: { eq: string };
+  domainId?: { eq: string };
+  name?: { contains: string };
 }
 
-/**
- * Competency repository implementing the Repository pattern
- * Handles data access for Competency entities
- */
+interface FindOptions {
+  includeDetails?: boolean;
+}
+
 export class CompetencyRepository
-  implements Repository<Competency, CreateCompetencyData, UpdateCompetencyData, CompetencyFilter>
+  implements Repository<Competency, CreateCompetencyInput, UpdateCompetencyInput, CompetencyFilter>
 {
-  /**
-   * Create a new competency
-   * @param data - Competency creation data
-   * @returns Promise with created Competency instance
-   */
-  async create(data: CreateCompetencyData): Promise<Competency> {
-    const rawCompetency = await graphQLClient.createCompetency(data);
-    if (!rawCompetency) {
+  async create(data: CreateCompetencyInput): Promise<Competency> {
+    const raw = await graphQLClient.createCompetency(data);
+    if (!raw) {
       throw new Error('Failed to create competency');
     }
-    return new Competency(rawCompetency as CompetencyGraphQLData);
+    return Competency.fromAmplify(raw);
   }
 
-  /**
-   * Find competency by ID
-   * @param id - Competency ID
-   * @returns Promise with Competency instance or null if not found
-   */
-  async findById(id: string): Promise<Competency | null> {
-    const rawCompetency = await graphQLClient.getCompetency(id);
-    return rawCompetency ? new Competency(rawCompetency as CompetencyGraphQLData) : null;
+  async findById(id: string, options: FindOptions = {}): Promise<Competency | null> {
+    const raw = options.includeDetails
+      ? await graphQLClient.getCompetencyWithDetails(id)
+      : await graphQLClient.getCompetency(id);
+    if (!raw) {
+      return null;
+    }
+    return Competency.fromAmplify(raw);
   }
 
-  /**
-   * Find all competencies
-   * @param filter - Optional filter criteria
-   * @returns Promise with array of Competency instances
-   */
   async findAll(filter?: CompetencyFilter): Promise<Competency[]> {
-    const rawCompetencies = await graphQLClient.listCompetencies(filter);
-    if (!rawCompetencies) return [];
+    const rawCompetencies = await graphQLClient.listCompetencies(filter ?? undefined);
     return rawCompetencies
-      .filter((rawCompetency) => rawCompetency !== null && rawCompetency !== undefined)
-      .map((rawCompetency) => new Competency(rawCompetency as CompetencyGraphQLData));
+      .filter(
+        (competency): competency is NonNullable<typeof competency> =>
+          competency !== null && competency !== undefined,
+      )
+      .map((competency) => Competency.fromAmplify(competency));
   }
 
-  /**
-   * Update a competency
-   * @param id - Competency ID
-   * @param data - Updated competency data
-   * @returns Promise with updated Competency instance
-   */
-  async update(id: string, data: UpdateCompetencyData): Promise<Competency> {
-    const rawCompetency = await graphQLClient.updateCompetency(id, data);
-    if (!rawCompetency) {
+  async update(id: string, data: UpdateCompetencyInput): Promise<Competency> {
+    const raw = await graphQLClient.updateCompetency({ id, ...data });
+    if (!raw) {
       throw new Error(`Failed to update competency ${id}`);
     }
-    return new Competency(rawCompetency as CompetencyGraphQLData);
+    return Competency.fromAmplify(raw);
   }
 
-  /**
-   * Delete a competency
-   * @param id - Competency ID
-   * @returns Promise with deleted Competency instance
-   */
   async delete(id: string): Promise<Competency> {
-    const rawCompetency = await graphQLClient.deleteCompetency(id);
-    if (!rawCompetency) {
+    const raw = await graphQLClient.deleteCompetency(id);
+    if (!raw) {
       throw new Error(`Failed to delete competency ${id}`);
     }
-    return new Competency(rawCompetency as CompetencyGraphQLData);
+    return Competency.fromAmplify(raw);
   }
 
-  /**
-   * Find competencies by domain
-   * @param domain - Domain to filter by
-   * @returns Promise with array of Competency instances
-   */
-  async findByDomain(domain: string): Promise<Competency[]> {
-    return this.findAll({ domain: { eq: domain } });
+  async findByDomain(domainId: string): Promise<Competency[]> {
+    return this.findAll({ domainId: { eq: domainId } });
   }
 
-  /**
-   * Find competencies by sub-domain
-   * @param subDomain - Sub-domain to filter by
-   * @returns Promise with array of Competency instances
-   */
-  async findBySubDomain(subDomain: string): Promise<Competency[]> {
-    return this.findAll({ subDomain: { eq: subDomain } });
-  }
-
-  /**
-   * Find competencies by status
-   * @param status - Status to filter by
-   * @returns Promise with array of Competency instances
-   */
-  async findByStatus(status: CompetencyStatus): Promise<Competency[]> {
-    return this.findAll({ status: { eq: status } });
-  }
-
-  /**
-   * Find competencies by stage
-   * @param stage - Stage to filter by
-   * @returns Promise with array of Competency instances
-   */
-  async findByStage(stage: string): Promise<Competency[]> {
-    return this.findAll({ stage: { eq: stage } });
-  }
-
-  /**
-   * Find available competencies (unlocked or in progress)
-   * @returns Promise with array of available Competency instances
-   */
-  async findAvailable(): Promise<Competency[]> {
-    const unlocked = await this.findByStatus(CompetencyStatus.UNLOCKED);
-    const inProgress = await this.findByStatus(CompetencyStatus.IN_PROGRESS);
-    return [...unlocked, ...inProgress];
-  }
-
-  /**
-   * Find acquired competencies
-   * @returns Promise with array of acquired Competency instances
-   */
-  async findAcquired(): Promise<Competency[]> {
-    return this.findByStatus(CompetencyStatus.ACQUIRED);
-  }
-
-  /**
-   * Find competencies by domain and sub-domain
-   * @param domain - Domain to filter by
-   * @param subDomain - Sub-domain to filter by
-   * @returns Promise with array of Competency instances
-   */
-  async findByDomainAndSubDomain(domain: string, subDomain: string): Promise<Competency[]> {
+  async searchByName(domainId: string, search: string): Promise<Competency[]> {
     return this.findAll({
-      domain: { eq: domain },
-      subDomain: { eq: subDomain },
+      domainId: { eq: domainId },
+      name: { contains: search },
     });
   }
 }
 
-// Singleton instance
 export const competencyRepository = new CompetencyRepository();

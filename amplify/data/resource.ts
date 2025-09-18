@@ -18,6 +18,7 @@ const schema = a
         students: a.hasMany('TeachingAssignment', 'educatorId'),
         parents: a.hasMany('ParentLink', 'studentId'),
         children: a.hasMany('ParentLink', 'parentId'),
+        helperResources: a.hasMany('Resource', 'personUserId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -46,13 +47,53 @@ const schema = a
         allow.authenticated().to(['read']),
         allow.groups(['Admin']).to(['create', 'read', 'update', 'delete']),
       ]),
+    Domain: a
+      .model({
+        name: a.string().required(),
+        colorCode: a.string(),
+        competencies: a.hasMany('Competency', 'domainId'),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.groups(['Admin']).to(['create', 'update', 'delete']),
+      ]),
     Competency: a
       .model({
-        domain: a.string(),
-        subDomain: a.string(),
+        domainId: a.id().required(),
+        domain: a.belongsTo('Domain', 'domainId'),
+        name: a.string().required(),
         description: a.string(),
-        stage: a.string(),
-        status: a.enum(['LOCKED', 'UNLOCKED', 'ACQUIRED', 'IN_PROGRESS']),
+        objectives: a.string(),
+        subCompetencies: a.hasMany('SubCompetency', 'competencyId'),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.groups(['Admin', 'Educator']).to(['create', 'update', 'delete']),
+      ]),
+    SubCompetency: a
+      .model({
+        competencyId: a.id().required(),
+        competency: a.belongsTo('Competency', 'competencyId'),
+        name: a.string().required(),
+        description: a.string(),
+        objectives: a.string(),
+        order: a.integer().default(0),
+        resources: a.hasMany('Resource', 'subCompetencyId'),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.groups(['Admin', 'Educator']).to(['create', 'update', 'delete']),
+      ]),
+    Resource: a
+      .model({
+        subCompetencyId: a.id().required(),
+        subCompetency: a.belongsTo('SubCompetency', 'subCompetencyId'),
+        type: a.enum(['Link', 'Human', 'Document', 'Location']),
+        title: a.string().required(),
+        description: a.string(),
+        url: a.string(),
+        personUserId: a.id(),
+        person: a.belongsTo('User', 'personUserId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),

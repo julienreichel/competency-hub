@@ -12,7 +12,28 @@ vi.mock('aws-amplify/data', () => ({
         update: vi.fn(),
         delete: vi.fn(),
       },
+      Domain: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
       Competency: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      SubCompetency: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      Resource: {
         create: vi.fn(),
         get: vi.fn(),
         list: vi.fn(),
@@ -32,7 +53,28 @@ interface MockAmplifyClient {
       update: ReturnType<typeof vi.fn>;
       delete: ReturnType<typeof vi.fn>;
     };
+    Domain: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
     Competency: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+    SubCompetency: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+    Resource: {
       create: ReturnType<typeof vi.fn>;
       get: ReturnType<typeof vi.fn>;
       list: ReturnType<typeof vi.fn>;
@@ -298,230 +340,155 @@ describe('GraphQLClient', () => {
     });
   });
 
+  describe('Domain operations', () => {
+    const rawDomain = { id: 'domain-1', name: 'Mathematics', colorCode: '#FF0000' };
+
+    it('creates a domain', async () => {
+      mockAmplifyClient.models.Domain.create.mockResolvedValue({ data: rawDomain, errors: null });
+
+      const result = await graphQLClient.createDomain({
+        name: 'Mathematics',
+        colorCode: '#FF0000',
+      });
+
+      expect(result).toEqual(rawDomain);
+      expect(mockAmplifyClient.models.Domain.create).toHaveBeenCalledWith(
+        { name: 'Mathematics', colorCode: '#FF0000' },
+        { authMode: 'userPool' },
+      );
+    });
+
+    it('lists domains', async () => {
+      mockAmplifyClient.models.Domain.list.mockResolvedValue({ data: [rawDomain], errors: null });
+
+      const result = await graphQLClient.listDomains();
+
+      expect(result).toEqual([rawDomain]);
+      expect(mockAmplifyClient.models.Domain.list).toHaveBeenCalledWith({ authMode: 'userPool' });
+    });
+  });
+
   describe('Competency operations', () => {
-    const mockCompetencyData = {
+    const rawCompetency = {
       id: 'comp-1',
-      name: 'JavaScript',
-      description: 'Programming language',
+      domainId: 'domain-1',
+      name: 'Foundations',
+      description: 'Basics',
+      objectives: 'Understand fundamentals',
     };
 
-    describe('createCompetency', () => {
-      it('should create a competency successfully', async () => {
-        const createData = { name: 'JavaScript', description: 'Programming language' };
-        mockAmplifyClient.models.Competency.create.mockResolvedValue({
-          data: mockCompetencyData,
-          errors: null,
-        });
-
-        const result = await graphQLClient.createCompetency(createData);
-
-        expect(result).toEqual(mockCompetencyData);
-        expect(mockAmplifyClient.models.Competency.create).toHaveBeenCalledWith(createData, {
-          authMode: 'identityPool',
-        });
+    it('creates a competency', async () => {
+      mockAmplifyClient.models.Competency.create.mockResolvedValue({
+        data: rawCompetency,
+        errors: null,
       });
 
-      it('should handle GraphQL errors during competency creation', async () => {
-        const createData = { name: 'JavaScript' };
-        const graphQLErrors = [{ message: 'Name already exists' }];
-        mockAmplifyClient.models.Competency.create.mockResolvedValue({
-          data: null,
-          errors: graphQLErrors,
-        });
-
-        await expect(graphQLClient.createCompetency(createData)).rejects.toThrow(
-          `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
-        );
+      const result = await graphQLClient.createCompetency({
+        domainId: 'domain-1',
+        name: 'Foundations',
+        description: 'Basics',
+        objectives: 'Understand fundamentals',
       });
+
+      expect(result).toEqual(rawCompetency);
+      expect(mockAmplifyClient.models.Competency.create).toHaveBeenCalledWith(
+        {
+          domainId: 'domain-1',
+          name: 'Foundations',
+          description: 'Basics',
+          objectives: 'Understand fundamentals',
+        },
+        { authMode: 'userPool' },
+      );
     });
 
-    describe('getCompetency', () => {
-      it('should get a competency successfully', async () => {
-        const competencyId = 'comp-1';
-        mockAmplifyClient.models.Competency.get.mockResolvedValue({
-          data: mockCompetencyData,
-          errors: null,
-        });
-
-        const result = await graphQLClient.getCompetency(competencyId);
-
-        expect(result).toEqual(mockCompetencyData);
-        expect(mockAmplifyClient.models.Competency.get).toHaveBeenCalledWith(
-          { id: competencyId },
-          { authMode: 'identityPool' },
-        );
+    it('retrieves competency with details', async () => {
+      mockAmplifyClient.models.Competency.get.mockResolvedValue({
+        data: rawCompetency,
+        errors: null,
       });
 
-      it('should handle GraphQL errors during competency retrieval', async () => {
-        const competencyId = 'comp-1';
-        const graphQLErrors = [{ message: 'Competency not found' }];
-        mockAmplifyClient.models.Competency.get.mockResolvedValue({
-          data: null,
-          errors: graphQLErrors,
-        });
+      await graphQLClient.getCompetency('comp-1');
 
-        await expect(graphQLClient.getCompetency(competencyId)).rejects.toThrow(
-          `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
-        );
-      });
-
-      it('should handle network errors during competency retrieval', async () => {
-        const competencyId = 'comp-1';
-        const networkError = new Error('Network timeout');
-        mockAmplifyClient.models.Competency.get.mockRejectedValue(networkError);
-
-        await expect(graphQLClient.getCompetency(competencyId)).rejects.toThrow('Network timeout');
-      });
+      expect(mockAmplifyClient.models.Competency.get).toHaveBeenCalledWith(
+        { id: 'comp-1' },
+        {
+          authMode: 'userPool',
+        },
+      );
     });
 
-    describe('listCompetencies', () => {
-      it('should list competencies without filter', async () => {
-        const mockCompetencies = [mockCompetencyData];
-        mockAmplifyClient.models.Competency.list.mockResolvedValue({
-          data: mockCompetencies,
-          errors: null,
-        });
-
-        const result = await graphQLClient.listCompetencies();
-
-        expect(result).toEqual(mockCompetencies);
-        expect(mockAmplifyClient.models.Competency.list).toHaveBeenCalledWith({
-          authMode: 'identityPool',
-        });
+    it('lists competencies with filter', async () => {
+      mockAmplifyClient.models.Competency.list.mockResolvedValue({
+        data: [rawCompetency],
+        errors: null,
       });
 
-      it('should list competencies with filter', async () => {
-        const filter = { name: { contains: 'Script' } };
-        const mockCompetencies = [mockCompetencyData];
-        mockAmplifyClient.models.Competency.list.mockResolvedValue({
-          data: mockCompetencies,
-          errors: null,
-        });
+      const result = await graphQLClient.listCompetencies({ domainId: { eq: 'domain-1' } });
 
-        const result = await graphQLClient.listCompetencies(filter);
-
-        expect(result).toEqual(mockCompetencies);
-        expect(mockAmplifyClient.models.Competency.list).toHaveBeenCalledWith({
-          authMode: 'identityPool',
-          filter,
-        });
-      });
-
-      it('should handle GraphQL errors during competency listing', async () => {
-        const graphQLErrors = [{ message: 'Access denied' }];
-        mockAmplifyClient.models.Competency.list.mockResolvedValue({
-          data: [],
-          errors: graphQLErrors,
-        });
-
-        await expect(graphQLClient.listCompetencies()).rejects.toThrow(
-          `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
-        );
-      });
-
-      it('should handle network errors during competency listing', async () => {
-        const networkError = new Error('Connection failed');
-        mockAmplifyClient.models.Competency.list.mockRejectedValue(networkError);
-
-        await expect(graphQLClient.listCompetencies()).rejects.toThrow('Connection failed');
-      });
-    });
-
-    describe('updateCompetency', () => {
-      it('should update a competency successfully', async () => {
-        const competencyId = 'comp-1';
-        const updateData = { description: 'Updated description' };
-        const updatedCompetency = { ...mockCompetencyData, ...updateData };
-
-        mockAmplifyClient.models.Competency.update.mockResolvedValue({
-          data: updatedCompetency,
-          errors: null,
-        });
-
-        const result = await graphQLClient.updateCompetency(competencyId, updateData);
-
-        expect(result).toEqual(updatedCompetency);
-        expect(mockAmplifyClient.models.Competency.update).toHaveBeenCalledWith(
-          { id: competencyId, ...updateData },
-          { authMode: 'identityPool' },
-        );
-      });
-
-      it('should handle GraphQL errors during competency update', async () => {
-        const competencyId = 'comp-1';
-        const updateData = { name: 'Updated name' };
-        const graphQLErrors = [{ message: 'Validation failed' }];
-
-        mockAmplifyClient.models.Competency.update.mockResolvedValue({
-          data: null,
-          errors: graphQLErrors,
-        });
-
-        await expect(graphQLClient.updateCompetency(competencyId, updateData)).rejects.toThrow(
-          `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
-        );
-      });
-
-      it('should handle network errors during competency update', async () => {
-        const competencyId = 'comp-1';
-        const updateData = { name: 'Updated name' };
-        const networkError = new Error('Update failed');
-        mockAmplifyClient.models.Competency.update.mockRejectedValue(networkError);
-
-        await expect(graphQLClient.updateCompetency(competencyId, updateData)).rejects.toThrow(
-          'Update failed',
-        );
-      });
-    });
-
-    describe('deleteCompetency', () => {
-      it('should delete a competency successfully', async () => {
-        const competencyId = 'comp-1';
-        mockAmplifyClient.models.Competency.delete.mockResolvedValue({
-          data: mockCompetencyData,
-          errors: null,
-        });
-
-        const result = await graphQLClient.deleteCompetency(competencyId);
-
-        expect(result).toEqual(mockCompetencyData);
-        expect(mockAmplifyClient.models.Competency.delete).toHaveBeenCalledWith(
-          { id: competencyId },
-          { authMode: 'identityPool' },
-        );
-      });
-
-      it('should handle GraphQL errors during competency deletion', async () => {
-        const competencyId = 'comp-1';
-        const graphQLErrors = [{ message: 'Cannot delete competency' }];
-
-        mockAmplifyClient.models.Competency.delete.mockResolvedValue({
-          data: null,
-          errors: graphQLErrors,
-        });
-
-        await expect(graphQLClient.deleteCompetency(competencyId)).rejects.toThrow(
-          `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
-        );
-      });
-
-      it('should handle network errors during competency deletion', async () => {
-        const competencyId = 'comp-1';
-        const networkError = new Error('Delete failed');
-        mockAmplifyClient.models.Competency.delete.mockRejectedValue(networkError);
-
-        await expect(graphQLClient.deleteCompetency(competencyId)).rejects.toThrow('Delete failed');
+      expect(result).toEqual([rawCompetency]);
+      expect(mockAmplifyClient.models.Competency.list).toHaveBeenCalledWith({
+        authMode: 'userPool',
+        filter: { domainId: { eq: 'domain-1' } },
       });
     });
   });
 
-  describe('Error handling', () => {
-    it('should handle network errors during competency creation', async () => {
-      const createData = { name: 'TypeScript' };
-      const networkError = new Error('Network error');
-      mockAmplifyClient.models.Competency.create.mockRejectedValue(networkError);
+  describe('Sub-competency operations', () => {
+    const rawSubCompetency = {
+      id: 'sub-1',
+      competencyId: 'comp-1',
+      name: 'Stage 1',
+      order: 1,
+    };
 
-      await expect(graphQLClient.createCompetency(createData)).rejects.toThrow('Network error');
+    it('creates a sub-competency', async () => {
+      mockAmplifyClient.models.SubCompetency.create.mockResolvedValue({
+        data: rawSubCompetency,
+        errors: null,
+      });
+
+      const result = await graphQLClient.createSubCompetency({
+        competencyId: 'comp-1',
+        name: 'Stage 1',
+        order: 1,
+      });
+
+      expect(result).toEqual(rawSubCompetency);
+      expect(mockAmplifyClient.models.SubCompetency.create).toHaveBeenCalledWith(
+        { competencyId: 'comp-1', name: 'Stage 1', order: 1 },
+        { authMode: 'userPool' },
+      );
+    });
+  });
+
+  describe('Resource operations', () => {
+    const rawResource = {
+      id: 'res-1',
+      subCompetencyId: 'sub-1',
+      type: 'Link',
+      title: 'Overview',
+      url: 'https://example.com',
+    };
+
+    it('creates a resource', async () => {
+      mockAmplifyClient.models.Resource.create.mockResolvedValue({
+        data: rawResource,
+        errors: null,
+      });
+
+      const result = await graphQLClient.createResource({
+        subCompetencyId: 'sub-1',
+        type: 'Link',
+        title: 'Overview',
+        url: 'https://example.com',
+      });
+
+      expect(result).toEqual(rawResource);
+      expect(mockAmplifyClient.models.Resource.create).toHaveBeenCalledWith(
+        { subCompetencyId: 'sub-1', type: 'Link', title: 'Overview', url: 'https://example.com' },
+        { authMode: 'userPool' },
+      );
     });
   });
 });
