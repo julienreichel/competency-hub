@@ -109,6 +109,13 @@
             icon="assessment"
             link="/reports"
           />
+
+          <essential-link
+            title="Domains"
+            caption="Manage competency domains"
+            icon="category"
+            link="/domains"
+          />
         </template>
 
         <template v-if="hasRole('Parent')">
@@ -126,6 +133,13 @@
             caption="Manage platform users"
             icon="people"
             link="/admin/users"
+          />
+
+          <essential-link
+            title="Domains"
+            caption="Organise competencies"
+            icon="category"
+            link="/domains"
           />
         </template>
 

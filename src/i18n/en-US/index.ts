@@ -110,6 +110,80 @@ export default {
     unassignSelf: 'Unassign myself',
   },
 
+  domains: {
+    title: 'Domains',
+    subtitle: 'Organise competencies by domain',
+    addDomain: 'Add Domain',
+    createTitle: 'Create Domain',
+    editTitle: 'Edit Domain',
+    loading: 'Loading domains...',
+    emptyState: 'No domains found yet. Create the first one to get started.',
+    messages: {
+      created: 'Domain created successfully.',
+      updated: 'Domain updated successfully.',
+      error: 'Something went wrong. Please try again.',
+    },
+    fields: {
+      name: 'Domain name',
+      color: 'Color (optional)',
+    },
+    actions: {
+      create: 'Create',
+      save: 'Save changes',
+    },
+    competencyCount: '{count, plural, one {# competency} other {# competencies}}',
+  },
+
+  competencies: {
+    addCompetency: 'Add Competency',
+    createTitle: 'Create Competency',
+    fields: {
+      name: 'Competency name',
+      description: 'Description',
+      objectives: 'Objectives',
+    },
+    actions: {
+      create: 'Create',
+      save: 'Save changes',
+    },
+    loading: 'Loading competencies...',
+    emptyState: 'No competencies in this domain yet.',
+    noDescription: 'No description provided.',
+    searchPlaceholder: 'Search competencies...',
+    editor: {
+      breadcrumb: 'Competency editor',
+      loading: 'Loading competency...',
+      tabs: {
+        details: 'Details',
+        stages: 'Stages',
+        resources: 'Resources',
+      },
+      stages: {
+        placeholder: {
+          title: 'Stage management coming soon',
+          description: 'You will be able to add and order sub-competencies here.',
+        },
+      },
+      resources: {
+        placeholder: {
+          title: 'Resource management coming soon',
+          description: 'Attach human and digital helpers to each stage from this tab.',
+        },
+      },
+      messages: {
+        notFound: 'Competency not found.',
+        loadError: 'Could not load the competency. Please try again.',
+        saveError: 'Could not save the competency. Please try again.',
+        saved: 'Competency updated successfully.',
+      },
+    },
+    messages: {
+      created: 'Competency created successfully.',
+      error: 'Could not save the competency. Please try again.',
+      loadError: 'Could not load domain details. Please try again.',
+    },
+  },
+
   // Validation messages
   validation: {
     required: 'This field is required',

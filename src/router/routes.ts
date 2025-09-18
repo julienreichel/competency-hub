@@ -50,6 +50,24 @@ const routes: RouteRecordRaw[] = [
         meta: { roles: ['Educator'] },
       },
       {
+        path: 'domains',
+        name: 'domains',
+        component: () => import('pages/DomainsPage.vue'),
+        meta: { roles: ['Admin', 'Educator'] },
+      },
+      {
+        path: 'domains/:domainId',
+        name: 'domain-competencies',
+        component: () => import('pages/DomainCompetenciesPage.vue'),
+        meta: { roles: ['Admin', 'Educator'] },
+      },
+      {
+        path: 'competencies/:competencyId',
+        name: 'competency-editor',
+        component: () => import('pages/CompetencyEditorPage.vue'),
+        meta: { roles: ['Admin', 'Educator'] },
+      },
+      {
         path: 'educator',
         children: [
           {

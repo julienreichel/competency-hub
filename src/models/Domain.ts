@@ -40,12 +40,14 @@ export interface DomainInit extends Record<string, unknown> {
   createdAt?: string;
   updatedAt?: string;
   competencies?: Array<CompetencyInit | Competency>;
+  competencyCount?: number | null;
 }
 
 export class Domain extends BaseModel {
   public readonly name: string;
   public readonly colorCode: string | null;
   public readonly competencies: Competency[];
+  public readonly competencyCount: number | null;
 
   constructor(data: DomainInit) {
     super(data);
@@ -56,6 +58,12 @@ export class Domain extends BaseModel {
       competency instanceof Competency ? competency.clone() : new Competency(competency),
     );
 
+    this.competencyCount =
+      typeof data.competencyCount === 'number'
+        ? data.competencyCount
+        : data.competencyCount === null
+          ? null
+          : this.competencies.length;
     this.validate();
   }
 
@@ -86,6 +94,7 @@ export class Domain extends BaseModel {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       competencies: this.competencies.map((competency) => competency.toJSON()),
+      competencyCount: this.competencyCount ?? this.competencies.length,
     };
   }
 
@@ -97,6 +106,7 @@ export class Domain extends BaseModel {
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
       competencies: this.competencies.map((competency) => competency.clone()),
+      competencyCount: this.competencyCount ?? this.competencies.length,
     });
   }
 }
