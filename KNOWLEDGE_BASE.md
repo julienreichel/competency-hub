@@ -27,14 +27,14 @@ The platform provides a **learner-centered environment** with interactive dashbo
 ### **2.2 Domain**
 
 - Represents a broad subject area (e.g., Mathematics, French).
-- **Attributes:** ID, name, pictogram, color code, progress (% of competencies completed).
+- **Attributes:** ID, name, pictogram, color code.
 - **Relations:**
   - Contains Competencies
 
 ### **2.3 Competency**
 
 - Belongs to a Domain.
-- **Attributes:** ID, description, stage/cycle, objectives, status (locked, unlocked, acquired, in-progress, blocked-visible), progress (%), unique code.
+- **Attributes:** ID, description, stage/cycle, objectives, unique code.
 - **Relations:**
   - Belongs to Domain
   - Contains Sub-Competencies
@@ -43,7 +43,7 @@ The platform provides a **learner-centered environment** with interactive dashbo
 ### **2.4 Sub-Competency**
 
 - The most granular unit of learning.
-- **Attributes:** ID, name/description, objectives, status (available, blocked-visible, completed), progress, code.
+- **Attributes:** ID, name/description, objectives, code.
 - **Relations:**
   - Belongs to Competency
   - Linked to resources and evaluations
