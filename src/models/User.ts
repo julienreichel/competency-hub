@@ -40,19 +40,15 @@ export interface UpdateUserData extends Record<string, unknown> {
   picture?: string | null;
   contactInfo?: string;
   lastActive?: string;
-  /**
-   * Derived relationship fields (not persisted directly via GraphQL)
-   */
-  educatorIds?: string[];
-  parentIds?: string[];
-  studentIds?: string[];
+  educators?: UserRelationInit[];
+  parents?: UserRelationInit[];
+  students?: UserRelationInit[];
+  children?: UserRelationInit[];
 }
 
 type AmplifyUser = NonNullable<Schema['User']['type']>;
 
-type RelationEntries = AmplifyUser['educators'] | AmplifyUser['parents'];
-
-type UserInit = {
+export interface UserRelationInit {
   id: string;
   name: string;
   role: UserRole;
@@ -63,10 +59,13 @@ type UserInit = {
   lastActive?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  educatorIds?: string[];
-  parentIds?: string[];
-  studentIds?: string[];
-};
+  educators?: UserRelationInit[];
+  parents?: UserRelationInit[];
+  students?: UserRelationInit[];
+  children?: UserRelationInit[];
+}
+
+type UserInit = UserRelationInit;
 
 /**
  * User domain model
@@ -80,9 +79,10 @@ export class User extends BaseModel {
   public readonly picture?: string | null;
   public readonly contactInfo: string;
   public readonly lastActive: string | undefined;
-  public readonly educatorIds: string[];
-  public readonly parentIds: string[];
-  public readonly studentIds: string[];
+  public readonly educators: User[];
+  public readonly parents: User[];
+  public readonly students: User[];
+  public readonly children: User[];
 
   constructor(data: UserInit) {
     super(data);
@@ -93,9 +93,10 @@ export class User extends BaseModel {
     this.picture = data.picture ?? null;
     this.contactInfo = data.contactInfo ?? '';
     this.lastActive = data.lastActive ?? undefined;
-    this.educatorIds = [...(data.educatorIds ?? [])];
-    this.parentIds = [...(data.parentIds ?? [])];
-    this.studentIds = [...(data.studentIds ?? [])];
+    this.educators = User.normaliseRelation(data.educators);
+    this.parents = User.normaliseRelation(data.parents);
+    this.students = User.normaliseRelation(data.students);
+    this.children = User.normaliseRelation(data.children);
     this.validate();
   }
 
@@ -111,20 +112,10 @@ export class User extends BaseModel {
       lastActive: raw.lastActive ?? null,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
-      educatorIds: User.collectUniqueIds([
-        User.extractIdsFromEntries(raw.educators, 'educator'),
-        User.extractIdsFromEntries(raw.educators, 'educatorId'),
-      ]),
-      parentIds: User.collectUniqueIds([
-        User.extractIdsFromEntries(raw.parents, 'parent'),
-        User.extractIdsFromEntries(raw.parents, 'parentId'),
-      ]),
-      studentIds: User.collectUniqueIds([
-        User.extractIdsFromEntries(raw.students, 'student'),
-        User.extractIdsFromEntries(raw.students, 'studentId'),
-        User.extractIdsFromEntries(raw.children, 'student'),
-        User.extractIdsFromEntries(raw.children, 'studentId'),
-      ]),
+      educators: User.extractUsersFromEntries(raw.educators, 'educator'),
+      parents: User.extractUsersFromEntries(raw.parents, 'parent'),
+      students: User.extractUsersFromEntries(raw.students, 'student'),
+      children: User.extractUsersFromEntries(raw.children, 'student'),
     });
   }
 
@@ -207,21 +198,7 @@ export class User extends BaseModel {
    * @returns Plain object representation
    */
   toJSON(): Record<string, unknown> {
-    return {
-      id: this.id,
-      name: this.name,
-      role: this.role,
-      email: this.email,
-      avatar: this.avatar,
-      picture: this.picture ?? null,
-      contactInfo: this.contactInfo,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      lastActive: this.lastActive ?? null,
-      educatorIds: [...this.educatorIds],
-      parentIds: [...this.parentIds],
-      studentIds: [...this.studentIds],
-    };
+    return this.toRelationInit(true) as unknown as Record<string, unknown>;
   }
 
   /**
@@ -237,9 +214,10 @@ export class User extends BaseModel {
       avatar: this.avatar,
       picture: this.picture ?? null,
       contactInfo: this.contactInfo,
-      educatorIds: [...this.educatorIds],
-      parentIds: [...this.parentIds],
-      studentIds: [...this.studentIds],
+      educators: this.educators.map((educator) => educator.toRelationInit(true)),
+      parents: this.parents.map((parent) => parent.toRelationInit(true)),
+      students: this.students.map((student) => student.toRelationInit(true)),
+      children: this.children.map((child) => child.toRelationInit(true)),
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
       ...(this.lastActive && { lastActive: this.lastActive }),
@@ -261,9 +239,11 @@ export class User extends BaseModel {
       picture: updates.picture ?? this.picture ?? null,
       contactInfo: updates.contactInfo ?? this.contactInfo,
       lastActive: updates.lastActive ?? this.lastActive ?? null,
-      educatorIds: updates.educatorIds ?? this.educatorIds,
-      parentIds: updates.parentIds ?? this.parentIds,
-      studentIds: updates.studentIds ?? this.studentIds,
+      educators:
+        updates.educators ?? this.educators.map((educator) => educator.toRelationInit(true)),
+      parents: updates.parents ?? this.parents.map((parent) => parent.toRelationInit(true)),
+      students: updates.students ?? this.students.map((student) => student.toRelationInit(true)),
+      children: updates.children ?? this.children.map((child) => child.toRelationInit(true)),
       ...(this.createdAt && { createdAt: this.createdAt }),
       ...(this.updatedAt && { updatedAt: this.updatedAt }),
     });
@@ -279,65 +259,87 @@ export class User extends BaseModel {
     return emailRegex.test(email);
   }
 
-  private static extractIdsFromEntries(
-    entries: RelationEntries,
-    key: 'student' | 'educator' | 'parent' | 'studentId' | 'educatorId' | 'parentId',
-  ): string[] {
+  private toRelationInit(includeRelations = false): UserRelationInit {
+    const base: UserRelationInit = {
+      id: this.id,
+      name: this.name,
+      role: this.role,
+      email: this.email,
+      avatar: this.avatar,
+      picture: this.picture ?? null,
+      contactInfo: this.contactInfo,
+      lastActive: this.lastActive ?? null,
+      ...(this.createdAt && { createdAt: this.createdAt }),
+      ...(this.updatedAt && { updatedAt: this.updatedAt }),
+    };
+
+    if (includeRelations) {
+      if (this.educators.length > 0) {
+        base.educators = this.educators.map((educator) => educator.toRelationInit());
+      }
+      if (this.parents.length > 0) {
+        base.parents = this.parents.map((parent) => parent.toRelationInit());
+      }
+      if (this.students.length > 0) {
+        base.students = this.students.map((student) => student.toRelationInit());
+      }
+      if (this.children.length > 0) {
+        base.children = this.children.map((child) => child.toRelationInit());
+      }
+    }
+
+    return base;
+  }
+
+  private static normaliseRelation(relations?: UserRelationInit[]): User[] {
+    if (!relations?.length) {
+      return [];
+    }
+    return relations.map((relation) => User.create(relation));
+  }
+
+  private static extractUsersFromEntries(
+    entries: AmplifyUser['educators'] | AmplifyUser['parents'],
+    key: 'educator' | 'student' | 'parent',
+  ): UserRelationInit[] {
     if (!entries) {
       return [];
     }
 
-    const collectFromValue = (value: unknown): string | null => {
-      if (typeof value === 'string' && value.trim()) {
-        return value.trim();
+    const mapEntry = (entry: unknown): UserRelationInit | null => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
       }
+
+      const value = (entry as Record<string, unknown>)[key];
       if (value && typeof value === 'object' && 'id' in value) {
-        const candidate = (value as { id?: unknown }).id;
-        if (typeof candidate === 'string' && candidate.trim()) {
-          return candidate.trim();
-        }
+        const candidate = value as Partial<AmplifyUser> & { id: string };
+        return {
+          id: candidate.id,
+          name: candidate.name ?? candidate.id,
+          role: User.normaliseRole(candidate.role),
+          email: candidate.email ?? '',
+          avatar: candidate.avatar ?? '',
+          picture: candidate.picture ?? null,
+          contactInfo: candidate.contactInfo ?? '',
+          lastActive: candidate.lastActive ?? null,
+          ...(candidate.createdAt !== undefined ? { createdAt: candidate.createdAt } : {}),
+          ...(candidate.updatedAt !== undefined ? { updatedAt: candidate.updatedAt } : {}),
+        };
       }
+
       return null;
     };
 
-    const processEntry = (entry: unknown): string[] => {
-      if (!entry || typeof entry !== 'object') {
-        return [];
-      }
-      const container = entry as Record<string, unknown>;
-      const raw = container[key];
+    const entriesArray = Array.isArray(entries)
+      ? entries
+      : Array.isArray((entries as { items?: unknown }).items)
+        ? ((entries as { items?: unknown }).items as unknown[])
+        : [];
 
-      if (Array.isArray(raw)) {
-        return raw.map(collectFromValue).filter((id): id is string => Boolean(id));
-      }
-
-      const single = collectFromValue(raw);
-      return single ? [single] : [];
-    };
-
-    if (Array.isArray(entries)) {
-      return entries.flatMap(processEntry);
-    }
-
-    const items = (entries as { items?: unknown }).items;
-    if (Array.isArray(items)) {
-      return items.flatMap(processEntry);
-    }
-
-    return processEntry(entries);
-  }
-
-  private static collectUniqueIds(groups: Array<string[] | null | undefined>): string[] {
-    const bucket = new Set<string>();
-    groups.forEach((group) => {
-      group?.forEach((value) => {
-        const trimmed = value?.trim();
-        if (trimmed) {
-          bucket.add(trimmed);
-        }
-      });
-    });
-    return Array.from(bucket);
+    return entriesArray
+      .map((entry) => mapEntry(entry))
+      .filter((relation): relation is UserRelationInit => Boolean(relation));
   }
 
   private static normaliseRole(role: UserRole | string | null | undefined): UserRole {
@@ -347,5 +349,17 @@ export class User extends BaseModel {
       }
     }
     return UserRole.UNKNOWN;
+  }
+
+  get educatorIds(): string[] {
+    return this.educators.map((educator) => educator.id);
+  }
+
+  get parentIds(): string[] {
+    return this.parents.map((parent) => parent.id);
+  }
+
+  get studentIds(): string[] {
+    return this.students.map((student) => student.id);
   }
 }

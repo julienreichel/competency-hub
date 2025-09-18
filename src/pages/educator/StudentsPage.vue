@@ -49,6 +49,7 @@
             :user-map="userMap"
             :loading="loading"
             :current-educator-id="currentEducatorId"
+            :assigned-student-ids="assignedStudentIds"
             :empty-label="$t('educator.noMyStudents')"
             @assign="handleAssign"
             @unassign="handleUnassign"
@@ -62,6 +63,7 @@
             :user-map="userMap"
             :loading="loading"
             :current-educator-id="currentEducatorId"
+            :assigned-student-ids="assignedStudentIds"
             :empty-label="$t('educator.noStudentsFound')"
             @assign="handleAssign"
             @unassign="handleUnassign"
@@ -97,13 +99,13 @@ const allUsers = ref<User[]>([]);
 const showStudentDialog = ref(false);
 const selectedStudentForDialog = ref<User | null>(null);
 const currentEducator = ref<User | null>(null);
+const dialogLoading = ref(false);
 
 const {
   assignEducatorToStudent,
   unassignEducatorFromStudent,
   fetchUsers,
   getUserById,
-  getUsersByIds,
   loading,
   error,
 } = useUsers();
@@ -124,15 +126,20 @@ const students = computed<User[]>(
   () => allUsers.value.filter((user) => user.role === UserRole.STUDENT) as User[],
 );
 
+const assignedStudentIds = computed<string[]>(() => currentEducator.value?.studentIds ?? []);
+
+const assignedStudentSet = computed<Set<string>>(() => new Set(assignedStudentIds.value));
+
 const myStudents = computed<User[]>(() => {
-  const ids = currentEducator.value?.studentIds ?? [];
-  if (ids.length === 0) {
+  if (assignedStudentIds.value.length === 0) {
     return [];
   }
 
-  return ids
-    .map((id) => userMap.value.get(id))
-    .filter((student): student is User => Boolean(student) && student?.role === UserRole.STUDENT);
+  return assignedStudentIds.value
+    .map((id) => userMap.value.get(id) ?? null)
+    .filter(
+      (candidate): candidate is User => candidate !== null && candidate.role === UserRole.STUDENT,
+    );
 });
 
 const normalizedSearch = computed(() => searchTerm.value.trim().toLowerCase());
@@ -148,26 +155,22 @@ function filterBySearch(collection: User[]): User[] {
 }
 
 const filteredMyStudents = computed<User[]>(() => filterBySearch(myStudents.value));
-const filteredAllStudents = computed<User[]>(() => filterBySearch(students.value));
+const filteredAllStudents = computed<User[]>(() => {
+  const available = students.value.filter((student) =>
+    currentEducatorId.value ? !assignedStudentSet.value.has(student.id) : true,
+  );
+  return filterBySearch(available);
+});
 
 async function loadUsers(): Promise<void> {
   const fetched = await fetchUsers();
   allUsers.value = fetched;
 }
 
-async function ensureStudentsLoaded(studentIds: string[] | undefined): Promise<void> {
-  if (!studentIds || studentIds.length === 0) {
-    return;
-  }
-
-  try {
-    const studentsToMerge = await getUsersByIds(studentIds);
-    studentsToMerge.forEach((record) => {
-      updateUserInState(record);
-    });
-  } catch (err) {
-    console.error('Failed to load educator students', err);
-  }
+function mergeUsersIntoState(users: User[] | undefined): void {
+  users?.forEach((user) => {
+    updateUserInState(user);
+  });
 }
 
 async function loadCurrentEducator(): Promise<void> {
@@ -186,7 +189,7 @@ async function loadCurrentEducator(): Promise<void> {
 
     currentEducator.value = educator;
     updateUserInState(educator);
-    await ensureStudentsLoaded(educator.studentIds);
+    mergeUsersIntoState(educator.students);
   } catch (err) {
     console.error('Failed to load educator details', err);
   }
@@ -213,7 +216,7 @@ function updateUserInState(updated: User | null): void {
 
   if (currentEducator.value?.id === updated.id) {
     currentEducator.value = updated;
-    void ensureStudentsLoaded(updated.studentIds);
+    mergeUsersIntoState(updated.students);
   }
 }
 
@@ -226,7 +229,7 @@ function updateDialogUser(updated: User | null): void {
   }
   if (currentEducator.value?.id === updated.id) {
     currentEducator.value = updated;
-    void ensureStudentsLoaded(updated.studentIds);
+    mergeUsersIntoState(updated.students);
   }
 }
 
@@ -270,12 +273,29 @@ async function handleUnassign(studentId: string): Promise<void> {
 }
 
 function openStudentDialog(studentId: string): void {
-  const student = userMap.value.get(studentId);
-  if (!student) {
-    return;
+  const cached = userMap.value.get(studentId);
+  if (cached) {
+    selectedStudentForDialog.value = cached;
   }
-  selectedStudentForDialog.value = student;
   showStudentDialog.value = true;
+  void loadDetailedStudent(studentId);
+}
+
+async function loadDetailedStudent(studentId: string): Promise<void> {
+  dialogLoading.value = true;
+  try {
+    const detailed = await getUserById(studentId);
+    if (!detailed) {
+      return;
+    }
+    updateUserInState(detailed);
+    updateDialogUser(detailed);
+    selectedStudentForDialog.value = detailed;
+  } catch (err) {
+    console.error('Failed to load student details', err);
+  } finally {
+    dialogLoading.value = false;
+  }
 }
 
 onMounted(async () => {

@@ -1,5 +1,5 @@
 import { userRepository } from 'src/models/repositories/UserRepository';
-import { User, UserRole } from 'src/models/User';
+import { User, UserRole, type UserRelationInit } from 'src/models/User';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUserFormatters } from '../../src/composables/useUserFormatters';
 import { useUsers } from '../../src/composables/useUsers';
@@ -11,6 +11,22 @@ vi.mock('aws-amplify/storage', () => ({
 import { getUrl } from 'aws-amplify/storage';
 const mockedGetUrl = vi.mocked(getUrl);
 
+const buildRelation = (
+  id: string,
+  role: UserRole,
+  overrides: Partial<UserRelationInit> = {},
+): UserRelationInit => ({
+  id,
+  name: `${role} ${id}`,
+  role,
+  email: `${id}@example.com`,
+  avatar: '',
+  picture: null,
+  contactInfo: '',
+  lastActive: null,
+  ...overrides,
+});
+
 const baseUserData = {
   id: 'user-base',
   name: 'Test User',
@@ -19,9 +35,9 @@ const baseUserData = {
   avatar: '',
   picture: null,
   contactInfo: '',
-  educatorIds: [] as string[],
-  parentIds: [] as string[],
-  studentIds: [] as string[],
+  educators: [] as UserRelationInit[],
+  parents: [] as UserRelationInit[],
+  students: [] as UserRelationInit[],
 };
 
 function buildUser(overrides: Partial<typeof baseUserData>): User {
@@ -39,9 +55,9 @@ const mockUsers = [
     email: 'alice@example.com',
     avatar: '',
     contactInfo: '',
-    educatorIds: [],
-    parentIds: [],
-    studentIds: [],
+    educators: [],
+    parents: [],
+    students: [],
   },
   {
     id: '2',
@@ -50,9 +66,9 @@ const mockUsers = [
     email: 'bob@example.com',
     avatar: '',
     contactInfo: '',
-    educatorIds: [],
-    parentIds: [],
-    studentIds: [],
+    educators: [],
+    parents: [],
+    students: [],
   },
 ];
 
@@ -251,12 +267,8 @@ describe('useUsers - User Behavior', () => {
 
   describe('assignment helpers', () => {
     it('assigns an educator to a student and updates both records', async () => {
-      const student = buildUser({ id: 'student-1', role: UserRole.STUDENT, educatorIds: [] });
-      const educator = buildUser({
-        id: 'educator-1',
-        role: UserRole.EDUCATOR,
-        studentIds: [],
-      });
+      const student = buildUser({ id: 'student-1', role: UserRole.STUDENT });
+      const educator = buildUser({ id: 'educator-1', role: UserRole.EDUCATOR });
 
       vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
         if (id === 'student-1') return Promise.resolve(student);
@@ -268,12 +280,12 @@ describe('useUsers - User Behavior', () => {
         student: buildUser({
           id: 'student-1',
           role: UserRole.STUDENT,
-          educatorIds: ['educator-1'],
+          educators: [buildRelation('educator-1', UserRole.EDUCATOR)],
         }),
         educator: buildUser({
           id: 'educator-1',
           role: UserRole.EDUCATOR,
-          studentIds: ['student-1'],
+          students: [buildRelation('student-1', UserRole.STUDENT)],
         }),
       });
 
@@ -290,12 +302,12 @@ describe('useUsers - User Behavior', () => {
       const student = buildUser({
         id: 'student-1',
         role: UserRole.STUDENT,
-        educatorIds: ['educator-1'],
+        educators: [buildRelation('educator-1', UserRole.EDUCATOR)],
       });
       const educator = buildUser({
         id: 'educator-1',
         role: UserRole.EDUCATOR,
-        studentIds: ['student-1'],
+        students: [buildRelation('student-1', UserRole.STUDENT)],
       });
 
       vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
@@ -308,12 +320,12 @@ describe('useUsers - User Behavior', () => {
         student: buildUser({
           id: 'student-1',
           role: UserRole.STUDENT,
-          educatorIds: [],
+          educators: [],
         }),
         educator: buildUser({
           id: 'educator-1',
           role: UserRole.EDUCATOR,
-          studentIds: [],
+          students: [],
         }),
       });
 
@@ -327,8 +339,8 @@ describe('useUsers - User Behavior', () => {
     });
 
     it('assigns and removes parents for a student', async () => {
-      const student = buildUser({ id: 'student-1', role: UserRole.STUDENT, parentIds: [] });
-      const parent = buildUser({ id: 'parent-1', role: UserRole.PARENT, studentIds: [] });
+      const student = buildUser({ id: 'student-1', role: UserRole.STUDENT });
+      const parent = buildUser({ id: 'parent-1', role: UserRole.PARENT });
 
       const findByIdSpy = vi.spyOn(userRepository, 'findById').mockImplementation((id: string) => {
         if (id === 'student-1') return Promise.resolve(student);
@@ -340,12 +352,12 @@ describe('useUsers - User Behavior', () => {
         student: buildUser({
           id: 'student-1',
           role: UserRole.STUDENT,
-          parentIds: ['parent-1'],
+          parents: [buildRelation('parent-1', UserRole.PARENT)],
         }),
         parent: buildUser({
           id: 'parent-1',
           role: UserRole.PARENT,
-          studentIds: ['student-1'],
+          students: [buildRelation('student-1', UserRole.STUDENT)],
         }),
       });
       const unlinkParentSpy = vi
@@ -354,12 +366,12 @@ describe('useUsers - User Behavior', () => {
           student: buildUser({
             id: 'student-1',
             role: UserRole.STUDENT,
-            parentIds: [],
+            parents: [],
           }),
           parent: buildUser({
             id: 'parent-1',
             role: UserRole.PARENT,
-            studentIds: [],
+            students: [],
           }),
         });
 
@@ -374,11 +386,19 @@ describe('useUsers - User Behavior', () => {
       findByIdSpy.mockImplementation((id: string) => {
         if (id === 'student-1')
           return Promise.resolve(
-            buildUser({ id: 'student-1', role: UserRole.STUDENT, parentIds: ['parent-1'] }),
+            buildUser({
+              id: 'student-1',
+              role: UserRole.STUDENT,
+              parents: [buildRelation('parent-1', UserRole.PARENT)],
+            }),
           );
         if (id === 'parent-1')
           return Promise.resolve(
-            buildUser({ id: 'parent-1', role: UserRole.PARENT, studentIds: ['student-1'] }),
+            buildUser({
+              id: 'parent-1',
+              role: UserRole.PARENT,
+              students: [buildRelation('student-1', UserRole.STUDENT)],
+            }),
           );
         return Promise.resolve(null);
       });

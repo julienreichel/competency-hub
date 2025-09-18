@@ -22,13 +22,17 @@
 
     <template #body-cell-parents="props">
       <q-td :props="props">
-        <div class="text-body2">{{ formatNames(props.row.parentIds) }}</div>
+        <div class="text-body2">
+          {{ formatRelationNames(props.row.parents, props.row.parentIds) }}
+        </div>
       </q-td>
     </template>
 
     <template #body-cell-educators="props">
       <q-td :props="props">
-        <div class="text-body2">{{ formatNames(props.row.educatorIds) }}</div>
+        <div class="text-body2">
+          {{ formatRelationNames(props.row.educators, props.row.educatorIds) }}
+        </div>
       </q-td>
     </template>
 
@@ -70,6 +74,7 @@ const props = defineProps<{
   userMap: Map<string, User>;
   loading: boolean;
   currentEducatorId: string | null;
+  assignedStudentIds?: string[];
   emptyLabel: string;
 }>();
 
@@ -105,18 +110,40 @@ const columns = [
 
 const rows = computed(() => props.students);
 
-function formatNames(ids: string[] | null | undefined): string {
-  const names = (ids ?? [])
+const assignedStudentSet = computed(() => new Set(props.assignedStudentIds ?? []));
+
+function formatRelationNames(
+  relations: User[] | undefined,
+  ids: string[] | null | undefined,
+): string {
+  const relationNames = (relations ?? [])
+    .map((relation) => props.userMap.get(relation.id)?.name ?? relation.name)
+    .filter((name) => Boolean(name));
+
+  if (relationNames.length > 0) {
+    return relationNames.join(', ');
+  }
+
+  const fallbackNames = (ids ?? [])
     .map((id) => props.userMap.get(id)?.name)
     .filter((name): name is string => Boolean(name));
-  return names.length > 0 ? names.join(', ') : '—';
+
+  return fallbackNames.length > 0 ? fallbackNames.join(', ') : '—';
 }
 
 function isAssigned(student: User): boolean {
   if (!props.currentEducatorId) {
     return false;
   }
-  return (student.educatorIds ?? []).includes(props.currentEducatorId);
+  if (student.educators.some((educator) => educator.id === props.currentEducatorId)) {
+    return true;
+  }
+
+  if (student.educatorIds.includes(props.currentEducatorId)) {
+    return true;
+  }
+
+  return assignedStudentSet.value.has(student.id);
 }
 </script>
 

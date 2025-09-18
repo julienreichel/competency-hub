@@ -196,17 +196,31 @@ import { useUserFormatters } from 'src/composables/useUserFormatters';
 import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
 import { computed, ref, watch } from 'vue';
+import type { DeepReadonly } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-type UserDetailsUser = Pick<
+type UserDetailsSnapshot = Pick<
   User,
-  'id' | 'name' | 'email' | 'role' | 'avatar' | 'educatorIds' | 'parentIds' | 'studentIds'
+  | 'id'
+  | 'name'
+  | 'email'
+  | 'role'
+  | 'avatar'
+  | 'educators'
+  | 'parents'
+  | 'students'
+  | 'children'
+  | 'educatorIds'
+  | 'parentIds'
+  | 'studentIds'
 > & {
   contactInfo?: string | null;
   createdAt?: string | undefined;
   lastActive?: string | undefined;
   picture?: string | null;
 };
+
+type UserDetailsUser = User | DeepReadonly<User> | UserDetailsSnapshot;
 
 const props = defineProps<{
   modelValue: boolean;
@@ -242,25 +256,21 @@ const isOpen = computed({
 });
 
 const user = computed(() => props.user);
-const userMap = computed(
-  () => new Map((props.allUsers ?? []).map((candidate) => [candidate.id, candidate])),
-);
 const isStudent = computed(() => user.value?.role === UserRole.STUDENT);
-const educatorUsers = computed(() => {
+const educatorUsers = computed<UserDetailsUser[]>(() => {
   if (!isStudent.value) {
-    return [] as UserDetailsUser[];
+    return [];
   }
-  return (user.value?.educatorIds ?? [])
-    .map((id) => userMap.value.get(id))
-    .filter((record): record is UserDetailsUser => Boolean(record));
+  const relations = user.value?.educators ?? [];
+  return Array.from(relations) as UserDetailsUser[];
 });
-const parentUsers = computed(() => {
+
+const parentUsers = computed<UserDetailsUser[]>(() => {
   if (!isStudent.value) {
-    return [] as UserDetailsUser[];
+    return [];
   }
-  return (user.value?.parentIds ?? [])
-    .map((id) => userMap.value.get(id))
-    .filter((record): record is UserDetailsUser => Boolean(record));
+  const relations = user.value?.parents ?? [];
+  return Array.from(relations) as UserDetailsUser[];
 });
 
 const canManageEducators = computed(() => props.canManageEducators ?? false);
@@ -269,7 +279,7 @@ const availableParentOptions = computed(() => {
   if (!canManageParents.value) {
     return [] as Array<{ label: string; value: string }>;
   }
-  const assigned = new Set(user.value?.parentIds ?? []);
+  const assigned = new Set(parentUsers.value.map((parent) => parent.id));
   return (props.allUsers ?? [])
     .filter((candidate) => candidate.role === UserRole.PARENT && !assigned.has(candidate.id))
     .map((candidate) => ({ label: candidate.name, value: candidate.id }));
@@ -279,7 +289,7 @@ const availableEducatorOptions = computed(() => {
   if (!canManageEducators.value) {
     return [] as Array<{ label: string; value: string }>;
   }
-  const assigned = new Set(user.value?.educatorIds ?? []);
+  const assigned = new Set(educatorUsers.value.map((educator) => educator.id));
   return (props.allUsers ?? [])
     .filter((candidate) => candidate.role === UserRole.EDUCATOR && !assigned.has(candidate.id))
     .map((candidate) => ({ label: candidate.name, value: candidate.id }));

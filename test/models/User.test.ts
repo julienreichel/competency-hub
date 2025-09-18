@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { User, UserRole } from '../../src/models/User';
+import { User, UserRole, type UserRelationInit } from '../../src/models/User';
 
 describe('User Model', () => {
+  const buildRelation = (
+    id: string,
+    role: UserRole,
+    overrides: Partial<UserRelationInit> = {},
+  ): UserRelationInit => ({
+    id,
+    name: `${role} ${id}`,
+    role,
+    email: `${id}@example.com`,
+    avatar: '',
+    picture: null,
+    contactInfo: '',
+    lastActive: null,
+    ...overrides,
+  });
+
+  const baseEducator = buildRelation('educator-1', UserRole.EDUCATOR);
+  const baseParent = buildRelation('parent-1', UserRole.PARENT);
+  const baseStudent = buildRelation('student-1', UserRole.STUDENT);
+
   const baseInit: Parameters<typeof User.create>[0] = {
     id: 'user-1',
     name: 'John Doe',
@@ -11,9 +31,9 @@ describe('User Model', () => {
     contactInfo: 'contact-info',
     createdAt: '2023-01-01T00:00:00Z',
     updatedAt: '2023-01-01T00:00:00Z',
-    educatorIds: ['educator-1'],
-    parentIds: ['parent-1'],
-    studentIds: ['student-1'],
+    educators: [baseEducator],
+    parents: [baseParent],
+    students: [baseStudent],
   };
 
   const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}): User =>
@@ -43,9 +63,9 @@ describe('User Model', () => {
         email: 'jane@example.com',
         avatar: 'avatar-url-2',
         contactInfo: 'contact-info-2',
-        educatorIds: [],
-        parentIds: [],
-        studentIds: [],
+        educators: [],
+        parents: [],
+        students: [],
       });
 
       expect(user.id).toBe('user-2');
@@ -148,9 +168,9 @@ describe('User Model', () => {
       expect(updatedUser.email).toBe(baseInit.email); // unchanged
       expect(updatedUser.id).toBe(baseInit.id); // unchanged
       expect(updatedUser.role).toBe(baseInit.role); // unchanged
-      expect(updatedUser.educatorIds).toEqual(baseInit.educatorIds);
-      expect(updatedUser.parentIds).toEqual(baseInit.parentIds);
-      expect(updatedUser.studentIds).toEqual(baseInit.studentIds);
+      expect(updatedUser.educatorIds).toEqual(['educator-1']);
+      expect(updatedUser.parentIds).toEqual(['parent-1']);
+      expect(updatedUser.studentIds).toEqual(['student-1']);
     });
 
     it('should handle multiple field updates', () => {
@@ -159,7 +179,7 @@ describe('User Model', () => {
         name: 'Jane Smith',
         email: 'jane.smith@example.com',
         role: UserRole.PARENT,
-        studentIds: ['student-42'],
+        students: [buildRelation('student-42', UserRole.STUDENT)],
       });
 
       expect(updatedUser.name).toBe('Jane Smith');
@@ -203,9 +223,9 @@ describe('User Model', () => {
         name: 'Jane Doe',
         role: UserRole.STUDENT,
         email: 'jane@example.com',
-        educatorIds: [],
-        parentIds: [],
-        studentIds: [],
+        educators: [],
+        parents: [],
+        students: [],
       });
       const clonedUser = user.clone();
 

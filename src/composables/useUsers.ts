@@ -153,7 +153,7 @@ export function useUsers(): {
         throw new Error('Educator not found');
       }
 
-      if (student.educatorIds?.includes(educatorId)) {
+      if (student.educators.some((relation) => relation.id === educatorId)) {
         return { student, educator };
       }
 
@@ -193,7 +193,7 @@ export function useUsers(): {
         throw new Error('Educator not found');
       }
 
-      if (!student.educatorIds?.includes(educatorId)) {
+      if (!student.educators.some((relation) => relation.id === educatorId)) {
         return { student, educator };
       }
 
@@ -233,7 +233,7 @@ export function useUsers(): {
         throw new Error('Parent not found');
       }
 
-      if (student.parentIds?.includes(parentId)) {
+      if (student.parents.some((relation) => relation.id === parentId)) {
         return { student, parent };
       }
 
@@ -273,7 +273,7 @@ export function useUsers(): {
         throw new Error('Parent not found');
       }
 
-      if (!student.parentIds?.includes(parentId)) {
+      if (!student.parents.some((relation) => relation.id === parentId)) {
         return { student, parent };
       }
 
