@@ -94,8 +94,8 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import AmplifyUploader from 'src/components/ui/AmplifyUploader';
 import AvatarPicker from 'src/components/ui/AvatarPicker.vue';
+import AmplifyUploader from 'src/components/utils/AmplifyUploader';
 import { useUserFormatters } from 'src/composables/useUserFormatters';
 import type { UserRole } from 'src/models/User';
 import { computed, ref, watch } from 'vue';

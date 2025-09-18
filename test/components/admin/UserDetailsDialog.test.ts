@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
-import UserDetailsDialog from '../../../src/components/admin/UserDetailsDialog.vue';
+import UserDetailsDialog from '../../../src/components/ui/UserDetailsDialog.vue';
 import { UserRole } from '../../../src/models/User';
 import { withQuasarBrowser } from '../../browser-test-utils';
 

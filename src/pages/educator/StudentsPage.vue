@@ -84,8 +84,8 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import UserDetailsDialog from 'src/components/admin/UserDetailsDialog.vue';
 import StudentAssignmentsTable from 'src/components/educator/StudentAssignmentsTable.vue';
+import UserDetailsDialog from 'src/components/ui/UserDetailsDialog.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';
 import type { User } from 'src/models/User';
