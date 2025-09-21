@@ -574,7 +574,7 @@ export class GraphQLClient {
             'name',
             'description',
             'objectives',
-            'order',
+            'level',
             'createdAt',
             'updatedAt',
             'resources.*',

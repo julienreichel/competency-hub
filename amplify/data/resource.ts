@@ -77,7 +77,7 @@ const schema = a
         name: a.string().required(),
         description: a.string(),
         objectives: a.string(),
-        order: a.integer().default(0),
+        level: a.integer().default(0),
         resources: a.hasMany('Resource', 'subCompetencyId'),
       })
       .authorization((allow) => [

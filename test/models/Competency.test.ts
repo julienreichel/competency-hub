@@ -22,7 +22,7 @@ describe('Competency taxonomy models', () => {
     name: 'Stage 1',
     description: 'First stage',
     objectives: 'Understand basics',
-    order: 1,
+    level: 1,
     resources: [resourceInit],
   };
 
@@ -69,7 +69,7 @@ describe('Competency taxonomy models', () => {
 
       expect(stage.resources).toHaveLength(1);
       expect(stage.resources[0]?.name).toBe('Intro video');
-      expect(stage.order).toBe(1);
+      expect(stage.level).toBe(1);
     });
 
     it('throws when name is empty', () => {

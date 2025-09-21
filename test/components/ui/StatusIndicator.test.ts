@@ -119,7 +119,7 @@ describe('StatusIndicator - User Experience', () => {
       expect(text).toMatch(/(Active|Inactive|Suspended)/);
     });
 
-    it('should maintain logical reading order for assistive technology', () => {
+    it('should maintain logical reading level for assistive technology', () => {
       const wrapper = mount(
         StatusIndicator,
         withQuasarBrowser({

@@ -145,7 +145,7 @@ export interface SubCompetencyInit {
   name: string;
   description?: string | null;
   objectives?: string | null;
-  order?: number;
+  level?: number;
   createdAt?: string;
   updatedAt?: string;
   resources?: Array<ResourceInit | CompetencyResource>;
@@ -157,7 +157,7 @@ export interface CreateSubCompetencyInput {
   name: string;
   description?: string | null;
   objectives?: string | null;
-  order?: number;
+  level?: number;
 }
 
 export type UpdateSubCompetencyInput = Partial<CreateSubCompetencyInput>;
@@ -333,7 +333,7 @@ export class SubCompetency extends BaseModel {
   public name: string;
   public description: string | null;
   public objectives: string | null;
-  public order: number;
+  public level: number;
   public readonly resources: CompetencyResource[];
 
   constructor(data: SubCompetencyInit) {
@@ -347,7 +347,7 @@ export class SubCompetency extends BaseModel {
     this.name = data.name;
     this.description = data.description ?? null;
     this.objectives = data.objectives ?? null;
-    this.order = typeof data.order === 'number' ? data.order : 0;
+    this.level = typeof data.level === 'number' ? data.level : 0;
     const initialResources = Array.from(data.resources ?? []);
     this.resources = initialResources.map((resource) =>
       resource instanceof CompetencyResource ? resource.clone() : new CompetencyResource(resource),
@@ -375,7 +375,7 @@ export class SubCompetency extends BaseModel {
       name: raw.name,
       description: raw.description ?? null,
       objectives: raw.objectives ?? null,
-      order: typeof raw.order === 'number' ? raw.order : 0,
+      level: typeof raw.level === 'number' ? raw.level : 0,
       resources,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
@@ -395,7 +395,7 @@ export class SubCompetency extends BaseModel {
       name: this.name,
       description: this.description,
       objectives: this.objectives,
-      order: this.order,
+      level: this.level,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
 
@@ -411,7 +411,7 @@ export class SubCompetency extends BaseModel {
       name: this.name,
       description: this.description,
       objectives: this.objectives,
-      order: this.order,
+      level: this.level,
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
       resources: this.resources.map((resource) => resource.clone()),

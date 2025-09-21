@@ -35,8 +35,8 @@ async function load(): Promise<void> {
     competency.value = c;
     domainId = c?.domainId;
     if (c?.domain?.name) domainName.value = c?.domain?.name;
-    // Ensure stable order
-    subs.value = (c?.subCompetencies ?? []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    // Ensure stable level
+    subs.value = (c?.subCompetencies ?? []).sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
   } finally {
     loading.value = false;
   }
@@ -57,11 +57,11 @@ async function saveCompetency(updated: UpdateCompetencyInput): Promise<void> {
 }
 
 async function addSubCompetency(name: string): Promise<void> {
-  const nextOrder = (subs.value[subs.value.length - 1]?.order ?? 0) + 1;
+  const nextOrder = (subs.value[subs.value.length - 1]?.level ?? 0) + 1;
   const created = await subCompetencyRepository.create({
     competencyId,
     name,
-    order: nextOrder,
+    level: nextOrder,
   });
   subs.value.push(created);
   $q.notify({ type: 'positive', message: 'Sub-competency added' });
@@ -79,35 +79,6 @@ async function deleteSubCompetency(id: string): Promise<void> {
   await subCompetencyRepository.delete(id);
   subs.value = subs.value.filter((s) => s.id !== id);
   $q.notify({ type: 'positive', message: 'Deleted' });
-}
-
-async function moveUp(id: string): Promise<void> {
-  const idx = subs.value.findIndex((s) => s.id === id);
-  if (idx <= 0) return;
-  const prev = subs.value[idx - 1];
-  const curr = subs.value[idx];
-  if (!prev || !curr) return;
-  const prevOrder = prev.order ?? idx;
-  const currOrder = curr.order ?? idx + 1;
-  // swap orders
-  await subCompetencyRepository.update(prev.id, { order: currOrder });
-  await subCompetencyRepository.update(curr.id, { order: prevOrder });
-  subs.value[idx - 1] = curr;
-  subs.value[idx] = prev;
-}
-
-async function moveDown(id: string): Promise<void> {
-  const idx = subs.value.findIndex((s) => s.id === id);
-  if (idx === -1 || idx >= subs.value.length - 1) return;
-  const curr = subs.value[idx];
-  const next = subs.value[idx + 1];
-  if (!curr || !next) return;
-  const nextOrder = next.order ?? idx + 1;
-  const currOrder = curr.order ?? idx;
-  await subCompetencyRepository.update(next.id, { order: currOrder });
-  await subCompetencyRepository.update(curr.id, { order: nextOrder });
-  subs.value[idx] = next;
-  subs.value[idx + 1] = curr;
 }
 
 async function openSubCompetency(id: string): Promise<void> {
@@ -163,8 +134,6 @@ onMounted(load);
       @edit="openSubCompetency"
       @rename="renameSubCompetency"
       @delete="deleteSubCompetency"
-      @move-up="moveUp"
-      @move-down="moveDown"
     />
 
     <!-- quick add dialog -->

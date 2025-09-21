@@ -439,7 +439,7 @@ describe('GraphQLClient', () => {
       id: 'sub-1',
       competencyId: 'comp-1',
       name: 'Stage 1',
-      order: 1,
+      level: 1,
     };
 
     it('creates a sub-competency', async () => {
@@ -451,12 +451,12 @@ describe('GraphQLClient', () => {
       const result = await graphQLClient.createSubCompetency({
         competencyId: 'comp-1',
         name: 'Stage 1',
-        order: 1,
+        level: 1,
       });
 
       expect(result).toEqual(rawSubCompetency);
       expect(mockAmplifyClient.models.SubCompetency.create).toHaveBeenCalledWith(
-        { competencyId: 'comp-1', name: 'Stage 1', order: 1 },
+        { competencyId: 'comp-1', name: 'Stage 1', level: 1 },
         { authMode: 'userPool' },
       );
     });

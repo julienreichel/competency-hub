@@ -26,7 +26,7 @@ describe('EditUserDialog - User Behavior', () => {
       }),
     );
 
-    // Find all q-input input fields and check their values by order
+    // Find all q-input input fields and check their values by level
     const inputComps = wrapper.findAllComponents({ name: 'QInput' });
     expect(inputComps.length).toBeGreaterThanOrEqual(2);
     if (inputComps.length >= 2) {

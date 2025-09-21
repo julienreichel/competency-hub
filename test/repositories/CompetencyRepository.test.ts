@@ -41,7 +41,7 @@ describe('CompetencyRepository', () => {
         name: 'Stage 1',
         description: 'First stage',
         objectives: 'Cover introduction',
-        order: 1,
+        level: 1,
         resources: [
           {
             id: 'res-1',

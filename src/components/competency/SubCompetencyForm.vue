@@ -19,6 +19,7 @@ function onSave(): void {
   const payload: UpdateSubCompetencyInput = {
     id: form.id,
     name: form.name,
+    level: form.level || 1,
     description: form.description ?? '',
     objectives: form.objectives ?? '',
   };
@@ -38,11 +39,14 @@ function onSave(): void {
           dense
         />
       </div>
-      <div class="col-12">
-        <q-input v-model="form.objectives" label="Objectives" type="textarea" autogrow filled />
+      <div class="col-12 col-md-6">
+        <q-slider filled dense v-model="form.level" :min="1" :max="10" />
       </div>
       <div class="col-12">
         <q-input v-model="form.description" label="Description" type="textarea" autogrow filled />
+      </div>
+      <div class="col-12">
+        <q-input v-model="form.objectives" label="Objectives" type="textarea" autogrow filled />
       </div>
     </div>
 

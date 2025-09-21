@@ -19,7 +19,7 @@ describe('Domain model', () => {
             id: 'sub-1',
             competencyId: 'comp-1',
             name: 'Linear equations',
-            order: 1,
+            level: 1,
             resources: [
               {
                 id: 'res-1',

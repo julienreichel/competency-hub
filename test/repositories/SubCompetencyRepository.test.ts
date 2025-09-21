@@ -30,7 +30,7 @@ describe('SubCompetencyRepository', () => {
     name: 'Stage 1',
     description: 'First stage',
     objectives: 'Cover basics',
-    order: 1,
+    level: 1,
     resources: [],
   };
 
@@ -46,14 +46,14 @@ describe('SubCompetencyRepository', () => {
       competencyId: 'comp-1',
       name: 'Stage 1',
       description: 'First stage',
-      order: 1,
+      level: 1,
     });
 
     expect(mockGraphQLClient.createSubCompetency).toHaveBeenCalledWith({
       competencyId: 'comp-1',
       name: 'Stage 1',
       description: 'First stage',
-      order: 1,
+      level: 1,
     });
     expect(result).toBeInstanceOf(SubCompetency);
   });
