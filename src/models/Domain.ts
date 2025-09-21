@@ -2,7 +2,7 @@ import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { Competency, mapCompetenciesFromAmplify, type CompetencyInit } from './Competency';
 
-type AmplifyDomain = NonNullable<Schema['Domain']['type']>;
+export type AmplifyDomain = NonNullable<Schema['Domain']['type']>;
 
 type RelationCollection<T> = T | T[] | { items?: T[] } | { toArray?: () => T[] } | null | undefined;
 

@@ -500,6 +500,7 @@ export class GraphQLClient {
           selectionSet: [
             'id',
             'domainId',
+            'domain.*',
             'name',
             'description',
             'objectives',
@@ -568,6 +569,8 @@ export class GraphQLClient {
           selectionSet: [
             'id',
             'competencyId',
+            'competency.*',
+            'competency.domain.*',
             'name',
             'description',
             'objectives',

@@ -2,6 +2,7 @@
 import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
+import { Domain, type AmplifyDomain } from './Domain';
 import { User, UserRole } from './User';
 
 type AmplifyCompetency = NonNullable<Schema['Competency']['type']>;
@@ -140,6 +141,7 @@ export type UpdateResourceInput = Partial<CreateResourceInput>;
 export interface SubCompetencyInit {
   id: string;
   competencyId: string;
+  competency?: Competency | null;
   name: string;
   description?: string | null;
   objectives?: string | null;
@@ -163,6 +165,7 @@ export type UpdateSubCompetencyInput = Partial<CreateSubCompetencyInput>;
 export interface CompetencyInit {
   id: string;
   domainId: string;
+  domain?: Domain | null;
   name: string;
   description?: string | null;
   objectives?: string | null;
@@ -322,6 +325,7 @@ export class CompetencyResource extends BaseModel {
 
 export class SubCompetency extends BaseModel {
   public readonly competencyId: string;
+  public readonly competency: Competency | null;
   public name: string;
   public description: string | null;
   public objectives: string | null;
@@ -331,6 +335,11 @@ export class SubCompetency extends BaseModel {
   constructor(data: SubCompetencyInit) {
     super(data);
     this.competencyId = data.competencyId;
+    this.competency = data.competency
+      ? data.competency instanceof Competency
+        ? data.competency
+        : new Competency(data.competency)
+      : null;
     this.name = data.name;
     this.description = data.description ?? null;
     this.objectives = data.objectives ?? null;
@@ -347,10 +356,18 @@ export class SubCompetency extends BaseModel {
     const resources = normaliseCollection<AmplifyResource>(raw.resources).map((resource) =>
       CompetencyResource.fromAmplify(resource),
     );
-
+    let competency: Competency | null = null;
+    if (raw.competency) {
+      // If already a Competency instance, use as is; otherwise, parse
+      competency =
+        raw.competency instanceof Competency
+          ? raw.competency
+          : Competency.fromAmplify(raw.competency as unknown as AmplifyCompetency);
+    }
     return new SubCompetency({
       id: raw.id,
       competencyId: raw.competencyId,
+      competency,
       name: raw.name,
       description: raw.description ?? null,
       objectives: raw.objectives ?? null,
@@ -377,6 +394,7 @@ export class SubCompetency extends BaseModel {
       order: this.order,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+
       resources: this.resources.map((resource) => resource.toJSON()),
     };
   }
@@ -385,6 +403,7 @@ export class SubCompetency extends BaseModel {
     return new SubCompetency({
       id: this.id,
       competencyId: this.competencyId,
+      competency: this.competency ? this.competency.clone() : null,
       name: this.name,
       description: this.description,
       objectives: this.objectives,
@@ -398,6 +417,7 @@ export class SubCompetency extends BaseModel {
 
 export class Competency extends BaseModel {
   public readonly domainId: string;
+  public readonly domain: Domain | null;
   public name: string;
   public description: string | null;
   public objectives: string | null;
@@ -406,6 +426,11 @@ export class Competency extends BaseModel {
   constructor(data: CompetencyInit) {
     super(data);
     this.domainId = data.domainId;
+    this.domain = data.domain
+      ? data.domain instanceof Domain
+        ? data.domain
+        : new Domain(data.domain)
+      : null;
     this.name = data.name;
     this.description = data.description ?? null;
     this.objectives = data.objectives ?? null;
@@ -423,10 +448,18 @@ export class Competency extends BaseModel {
     const subCompetencies = normaliseCollection<AmplifySubCompetency>(raw.subCompetencies).map(
       (sub) => SubCompetency.fromAmplify(sub),
     );
-
+    let domain: Domain | null = null;
+    if (raw.domain) {
+      // If already a Competency instance, use as is; otherwise, parse
+      domain =
+        raw.domain instanceof Domain
+          ? raw.domain
+          : Domain.fromAmplify(raw.domain as unknown as AmplifyDomain);
+    }
     return new Competency({
       id: raw.id,
       domainId: raw.domainId,
+      domain,
       name: raw.name,
       description: raw.description ?? null,
       objectives: raw.objectives ?? null,
@@ -450,6 +483,7 @@ export class Competency extends BaseModel {
     return new Competency({
       id: this.id,
       domainId: this.domainId,
+      domain: this.domain?.clone() ?? null,
       name: this.name,
       description: this.description,
       objectives: this.objectives,
@@ -463,6 +497,7 @@ export class Competency extends BaseModel {
     return {
       id: this.id,
       domainId: this.domainId,
+      domain: this.domain ? this.domain.toJSON() : null,
       name: this.name,
       description: this.description,
       objectives: this.objectives,
@@ -476,6 +511,7 @@ export class Competency extends BaseModel {
     return new Competency({
       id: this.id,
       domainId: this.domainId,
+      domain: this.domain?.clone() ?? null,
       name: this.name,
       description: this.description,
       objectives: this.objectives,
@@ -485,7 +521,6 @@ export class Competency extends BaseModel {
     });
   }
 }
-
 export const mapResourcesFromAmplify = (resources: unknown): CompetencyResource[] =>
   normaliseCollection<AmplifyResource>(resources as RelationCollection<AmplifyResource>).map(
     (resource) => CompetencyResource.fromAmplify(resource),

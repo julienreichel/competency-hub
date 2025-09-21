@@ -1,5 +1,3 @@
-// Translation keys for competency hub application
-
 export default {
   // Common terms
   common: {
@@ -22,6 +20,7 @@ export default {
     close: 'Close',
     actions: 'Actions',
     refresh: 'Refresh',
+    create: 'Create',
   },
 
   // Admin section
@@ -134,9 +133,19 @@ export default {
     competencyCount: 'None | 1 competency | {count} competencies',
   },
 
+  resources: {
+    title: 'Resources',
+    addResource: 'Add Resource',
+  },
+
   competencies: {
+    title: 'Competencies',
+
     addCompetency: 'Add Competency',
+    addSubCompetency: 'Add sub-competency',
     createTitle: 'Create Competency',
+    newSubCompetency: 'New sub-competency',
+    name: 'Competency name',
     fields: {
       name: 'Competency name',
       description: 'Description',
@@ -158,18 +167,6 @@ export default {
         stages: 'Stages',
         resources: 'Resources',
       },
-      stages: {
-        placeholder: {
-          title: 'Stage management coming soon',
-          description: 'You will be able to add and order sub-competencies here.',
-        },
-      },
-      resources: {
-        placeholder: {
-          title: 'Resource management coming soon',
-          description: 'Attach human and digital helpers to each stage from this tab.',
-        },
-      },
       messages: {
         notFound: 'Competency not found.',
         loadError: 'Could not load the competency. Please try again.',
@@ -182,6 +179,13 @@ export default {
       error: 'Could not save the competency. Please try again.',
       loadError: 'Could not load domain details. Please try again.',
     },
+    subCompetencies: 'Sub-Competencies',
+  },
+  subCompetencies: {
+    title: 'Sub-Competencies',
+    loading: 'Loading sub-competency...',
+    newSubCompetency: 'New sub-competency',
+    name: 'Sub-competency name',
   },
 
   // Validation messages

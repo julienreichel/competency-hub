@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
+import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
 import {
   type Competency,
   type SubCompetency,
   type UpdateCompetencyInput,
 } from 'src/models/Competency';
-import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-
-// Adjust these to your real paths
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
-
-import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
-import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
+import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
+let domainId = route.params.domainId as string | undefined;
+const domainName = ref<string>(t('domains.title'));
 const competencyId = route.params.competencyId as string;
 const loading = ref(false);
 const competency = ref<Competency | null>(null);
@@ -32,11 +33,20 @@ async function load(): Promise<void> {
     // Expect repo to return competency + subCompetencies array (or fetch separately)
     const c = await competencyRepository.findById(competencyId, true);
     competency.value = c;
-
+    domainId = c?.domainId;
+    if (c?.domain?.name) domainName.value = c?.domain?.name;
     // Ensure stable order
     subs.value = (c?.subCompetencies ?? []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   } finally {
     loading.value = false;
+  }
+}
+
+function goBack(): void {
+  if (domainId) {
+    void router.push({ name: 'domain-competencies', params: { domainId } });
+  } else {
+    router.back();
   }
 }
 
@@ -119,23 +129,32 @@ onMounted(load);
 
 <template>
   <q-page padding>
-    <div class="row items-center q-gutter-sm">
-      <div class="col">
-        <div class="text-h5">Edit Competency</div>
+    <div class="row items-center q-gutter-sm q-mb-md">
+      <q-btn flat round icon="arrow_back" color="primary" @click="goBack" />
+      <div class="column">
+        <q-breadcrumbs class="text-grey-7">
+          <q-breadcrumbs-el
+            :label="domainName"
+            :to="{ name: 'domain-competencies', params: { domainId } }"
+          />
+          <q-breadcrumbs-el :label="competency?.name ?? t('competencies.loading')" />
+        </q-breadcrumbs>
+        <div class="text-h5">{{ competency?.name ?? t('competencies.loading') }}</div>
       </div>
+      <q-space />
       <q-spinner v-if="loading" size="sm" />
     </div>
 
-    <q-separator class="q-mt-md q-mb-md" />
+    <q-separator class="q-mb-md" />
 
     <competency-details-form v-if="competency" :model-value="competency" @save="saveCompetency" />
 
     <q-separator class="q-my-lg" />
 
     <div class="row items-center q-gutter-sm">
-      <div class="text-h6">Sub-Competencies</div>
+      <div class="text-h6">{{ t('competencies.subCompetencies') }}</div>
       <q-space />
-      <q-btn color="primary" label="Add sub-competency" @click="openDialog" />
+      <q-btn color="primary" :label="t('competencies.addSubCompetency')" @click="openDialog" />
     </div>
 
     <sub-competency-list
@@ -151,13 +170,13 @@ onMounted(load);
     <!-- quick add dialog -->
     <q-dialog v-model="dialog">
       <q-card style="min-width: 420px">
-        <q-card-section class="text-h6">New sub-competency</q-card-section>
+        <q-card-section class="text-h6">{{ t('competencies.newSubCompetency') }}</q-card-section>
         <q-card-section>
-          <q-input v-model="addName" label="Name" autofocus />
+          <q-input v-model="addName" :label="t('competencies.name')" autofocus />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="primary" label="Create" @click="closeDialog" />
+          <q-btn flat :label="t('common.cancel')" v-close-popup />
+          <q-btn color="primary" :label="t('common.create')" @click="closeDialog" />
         </q-card-actions>
       </q-card>
     </q-dialog>
