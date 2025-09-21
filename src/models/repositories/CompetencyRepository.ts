@@ -7,10 +7,6 @@ interface CompetencyFilter extends Record<string, unknown> {
   name?: { contains: string };
 }
 
-interface FindOptions {
-  includeDetails?: boolean;
-}
-
 export class CompetencyRepository
   implements Repository<Competency, CreateCompetencyInput, UpdateCompetencyInput, CompetencyFilter>
 {
@@ -22,8 +18,8 @@ export class CompetencyRepository
     return Competency.fromAmplify(raw);
   }
 
-  async findById(id: string, options: FindOptions = {}): Promise<Competency | null> {
-    const raw = options.includeDetails
+  async findById(id: string, includeHierarchy = false): Promise<Competency | null> {
+    const raw = includeHierarchy
       ? await graphQLClient.getCompetencyWithDetails(id)
       : await graphQLClient.getCompetency(id);
     if (!raw) {

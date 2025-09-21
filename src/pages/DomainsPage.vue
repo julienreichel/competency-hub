@@ -48,7 +48,7 @@
                     <div class="text-caption text-grey-7">
                       {{
                         $t('domains.competencyCount', {
-                          count: domain.competencyCount ?? domain.competencies?.length ?? 0,
+                          count: domain.competencies?.length ?? 0,
                         })
                       }}
                     </div>

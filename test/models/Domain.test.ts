@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Domain } from '../../src/models/Domain';
 import { Competency } from '../../src/models/Competency';
+import { Domain } from '../../src/models/Domain';
 
 describe('Domain model', () => {
   const domainInit = {
@@ -25,7 +25,7 @@ describe('Domain model', () => {
                 id: 'res-1',
                 subCompetencyId: 'sub-1',
                 type: 'Link',
-                title: 'Tutorial',
+                name: 'Tutorial',
                 url: 'https://example.com/tutorial',
               },
             ],

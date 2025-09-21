@@ -467,7 +467,7 @@ describe('GraphQLClient', () => {
       id: 'res-1',
       subCompetencyId: 'sub-1',
       type: 'Link',
-      title: 'Overview',
+      name: 'Overview',
       url: 'https://example.com',
     };
 
@@ -480,13 +480,13 @@ describe('GraphQLClient', () => {
       const result = await graphQLClient.createResource({
         subCompetencyId: 'sub-1',
         type: 'Link',
-        title: 'Overview',
+        name: 'Overview',
         url: 'https://example.com',
       });
 
       expect(result).toEqual(rawResource);
       expect(mockAmplifyClient.models.Resource.create).toHaveBeenCalledWith(
-        { subCompetencyId: 'sub-1', type: 'Link', title: 'Overview', url: 'https://example.com' },
+        { subCompetencyId: 'sub-1', type: 'Link', name: 'Overview', url: 'https://example.com' },
         { authMode: 'userPool' },
       );
     });

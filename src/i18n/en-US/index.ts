@@ -131,7 +131,7 @@ export default {
       create: 'Create',
       save: 'Save changes',
     },
-    competencyCount: '{count, plural, one {# competency} other {# competencies}}',
+    competencyCount: 'None | 1 competency | {count} competencies',
   },
 
   competencies: {

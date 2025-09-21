@@ -1,7 +1,7 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
-import { User, UserRole } from './User';
 import type { UserRelationInit } from './User';
+import { User, UserRole } from './User';
 
 type AmplifyCompetency = NonNullable<Schema['Competency']['type']>;
 type AmplifySubCompetency = NonNullable<Schema['SubCompetency']['type']>;
@@ -119,9 +119,10 @@ export interface ResourceInit extends Record<string, unknown> {
   id: string;
   subCompetencyId: string;
   type: ResourceType | string;
-  title: string;
+  name: string;
   description?: string | null;
   url?: string | null;
+  fileKey?: string | null;
   personUserId?: string | null;
   person?: UserRelationInit | User | null;
   createdAt?: string;
@@ -129,17 +130,19 @@ export interface ResourceInit extends Record<string, unknown> {
 }
 
 export interface CreateResourceInput extends Record<string, unknown> {
+  id?: string;
   subCompetencyId: string;
   type: ResourceType;
-  title: string;
+  name: string;
   description?: string | null;
   url?: string | null;
+  fileKey?: string | null;
   personUserId?: string | null;
 }
 
 export type UpdateResourceInput = Partial<CreateResourceInput>;
 
-export interface SubCompetencyInit extends Record<string, unknown> {
+export interface SubCompetencyInit {
   id: string;
   competencyId: string;
   name: string;
@@ -151,7 +154,8 @@ export interface SubCompetencyInit extends Record<string, unknown> {
   resources?: Array<ResourceInit | CompetencyResource>;
 }
 
-export interface CreateSubCompetencyInput extends Record<string, unknown> {
+export interface CreateSubCompetencyInput {
+  id?: string;
   competencyId: string;
   name: string;
   description?: string | null;
@@ -161,7 +165,7 @@ export interface CreateSubCompetencyInput extends Record<string, unknown> {
 
 export type UpdateSubCompetencyInput = Partial<CreateSubCompetencyInput>;
 
-export interface CompetencyInit extends Record<string, unknown> {
+export interface CompetencyInit {
   id: string;
   domainId: string;
   name: string;
@@ -172,7 +176,8 @@ export interface CompetencyInit extends Record<string, unknown> {
   subCompetencies?: Array<SubCompetencyInit | SubCompetency>;
 }
 
-export interface CreateCompetencyInput extends Record<string, unknown> {
+export interface CreateCompetencyInput {
+  id?: string;
   domainId: string;
   name: string;
   description?: string | null;
@@ -191,9 +196,10 @@ const normaliseResourceType = (type: string | ResourceType): ResourceType => {
 export class CompetencyResource extends BaseModel {
   public readonly subCompetencyId: string;
   public readonly type: ResourceType;
-  public readonly title: string;
-  public readonly description: string | null;
-  public readonly url: string | null;
+  public name: string;
+  public description: string | null;
+  public url: string | null;
+  public fileKey: string | null;
   public readonly personUserId: string | null;
   public readonly person: User | null;
 
@@ -201,9 +207,10 @@ export class CompetencyResource extends BaseModel {
     super(data);
     this.subCompetencyId = data.subCompetencyId;
     this.type = normaliseResourceType(data.type);
-    this.title = data.title;
+    this.name = data.name;
     this.description = data.description ?? null;
     this.url = data.url ?? null;
+    this.fileKey = data.fileKey ?? null;
     this.personUserId = data.personUserId ?? null;
 
     if (data.person instanceof User) {
@@ -224,9 +231,10 @@ export class CompetencyResource extends BaseModel {
       id: raw.id,
       subCompetencyId: raw.subCompetencyId,
       type: (raw.type ?? ResourceType.LINK) as string,
-      title: raw.title,
+      name: raw.name,
       description: raw.description ?? null,
       url: raw.url ?? null,
+      fileKey: raw.fileKey ?? null,
       personUserId: raw.personUserId ?? null,
       person: personData,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
@@ -235,8 +243,8 @@ export class CompetencyResource extends BaseModel {
   }
 
   validate(): void {
-    if (!this.title?.trim()) {
-      throw new Error('Resource title is required');
+    if (!this.name?.trim()) {
+      throw new Error('Resource name is required');
     }
 
     if (!Object.values(ResourceType).includes(this.type)) {
@@ -259,9 +267,10 @@ export class CompetencyResource extends BaseModel {
       id: this.id,
       subCompetencyId: this.subCompetencyId,
       type: this.type,
-      title: this.title,
+      name: this.name,
       description: this.description,
       url: this.url,
+      fileKey: this.fileKey,
       personUserId: this.personUserId,
       person: this.person ? this.person.toJSON() : null,
       createdAt: this.createdAt,
@@ -275,9 +284,10 @@ export class CompetencyResource extends BaseModel {
       id: this.id,
       subCompetencyId: this.subCompetencyId,
       type: this.type,
-      title: this.title,
+      name: this.name,
       description: this.description,
       url: this.url,
+      fileKey: this.fileKey,
       personUserId: this.personUserId,
       person: personInit,
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
@@ -288,10 +298,10 @@ export class CompetencyResource extends BaseModel {
 
 export class SubCompetency extends BaseModel {
   public readonly competencyId: string;
-  public readonly name: string;
-  public readonly description: string | null;
-  public readonly objectives: string | null;
-  public readonly order: number;
+  public name: string;
+  public description: string | null;
+  public objectives: string | null;
+  public order: number;
   public readonly resources: CompetencyResource[];
 
   constructor(data: SubCompetencyInit) {
@@ -364,9 +374,9 @@ export class SubCompetency extends BaseModel {
 
 export class Competency extends BaseModel {
   public readonly domainId: string;
-  public readonly name: string;
-  public readonly description: string | null;
-  public readonly objectives: string | null;
+  public name: string;
+  public description: string | null;
+  public objectives: string | null;
   public readonly subCompetencies: SubCompetency[];
 
   constructor(data: CompetencyInit) {

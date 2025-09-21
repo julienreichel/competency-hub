@@ -89,9 +89,10 @@ const schema = a
         subCompetencyId: a.id().required(),
         subCompetency: a.belongsTo('SubCompetency', 'subCompetencyId'),
         type: a.enum(['Link', 'Human', 'Document', 'Location']),
-        title: a.string().required(),
+        name: a.string().required(),
         description: a.string(),
         url: a.string(),
+        fileKey: a.string(),
         personUserId: a.id(),
         person: a.belongsTo('User', 'personUserId'),
       })

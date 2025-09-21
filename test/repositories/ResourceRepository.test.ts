@@ -28,7 +28,7 @@ describe('ResourceRepository', () => {
     id: 'res-1',
     subCompetencyId: 'sub-1',
     type: 'Link',
-    title: 'Overview video',
+    name: 'Overview video',
     description: 'Watch before class',
     url: 'https://example.com/video',
   };
@@ -44,7 +44,7 @@ describe('ResourceRepository', () => {
     const result = await repository.create({
       subCompetencyId: 'sub-1',
       type: ResourceType.LINK,
-      title: 'Overview video',
+      name: 'Overview video',
       description: 'Watch before class',
       url: 'https://example.com/video',
     });
@@ -52,7 +52,7 @@ describe('ResourceRepository', () => {
     expect(mockGraphQLClient.createResource).toHaveBeenCalledWith({
       subCompetencyId: 'sub-1',
       type: ResourceType.LINK,
-      title: 'Overview video',
+      name: 'Overview video',
       description: 'Watch before class',
       url: 'https://example.com/video',
     });
@@ -65,7 +65,7 @@ describe('ResourceRepository', () => {
     const resource = await repository.findById('res-1');
 
     expect(mockGraphQLClient.getResource).toHaveBeenCalledWith('res-1');
-    expect(resource?.title).toBe('Overview video');
+    expect(resource?.name).toBe('Overview video');
   });
 
   it('lists resources by sub-competency id', async () => {
@@ -82,16 +82,16 @@ describe('ResourceRepository', () => {
   it('updates a resource', async () => {
     mockGraphQLClient.updateResource.mockResolvedValue({
       ...rawResource,
-      title: 'Updated title',
+      name: 'Updated name',
     });
 
-    const resource = await repository.update('res-1', { title: 'Updated title' });
+    const resource = await repository.update('res-1', { name: 'Updated name' });
 
     expect(mockGraphQLClient.updateResource).toHaveBeenCalledWith({
       id: 'res-1',
-      title: 'Updated title',
+      name: 'Updated name',
     });
-    expect(resource.title).toBe('Updated title');
+    expect(resource.name).toBe('Updated name');
   });
 
   it('deletes a resource', async () => {

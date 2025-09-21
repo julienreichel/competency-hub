@@ -11,7 +11,7 @@ describe('Competency taxonomy models', () => {
     id: 'resource-1',
     subCompetencyId: 'sub-1',
     type: ResourceType.LINK,
-    title: 'Intro video',
+    name: 'Intro video',
     description: 'Watch before class',
     url: 'https://example.com/video',
   };
@@ -68,7 +68,7 @@ describe('Competency taxonomy models', () => {
       const stage = new SubCompetency(subCompetencyInit);
 
       expect(stage.resources).toHaveLength(1);
-      expect(stage.resources[0]?.title).toBe('Intro video');
+      expect(stage.resources[0]?.name).toBe('Intro video');
       expect(stage.order).toBe(1);
     });
 
@@ -89,7 +89,7 @@ describe('Competency taxonomy models', () => {
 
       expect(competency.domainId).toBe('domain-1');
       expect(competency.subCompetencies).toHaveLength(1);
-      expect(competency.subCompetencies[0]?.resources[0]?.title).toBe('Intro video');
+      expect(competency.subCompetencies[0]?.resources[0]?.name).toBe('Intro video');
     });
 
     it('throws when name is empty', () => {

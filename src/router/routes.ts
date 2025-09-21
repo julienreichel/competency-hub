@@ -68,6 +68,12 @@ const routes: RouteRecordRaw[] = [
         meta: { roles: ['Admin', 'Educator'] },
       },
       {
+        path: 'competencies/:competencyId/sub/:subId',
+        name: 'sub-competency-editor',
+        component: () => import('pages/SubCompetencyEditorPage.vue'),
+        meta: { roles: ['Admin', 'Educator'] },
+      },
+      {
         path: 'educator',
         children: [
           {

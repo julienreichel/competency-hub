@@ -649,6 +649,9 @@ export class GraphQLClient {
     data: Schema['Resource']['createType'],
   ): Promise<Schema['Resource']['type'] | null> {
     try {
+      console.log('create before', { ...data });
+      if (!data.personUserId) delete data.personUserId;
+      console.log('after', { ...data });
       const result = await this.client.models.Resource.create(data, {
         authMode: 'userPool',
       });
@@ -666,6 +669,9 @@ export class GraphQLClient {
     data: Schema['Resource']['updateType'],
   ): Promise<Schema['Resource']['type'] | null> {
     try {
+      console.log('update before', { ...data });
+      if (!data.personUserId) delete data.personUserId;
+      console.log('before', { ...data });
       const result = await this.client.models.Resource.update(data, {
         authMode: 'userPool',
       });
@@ -707,7 +713,7 @@ export class GraphQLClient {
             'id',
             'subCompetencyId',
             'type',
-            'title',
+            'name',
             'description',
             'url',
             'personUserId',

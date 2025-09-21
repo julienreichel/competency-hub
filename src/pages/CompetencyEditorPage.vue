@@ -1,167 +1,167 @@
-<template>
-  <q-page class="q-pa-lg column q-gutter-lg">
-    <div class="row items-center q-gutter-sm">
-      <q-btn flat round icon="arrow_back" color="primary" @click="goBack" />
-      <div class="column">
-        <div class="text-caption text-grey-7">{{ $t('competencies.editor.breadcrumb') }}</div>
-        <div class="text-h5">{{ detailsForm.name || $t('competencies.editor.loading') }}</div>
-      </div>
-      <q-space />
-      <q-btn
-        color="primary"
-        icon="save"
-        :label="$t('competencies.actions.save')"
-        :loading="saving"
-        :disable="!isDirty"
-        @click="saveDetails"
-      />
-    </div>
-
-    <q-card flat bordered>
-      <q-tabs v-model="activeTab" color="primary" align="left" narrow-indicator>
-        <q-tab name="details" :label="$t('competencies.editor.tabs.details')" icon="description" />
-        <q-tab name="stages" :label="$t('competencies.editor.tabs.stages')" icon="timeline" />
-        <q-tab name="resources" :label="$t('competencies.editor.tabs.resources')" icon="link" />
-      </q-tabs>
-
-      <q-separator />
-
-      <q-tab-panels v-model="activeTab" animated>
-        <q-tab-panel name="details">
-          <q-form class="column q-gutter-md q-pa-md">
-            <q-input
-              v-model="detailsForm.name"
-              :label="$t('competencies.fields.name')"
-              :rules="[requiredRule]"
-            />
-            <q-input
-              v-model="detailsForm.description"
-              type="textarea"
-              :label="$t('competencies.fields.description')"
-            />
-            <q-input
-              v-model="detailsForm.objectives"
-              type="textarea"
-              :label="$t('competencies.fields.objectives')"
-            />
-          </q-form>
-        </q-tab-panel>
-
-        <q-tab-panel name="stages" class="q-pa-md text-grey-7">
-          <div class="text-subtitle1 q-mb-sm">
-            {{ $t('competencies.editor.stages.placeholder.title') }}
-          </div>
-          <div>{{ $t('competencies.editor.stages.placeholder.description') }}</div>
-        </q-tab-panel>
-
-        <q-tab-panel name="resources" class="q-pa-md text-grey-7">
-          <div class="text-subtitle1 q-mb-sm">
-            {{ $t('competencies.editor.resources.placeholder.title') }}
-          </div>
-          <div>{{ $t('competencies.editor.resources.placeholder.description') }}</div>
-        </q-tab-panel>
-      </q-tab-panels>
-    </q-card>
-  </q-page>
-</template>
-
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { useI18n } from 'vue-i18n';
-import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
-import type { Competency } from 'src/models/Competency';
+import {
+  type Competency,
+  type SubCompetency,
+  type UpdateCompetencyInput,
+} from 'src/models/Competency';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
+// Adjust these to your real paths
+import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
+import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
+
+import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
+import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
+
+const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
-const $q = useQuasar();
-const { t } = useI18n();
 
 const competencyId = route.params.competencyId as string;
+const loading = ref(false);
 const competency = ref<Competency | null>(null);
-const saving = ref(false);
-const activeTab = ref<'details' | 'stages' | 'resources'>('details');
+const subs = ref<SubCompetency[]>([]);
+const addName = ref<string>('');
+const dialog = ref<boolean>(false);
 
-const detailsForm = reactive({
-  name: '',
-  description: '',
-  objectives: '',
-});
-
-const requiredRule = (value: string): true | string =>
-  value?.trim() ? true : t('validation.required');
-
-const isDirty = computed(
-  () =>
-    competency.value !== null &&
-    (detailsForm.name !== competency.value.name ||
-      (detailsForm.description ?? '') !== (competency.value.description ?? '') ||
-      (detailsForm.objectives ?? '') !== (competency.value.objectives ?? '')),
-);
-
-async function loadCompetency(): Promise<void> {
+async function load(): Promise<void> {
+  loading.value = true;
   try {
-    const loaded = await competencyRepository.findById(competencyId, { includeDetails: true });
-    if (!loaded) {
-      $q.notify({ type: 'negative', message: t('competencies.editor.messages.notFound') });
-      void router.push({ name: 'domains' });
-      return;
-    }
-    competency.value = loaded;
-    detailsForm.name = loaded.name;
-    detailsForm.description = loaded.description ?? '';
-    detailsForm.objectives = loaded.objectives ?? '';
-  } catch (error) {
-    console.error(error);
-    $q.notify({ type: 'negative', message: t('competencies.editor.messages.loadError') });
-  }
-}
+    // Expect repo to return competency + subCompetencies array (or fetch separately)
+    const c = await competencyRepository.findById(competencyId, true);
+    competency.value = c;
 
-function goBack(): void {
-  if (!competency.value) {
-    void router.push({ name: 'domains' });
-    return;
-  }
-  void router.push({
-    name: 'domain-competencies',
-    params: { domainId: competency.value.domainId },
-  });
-}
-
-async function saveDetails(): Promise<void> {
-  if (!competency.value) {
-    return;
-  }
-  const trimmedName = detailsForm.name.trim();
-  if (!trimmedName) {
-    $q.notify({ type: 'warning', message: t('validation.required') });
-    return;
-  }
-
-  saving.value = true;
-  try {
-    const updated = await competencyRepository.update(competency.value.id, {
-      name: trimmedName,
-      description: detailsForm.description || null,
-      objectives: detailsForm.objectives || null,
-    });
-    competency.value = updated;
-    detailsForm.name = updated.name;
-    detailsForm.description = updated.description ?? '';
-    detailsForm.objectives = updated.objectives ?? '';
-    $q.notify({ type: 'positive', message: t('competencies.editor.messages.saved') });
-  } catch (error) {
-    console.error(error);
-    $q.notify({ type: 'negative', message: t('competencies.editor.messages.saveError') });
+    // Ensure stable order
+    subs.value = (c?.subCompetencies ?? []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   } finally {
-    saving.value = false;
+    loading.value = false;
   }
 }
 
-onMounted(() => {
-  void loadCompetency();
-});
+async function saveCompetency(updated: UpdateCompetencyInput): Promise<void> {
+  await competencyRepository.update(competencyId, updated);
+  $q.notify({ type: 'positive', message: 'Competency saved' });
+  await load();
+}
+
+async function addSubCompetency(name: string): Promise<void> {
+  const nextOrder = (subs.value[subs.value.length - 1]?.order ?? 0) + 1;
+  const created = await subCompetencyRepository.create({
+    competencyId,
+    name,
+    order: nextOrder,
+  });
+  subs.value.push(created);
+  $q.notify({ type: 'positive', message: 'Sub-competency added' });
+}
+
+async function renameSubCompetency(id: string, name: string): Promise<void> {
+  const found = subs.value.find((s) => s.id === id);
+  if (!found) return;
+  found.name = name;
+  await subCompetencyRepository.update(id, { id, name });
+  $q.notify({ type: 'positive', message: 'Renamed' });
+}
+
+async function deleteSubCompetency(id: string): Promise<void> {
+  await subCompetencyRepository.delete(id);
+  subs.value = subs.value.filter((s) => s.id !== id);
+  $q.notify({ type: 'positive', message: 'Deleted' });
+}
+
+async function moveUp(id: string): Promise<void> {
+  const idx = subs.value.findIndex((s) => s.id === id);
+  if (idx <= 0) return;
+  const prev = subs.value[idx - 1];
+  const curr = subs.value[idx];
+  if (!prev || !curr) return;
+  const prevOrder = prev.order ?? idx;
+  const currOrder = curr.order ?? idx + 1;
+  // swap orders
+  await subCompetencyRepository.update(prev.id, { order: currOrder });
+  await subCompetencyRepository.update(curr.id, { order: prevOrder });
+  subs.value[idx - 1] = curr;
+  subs.value[idx] = prev;
+}
+
+async function moveDown(id: string): Promise<void> {
+  const idx = subs.value.findIndex((s) => s.id === id);
+  if (idx === -1 || idx >= subs.value.length - 1) return;
+  const curr = subs.value[idx];
+  const next = subs.value[idx + 1];
+  if (!curr || !next) return;
+  const nextOrder = next.order ?? idx + 1;
+  const currOrder = curr.order ?? idx;
+  await subCompetencyRepository.update(next.id, { order: currOrder });
+  await subCompetencyRepository.update(curr.id, { order: nextOrder });
+  subs.value[idx] = next;
+  subs.value[idx + 1] = curr;
+}
+
+async function openSubCompetency(id: string): Promise<void> {
+  await router.push({ name: 'sub-competency-editor', params: { competencyId, subId: id } });
+}
+
+function openDialog(): void {
+  addName.value = '';
+  dialog.value = true;
+}
+
+async function closeDialog(): Promise<void> {
+  await addSubCompetency(addName.value || 'New sub-competency');
+  dialog.value = false;
+}
+
+onMounted(load);
 </script>
+
+<template>
+  <q-page padding>
+    <div class="row items-center q-gutter-sm">
+      <div class="col">
+        <div class="text-h5">Edit Competency</div>
+      </div>
+      <q-spinner v-if="loading" size="sm" />
+    </div>
+
+    <q-separator class="q-mt-md q-mb-md" />
+
+    <competency-details-form v-if="competency" :model-value="competency" @save="saveCompetency" />
+
+    <q-separator class="q-my-lg" />
+
+    <div class="row items-center q-gutter-sm">
+      <div class="text-h6">Sub-Competencies</div>
+      <q-space />
+      <q-btn color="primary" label="Add sub-competency" @click="openDialog" />
+    </div>
+
+    <sub-competency-list
+      class="q-mt-md"
+      :items="subs"
+      @edit="openSubCompetency"
+      @rename="renameSubCompetency"
+      @delete="deleteSubCompetency"
+      @move-up="moveUp"
+      @move-down="moveDown"
+    />
+
+    <!-- quick add dialog -->
+    <q-dialog v-model="dialog">
+      <q-card style="min-width: 420px">
+        <q-card-section class="text-h6">New sub-competency</q-card-section>
+        <q-card-section>
+          <q-input v-model="addName" label="Name" autofocus />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn color="primary" label="Create" @click="closeDialog" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </q-page>
+</template>
 
 <style scoped></style>

@@ -47,7 +47,7 @@ describe('CompetencyRepository', () => {
             id: 'res-1',
             subCompetencyId: 'sub-1',
             type: 'Link',
-            title: 'Overview video',
+            name: 'Overview video',
             url: 'https://example.com/video',
             createdAt: '2024-01-01T00:00:00.000Z',
             updatedAt: '2024-01-02T00:00:00.000Z',
@@ -97,10 +97,10 @@ describe('CompetencyRepository', () => {
   it('retrieves competency with nested details', async () => {
     mockGraphQLClient.getCompetencyWithDetails.mockResolvedValue(rawCompetency);
 
-    const result = await repository.findById('comp-1', { includeDetails: true });
+    const result = await repository.findById('comp-1', true);
 
     expect(mockGraphQLClient.getCompetencyWithDetails).toHaveBeenCalledWith('comp-1');
-    expect(result?.subCompetencies[0]?.resources[0]?.title).toBe('Overview video');
+    expect(result?.subCompetencies[0]?.resources[0]?.name).toBe('Overview video');
   });
 
   it('returns null when competency not found', async () => {
