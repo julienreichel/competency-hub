@@ -323,6 +323,10 @@ export class CompetencyResource extends BaseModel {
   }
 }
 
+export function isPresent(field: unknown): boolean {
+  return typeof field !== 'function' && Boolean(field);
+}
+
 export class SubCompetency extends BaseModel {
   public readonly competencyId: string;
   public readonly competency: Competency | null;
@@ -357,7 +361,7 @@ export class SubCompetency extends BaseModel {
       CompetencyResource.fromAmplify(resource),
     );
     let competency: Competency | null = null;
-    if (raw.competency) {
+    if (isPresent(raw.competency)) {
       // If already a Competency instance, use as is; otherwise, parse
       competency =
         raw.competency instanceof Competency
@@ -449,7 +453,7 @@ export class Competency extends BaseModel {
       (sub) => SubCompetency.fromAmplify(sub),
     );
     let domain: Domain | null = null;
-    if (raw.domain) {
+    if (isPresent(raw.domain)) {
       // If already a Competency instance, use as is; otherwise, parse
       domain =
         raw.domain instanceof Domain
