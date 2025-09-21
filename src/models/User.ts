@@ -254,12 +254,12 @@ export class User extends BaseModel {
    * @param email - Email to validate
    * @returns True if email format is valid
    */
-  private isValidEmail(email: string): boolean {
+  isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
-  private toRelationInit(includeRelations = false): UserRelationInit {
+  toRelationInit(includeRelations = false): UserRelationInit {
     const base: UserRelationInit = {
       id: this.id,
       name: this.name,

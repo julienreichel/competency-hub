@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FileUploaderField from 'src/components/common/FileUploaderField.vue';
+import UserPicker from 'src/components/common/UserPicker.vue';
 import {
   ResourceType,
   type CompetencyResource,
@@ -98,7 +99,7 @@ function onSubmit(): void {
             <div class="col-12 col-md-4">
               <q-select
                 v-model="form.type"
-                :options="['Digital', 'Human', 'LearnerAdded']"
+                :options="['Link', 'Document', 'Human', 'Location']"
                 label="Type"
                 dense
                 filled
@@ -125,48 +126,27 @@ function onSubmit(): void {
             </div>
 
             <!-- Digital specific -->
-            <template v-if="form.type === 'Link' || form.type === 'Document'">
-              <div class="col-12 col-md-7">
-                <q-input
-                  v-model="form.url"
-                  label="URL (optional if uploading a file)"
-                  dense
-                  filled
-                />
-              </div>
-              <div class="col-12 col-md-5">
-                <file-uploader-field
-                  v-model="form.fileKey"
-                  label="Upload file"
-                  :accept="'application/pdf, image/*'"
-                />
-              </div>
+            <template v-if="form.type === 'Link'">
+              <q-input v-model="form.url" label="URL" dense filled />
+            </template>
+
+            <template v-else-if="form.type === 'Document'">
+              <file-uploader-field
+                v-model="form.fileKey"
+                label="Upload file"
+                :accept="'application/pdf, image/*'"
+              />
             </template>
 
             <!-- Human helper -->
             <template v-else-if="form.type === 'Human'">
               <div class="col-12 col-md-6">
-                <q-input v-model="form.personUserId" label="Helper User ID" dense filled />
-                <!-- If you have a proper user picker, replace the input with it -->
-              </div>
-            </template>
-
-            <!-- LearnerAdded -->
-            <template v-else>
-              <div class="col-12">
-                <q-banner dense class="bg-grey-2 text-grey-9">
-                  Learner-added resource: title/description are usually enough. Optionally attach a
-                  URL or file.
-                </q-banner>
-              </div>
-              <div class="col-12 col-md-7">
-                <q-input v-model="form.url" label="URL (optional)" dense filled />
-              </div>
-              <div class="col-12 col-md-5">
-                <file-uploader-field
-                  v-model="form.fileKey"
-                  label="Upload file"
-                  :accept="'application/pdf, image/*'"
+                <user-picker
+                  :model-value="form.personUserId ?? null"
+                  @update:model-value="(val) => (form.personUserId = val)"
+                  label="Helper User"
+                  dense
+                  filled
                 />
               </div>
             </template>

@@ -1,6 +1,7 @@
+// Import getUrl if not already imported
+import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
-import type { UserRelationInit } from './User';
 import { User, UserRole } from './User';
 
 type AmplifyCompetency = NonNullable<Schema['Competency']['type']>;
@@ -50,22 +51,22 @@ const hasToJSON = (value: unknown): value is { toJSON: () => unknown } => {
   return typeof value.toJSON === 'function';
 };
 
-const extractUserRelation = (value: unknown): UserRelationInit | null => {
-  if (!value) {
+const unwrap = (candidate: unknown): Record<string, unknown> | null => {
+  if (!isObject(candidate)) {
     return null;
   }
 
-  const unwrap = (candidate: unknown): Record<string, unknown> | null => {
-    if (!isObject(candidate)) {
-      return null;
-    }
+  if (hasToJSON(candidate)) {
+    return unwrap(candidate.toJSON());
+  }
 
-    if (hasToJSON(candidate)) {
-      return unwrap(candidate.toJSON());
-    }
+  return candidate;
+};
 
-    return candidate;
-  };
+const extractUserRelation = (value: unknown): User | null => {
+  if (!value) {
+    return null;
+  }
 
   const record = unwrap(value);
   if (!record) {
@@ -86,24 +87,18 @@ const extractUserRelation = (value: unknown): UserRelationInit | null => {
   const email = typeof record.email === 'string' ? record.email : '';
   const name = typeof record.name === 'string' && record.name.trim().length > 0 ? record.name : id;
 
-  const relation: UserRelationInit = {
+  const relation = new User({
     id,
     name,
     role: normalisedRole,
     email,
     avatar: typeof record.avatar === 'string' ? record.avatar : '',
-    picture: typeof record.picture === 'string' ? record.picture : null,
+    picture: typeof record.picture === 'string' ? record.picture : '',
     contactInfo: typeof record.contactInfo === 'string' ? record.contactInfo : '',
-    lastActive: typeof record.lastActive === 'string' ? record.lastActive : null,
-  };
-
-  if (typeof record.createdAt === 'string') {
-    relation.createdAt = record.createdAt;
-  }
-
-  if (typeof record.updatedAt === 'string') {
-    relation.updatedAt = record.updatedAt;
-  }
+    lastActive: typeof record.lastActive === 'string' ? record.lastActive : '',
+    createdAt: typeof record.createdAt === 'string' ? record.createdAt : '',
+    updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : '',
+  });
 
   return relation;
 };
@@ -124,7 +119,7 @@ export interface ResourceInit extends Record<string, unknown> {
   url?: string | null;
   fileKey?: string | null;
   personUserId?: string | null;
-  person?: UserRelationInit | User | null;
+  person?: User | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -199,7 +194,7 @@ export class CompetencyResource extends BaseModel {
   public name: string;
   public description: string | null;
   public url: string | null;
-  public fileKey: string | null;
+  public readonly fileKey: string | null;
   public readonly personUserId: string | null;
   public readonly person: User | null;
 
@@ -251,9 +246,15 @@ export class CompetencyResource extends BaseModel {
       throw new Error('Invalid resource type');
     }
 
-    if (this.type === ResourceType.LINK || this.type === ResourceType.DOCUMENT) {
+    if (this.type === ResourceType.LINK) {
       if (!this.url?.trim()) {
         throw new Error('Resource URL is required for link and document types');
+      }
+    }
+
+    if (this.type === ResourceType.DOCUMENT) {
+      if (!this.fileKey?.trim()) {
+        throw new Error('File Key is required for link and document types');
       }
     }
 
@@ -293,6 +294,29 @@ export class CompetencyResource extends BaseModel {
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
     });
+  }
+
+  /**
+   * Resolves the download/view URL for this resource's file, if fileKey is present.
+   * @returns {Promise<string | null>} The resolved URL or null if not available.
+   */
+  async resolveFileUrl(): Promise<string | null> {
+    if (!this.fileKey) {
+      return null;
+    }
+
+    // If already a full URL, return as is
+    if (/^https?:\/\//i.test(this.fileKey)) {
+      return this.fileKey;
+    }
+
+    try {
+      const { url } = await getUrl({ path: this.fileKey });
+      return url.toString();
+    } catch (error) {
+      console.error('Failed to resolve file URL', error);
+      return null;
+    }
   }
 }
 
