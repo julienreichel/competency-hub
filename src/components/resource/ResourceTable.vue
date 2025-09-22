@@ -40,11 +40,7 @@
             <q-btn flat color="negative" icon="delete" @click="emit('delete', resource.id)" />
           </div>
         </q-card-section>
-        <user-details-dialog
-          :model-value="userDialogOpen"
-          :user="userDialogUser"
-          @update:model-value="userDialogOpen = $event"
-        />
+        <user-details-dialog :model-value="userDialogOpen" :user="userDialogUser" />
       </q-card>
     </div>
   </div>

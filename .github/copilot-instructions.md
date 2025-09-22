@@ -350,6 +350,53 @@ export function useFeature(dependencies) {
 }
 ```
 
+## 🧱 Dialog Standards (Unified)
+
+**Goal:** One consistent dialog UX across the app. All dialogs MUST use `BaseDialog` (src/components/ui/BaseDialog.vue).
+
+### Contract
+
+- **Props**
+  - `v-model="modelValue"`: open/close state (Boolean)
+  - `title?: string`
+  - `icon?: string`, `size?: 'sm'|'md'|'lg'|'xl'`
+  - `useForm?: boolean` (default true), `formId?: string`
+  - `loading?: boolean`, `disablePrimary?: boolean`, `disableCancel?: boolean`
+  - `primaryLabel?: string` (default t(`common.save`)), `cancelLabel?: string` (default t(`common.cancel`))
+  - `persistent?: boolean`, `showClose?: boolean`
+
+- **Emits**
+  - `submit`, `cancel`, `closed`
+
+- **Slots**
+  - default (body), `title`, `title-right`, `actions` (override buttons)
+
+### Behavior
+
+- **X close** always present (top-right), emits `cancel`, closes dialog.
+- **Enter** submits when `useForm=true`.
+- **Esc** cancels unless `persistent=true`.
+- **No `v-close-popup`**; close via `v-model` + events only.
+- **i18n** for all labels and aria; **no hardcoded strings**.
+
+### DRY Enforcement
+
+- No custom headers/footers per dialog unless necessary → use BaseDialog slots.
+- Reusable form blocks must be extracted to components.
+- Avoid template duplication; parameterize size/labels via props.
+
+### Testing (Boston School)
+
+- Test behaviors only: submit via Enter; X and Esc cancel; persistent prevents Esc close.
+- Do not assert DOM structure/classes; assert outcomes and visible text.
+
+### Checklist (before PR)
+
+- [ ] Uses `BaseDialog` and standard props/emits
+- [ ] No `v-close-popup`
+- [ ] Keyboard and a11y behaviors verified
+- [ ] Behavior-focused tests added
+
 ## 🔧 Function Design
 
 ### Pure Functions (Preferred)

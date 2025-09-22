@@ -141,7 +141,21 @@ export default {
   resources: {
     title: 'Resources',
     addResource: 'Add Resource',
+    addTitle: 'Add Resource',
+    editTitle: 'Edit Resource',
     emptyState: 'No resources found',
+    actions: {
+      create: 'Create resource',
+      save: 'Save changes',
+    },
+    fields: {
+      type: 'Type',
+      title: 'Title',
+      description: 'Description',
+      url: 'URL',
+      upload: 'Upload file',
+      helperUser: 'Helper User',
+    },
   },
 
   competencies: {

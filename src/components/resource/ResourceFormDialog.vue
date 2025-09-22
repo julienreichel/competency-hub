@@ -4,99 +4,92 @@
     :flat="isEdit"
     :icon="isEdit ? 'edit' : 'add'"
     color="primary"
-    @click="dlg = true"
+    @click="open = true"
   />
+  <base-dialog
+    v-model="open"
+    :title="isEdit ? $t('resources.editTitle') : $t('resources.addTitle')"
+    :primary-label="isEdit ? $t('common.save') : $t('common.create')"
+    :persistent="true"
+    :use-form="true"
+    @submit="onSubmit"
+    @cancel="onCancel"
+    size="md"
+    :loading="false"
+  >
+    <q-form @submit.prevent="onSubmit">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-4">
+          <q-select
+            v-model="form.type"
+            :options="['Link', 'Document', 'Human', 'Location']"
+            :label="$t('resources.fields.type')"
+            dense
+            filled
+          />
+        </div>
+        <div class="col-12 col-md-8">
+          <q-input
+            v-model="form.name"
+            :label="$t('resources.fields.title')"
+            dense
+            filled
+            :rules="[(v) => !!v || $t('validation.required')]"
+          />
+        </div>
 
-  <q-dialog v-model="dlg" persistent>
-    <q-card style="min-width: 560px; max-width: 720px">
-      <q-card-section class="text-h6">
-        {{ isEdit ? 'Edit CompetencyResource' : 'Add CompetencyResource' }}
-      </q-card-section>
+        <div class="col-12">
+          <q-input
+            v-model="form.description"
+            :label="$t('resources.fields.description')"
+            type="textarea"
+            filled
+            autogrow
+          />
+        </div>
 
-      <q-card-section>
-        <q-form @submit.prevent="onSubmit">
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-4">
-              <q-select
-                v-model="form.type"
-                :options="['Link', 'Document', 'Human', 'Location']"
-                label="Type"
-                dense
-                filled
-              />
-            </div>
-            <div class="col-12 col-md-8">
-              <q-input
-                v-model="form.name"
-                label="Title"
-                dense
-                filled
-                :rules="[(v) => !!v || 'Required']"
-              />
-            </div>
+        <!-- Digital specific -->
+        <template v-if="form.type === 'Link'">
+          <q-input v-model="form.url" :label="$t('resources.fields.url')" dense filled />
+        </template>
 
-            <div class="col-12">
-              <q-input
-                v-model="form.description"
-                label="Description"
-                type="textarea"
-                filled
-                autogrow
-              />
-            </div>
+        <template v-else-if="form.type === 'Document'">
+          <file-uploader-field
+            v-model="form.fileKey"
+            :label="$t('resources.fields.upload')"
+            :sub-competency-id="subCompetencyId"
+            :accept="'application/pdf, image/*'"
+          />
+        </template>
 
-            <!-- Digital specific -->
-            <template v-if="form.type === 'Link'">
-              <q-input v-model="form.url" label="URL" dense filled />
-            </template>
-
-            <template v-else-if="form.type === 'Document'">
-              <file-uploader-field
-                v-model="form.fileKey"
-                label="Upload file"
-                :sub-competency-id="subCompetencyId"
-                :accept="'application/pdf, image/*'"
-              />
-            </template>
-
-            <!-- Human helper -->
-            <template v-else-if="form.type === 'Human'">
-              <div class="col-12 col-md-6">
-                <user-picker
-                  :model-value="form.personUserId ?? null"
-                  @update:model-value="(val) => (form.personUserId = val)"
-                  label="Helper User"
-                  dense
-                  filled
-                />
-              </div>
-            </template>
-          </div>
-
-          <div class="q-mt-md">
-            <q-btn
-              color="primary"
-              :label="isEdit ? 'Save changes' : 'Create resource'"
-              type="submit"
+        <!-- Human helper -->
+        <template v-else-if="form.type === 'Human'">
+          <div class="col-12 col-md-6">
+            <user-picker
+              :model-value="form.personUserId ?? null"
+              @update:model-value="(val) => (form.personUserId = val)"
+              :label="$t('resources.fields.helperUser')"
+              dense
+              filled
             />
-            <q-btn flat label="Cancel" class="q-ml-sm" v-close-popup />
           </div>
-        </q-form>
-      </q-card-section>
-    </q-card>
-  </q-dialog>
+        </template>
+      </div>
+    </q-form>
+  </base-dialog>
 </template>
 
 <script setup lang="ts">
 import FileUploaderField from 'src/components/common/FileUploaderField.vue';
 import UserPicker from 'src/components/common/UserPicker.vue';
+import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import {
   ResourceType,
   type CompetencyResource,
   type CreateResourceInput,
   type UpdateResourceInput,
 } from 'src/models/Competency';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 
 const props = defineProps<{
   label?: string;
@@ -108,11 +101,7 @@ const emit = defineEmits<{
   (e: 'update', payload: UpdateResourceInput): void;
 }>();
 
-const dlg = ref(false);
-function show(): void {
-  dlg.value = true;
-}
-defineExpose({ show });
+const open = defineModel<boolean>({ default: false });
 
 const isEdit = computed(() => !!props.initial?.id);
 
@@ -165,7 +154,11 @@ function onSubmit(): void {
       fileKey: form.fileKey ?? null,
     });
   }
-  dlg.value = false;
+  open.value = false;
+}
+
+function onCancel(): void {
+  open.value = false;
 }
 </script>
 

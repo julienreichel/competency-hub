@@ -1,39 +1,33 @@
 <template>
-  <q-dialog v-model="isOpen" persistent>
-    <q-card style="min-width: 420px">
-      <q-card-section class="row items-center justify-between text-subtitle1 text-primary">
-        <span>{{ t('admin.editUser') }}</span>
-        <q-btn flat dense round icon="close" @click="handleCancel" />
-      </q-card-section>
-
-      <q-form @submit.prevent="handleSubmit">
-        <q-card-section class="q-gutter-md">
-          <user-profile-form
-            v-model="form"
-            :role-options="roleOptions"
-            enable-role
-            :user-id="props.user?.id ?? null"
-            data-testid="edit-user-form"
-            @uploading="handleUploading"
-          />
-        </q-card-section>
-
-        <q-card-actions>
-          <q-space />
-          <q-btn flat :label="t('common.cancel')" :disable="uploading" @click="handleCancel" />
-          <q-btn color="primary" type="submit" :label="t('common.save')" :disable="uploading" />
-        </q-card-actions>
-      </q-form>
-    </q-card>
-  </q-dialog>
+  <base-dialog
+    v-model="open"
+    :title="t('admin.editUser')"
+    :persistent="true"
+    :show-close="true"
+    :use-form="true"
+    @cancel="handleCancel"
+    @submit="handleSubmit"
+    size="md"
+    :loading="uploading"
+  >
+    <user-profile-form
+      v-model="form"
+      :role-options="roleOptions"
+      enable-role
+      :user-id="props.user?.id ?? null"
+      data-testid="edit-user-form"
+      @uploading="handleUploading"
+    />
+  </base-dialog>
 </template>
 
 <script setup lang="ts">
+import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import UserProfileForm, {
   type UserProfileFormModel,
 } from 'src/components/user/UserProfileForm.vue';
 import type { UserRole } from 'src/models/User';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 type EditableUser = {
@@ -47,13 +41,11 @@ type EditableUser = {
 };
 
 const props = defineProps<{
-  modelValue: boolean;
   user: EditableUser | null;
   roleOptions: UserRole[];
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
   save: [
     value: {
       id: string;
@@ -81,15 +73,7 @@ const emptyForm = (): UserProfileFormModel => ({
 const form = ref<UserProfileFormModel>(emptyForm());
 const uploading = ref(false);
 
-const isOpen = computed({
-  get: () => props.modelValue,
-  set: (value: boolean) => {
-    emit('update:modelValue', value);
-    if (!value) {
-      emit('cancel');
-    }
-  },
-});
+const open = defineModel<boolean>({ default: false });
 
 watch(
   () => props.user,
@@ -115,7 +99,6 @@ watch(
 
 function handleCancel(): void {
   emit('cancel');
-  emit('update:modelValue', false);
 }
 
 function handleUploading(status: boolean): void {
