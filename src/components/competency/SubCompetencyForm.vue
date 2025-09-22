@@ -1,32 +1,3 @@
-<script setup lang="ts">
-import {
-  type CreateSubCompetencyInput,
-  type UpdateSubCompetencyInput,
-} from 'src/models/Competency';
-import { reactive, watch } from 'vue';
-
-const props = defineProps<{ modelValue: CreateSubCompetencyInput }>();
-const emit = defineEmits<{ (e: 'save', value: UpdateSubCompetencyInput): void }>();
-
-const form = reactive<CreateSubCompetencyInput>({ ...props.modelValue });
-watch(
-  () => props.modelValue,
-  (v) => Object.assign(form, v),
-);
-
-function onSave(): void {
-  if (!form.id) return;
-  const payload: UpdateSubCompetencyInput = {
-    id: form.id,
-    name: form.name,
-    level: form.level || 1,
-    description: form.description ?? '',
-    objectives: form.objectives ?? '',
-  };
-  emit('save', payload);
-}
-</script>
-
 <template>
   <q-form @submit.prevent="onSave">
     <div class="row q-col-gutter-md">
@@ -55,6 +26,35 @@ function onSave(): void {
     </div>
   </q-form>
 </template>
+
+<script setup lang="ts">
+import {
+  type CreateSubCompetencyInput,
+  type UpdateSubCompetencyInput,
+} from 'src/models/Competency';
+import { reactive, watch } from 'vue';
+
+const props = defineProps<{ modelValue: CreateSubCompetencyInput }>();
+const emit = defineEmits<{ (e: 'save', value: UpdateSubCompetencyInput): void }>();
+
+const form = reactive<CreateSubCompetencyInput>({ ...props.modelValue });
+watch(
+  () => props.modelValue,
+  (v) => Object.assign(form, v),
+);
+
+function onSave(): void {
+  if (!form.id) return;
+  const payload: UpdateSubCompetencyInput = {
+    id: form.id,
+    name: form.name,
+    level: form.level || 1,
+    description: form.description ?? '',
+    objectives: form.objectives ?? '',
+  };
+  emit('save', payload);
+}
+</script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';

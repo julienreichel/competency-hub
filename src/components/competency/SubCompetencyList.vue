@@ -1,42 +1,46 @@
+<template>
+  <div>
+    <div v-if="props.items.length === 0" class="text-grey-6 text-center q-mt-lg">
+      {{ t('subCompetencies.emptyState') }}
+    </div>
+    <div v-else class="column q-gutter-md">
+      <q-card v-for="sub in itemsWithId" :key="String(sub.id)" flat bordered>
+        <q-card-section class="row items-center justify-between q-gutter-sm">
+          <div class="column">
+            <div class="row items-center q-gutter-xs">
+              <q-icon name="star" color="amber" size="20px" v-if="sub.level !== undefined" />
+              <span v-if="sub.level !== undefined" class="text-weight-bold">{{ sub.level }}</span>
+              <span class="text-subtitle1 q-ml-sm">{{ sub.name }}</span>
+            </div>
+            <div class="text-caption text-grey-7 q-mt-xs">
+              {{ sub.description || t('subCompetencies.noDescription') }}
+            </div>
+          </div>
+          <div class="row items-center q-gutter-xs">
+            <q-btn flat color="primary" icon="edit" @click="emit('edit', String(sub.id))" />
+            <q-btn flat color="negative" icon="delete" @click="emit('delete', String(sub.id))" />
+          </div>
+        </q-card-section>
+      </q-card>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { type CreateSubCompetencyInput } from 'src/models/Competency';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{ items: CreateSubCompetencyInput[] }>();
 const emit = defineEmits<{
   (e: 'edit', id: string): void;
-  (e: 'rename', id: string, name: string): void;
   (e: 'delete', id: string): void;
 }>();
-</script>
 
-<template>
-  <q-table
-    :rows="props.items"
-    row-key="id"
-    flat
-    bordered
-    :columns="[
-      { name: 'level', label: '#', field: 'level', align: 'left', sortable: true },
-      { name: 'name', label: 'Name', field: 'name', align: 'left' },
-      { name: 'description', label: 'Description', field: 'description', align: 'left' },
-      { name: 'actions', label: '', field: 'id', align: 'right' },
-    ]"
-  >
-    <template #body-cell-actions="slot">
-      <td iv class="justify-end q-gutter-xs">
-        <q-btn flat dense size="sm" icon="edit" @click="emit('edit', slot.row.id)" />
-        <q-btn
-          flat
-          dense
-          size="sm"
-          icon="delete"
-          color="negative"
-          @click="emit('delete', slot.row.id)"
-        />
-      </td>
-    </template>
-  </q-table>
-</template>
+const { t } = useI18n();
+
+const itemsWithId = computed(() => props.items.filter((item) => !!item.id));
+</script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';

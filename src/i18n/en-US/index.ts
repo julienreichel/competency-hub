@@ -136,6 +136,7 @@ export default {
   resources: {
     title: 'Resources',
     addResource: 'Add Resource',
+    emptyState: 'No resources found',
   },
 
   competencies: {
@@ -186,6 +187,8 @@ export default {
     loading: 'Loading sub-competency...',
     newSubCompetency: 'New sub-competency',
     name: 'Sub-competency name',
+    emptyState: 'No sub-competencies found',
+    noDescription: 'No description provided',
   },
 
   // Validation messages

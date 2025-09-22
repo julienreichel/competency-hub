@@ -1,3 +1,50 @@
+<template>
+  <q-page padding>
+    <div class="row items-center q-gutter-sm q-mb-md">
+      <q-btn flat round icon="arrow_back" color="primary" @click="goBack" />
+      <div class="column">
+        <q-breadcrumbs class="text-grey-7">
+          <q-breadcrumbs-el
+            :label="domainName"
+            :to="{ name: 'domain-competencies', params: { domainId } }"
+          />
+          <q-breadcrumbs-el
+            :label="competencyName"
+            :to="{ name: 'competency-editor', params: { competencyId } }"
+          />
+          <q-breadcrumbs-el :label="sub && sub.name ? sub.name : t('subCompetencies.loading')" />
+        </q-breadcrumbs>
+        <div class="text-h5">{{ sub && sub.name ? sub.name : t('subCompetencies.loading') }}</div>
+      </div>
+      <q-space />
+      <q-spinner v-if="loading" size="sm" />
+    </div>
+
+    <q-separator class="q-mb-lg" />
+
+    <sub-competency-form v-if="sub" :model-value="sub" @save="saveSub" />
+
+    <q-separator class="q-my-lg" />
+
+    <div class="row items-center q-gutter-sm">
+      <div class="text-h6">{{ t('resources.title') }}</div>
+      <q-space />
+      <resource-form-dialog
+        :label="t('resources.addResource')"
+        :sub-competency-id="subId"
+        @create="createResource"
+      />
+    </div>
+
+    <resource-table
+      class="q-mt-md"
+      :items="resources"
+      @edit="updateResource"
+      @delete="deleteResource"
+    />
+  </q-page>
+</template>
+
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import {
@@ -90,53 +137,6 @@ async function deleteResource(id: string): Promise<void> {
 
 onMounted(load);
 </script>
-
-<template>
-  <q-page padding>
-    <div class="row items-center q-gutter-sm q-mb-md">
-      <q-btn flat round icon="arrow_back" color="primary" @click="goBack" />
-      <div class="column">
-        <q-breadcrumbs class="text-grey-7">
-          <q-breadcrumbs-el
-            :label="domainName"
-            :to="{ name: 'domain-competencies', params: { domainId } }"
-          />
-          <q-breadcrumbs-el
-            :label="competencyName"
-            :to="{ name: 'competency-editor', params: { competencyId } }"
-          />
-          <q-breadcrumbs-el :label="sub && sub.name ? sub.name : t('subCompetencies.loading')" />
-        </q-breadcrumbs>
-        <div class="text-h5">{{ sub && sub.name ? sub.name : t('subCompetencies.loading') }}</div>
-      </div>
-      <q-space />
-      <q-spinner v-if="loading" size="sm" />
-    </div>
-
-    <q-separator class="q-mb-lg" />
-
-    <sub-competency-form v-if="sub" :model-value="sub" @save="saveSub" />
-
-    <q-separator class="q-my-lg" />
-
-    <div class="row items-center q-gutter-sm">
-      <div class="text-h6">{{ t('resources.title') }}</div>
-      <q-space />
-      <resource-form-dialog
-        :label="t('resources.addResource')"
-        :sub-competency-id="subId"
-        @create="createResource"
-      />
-    </div>
-
-    <resource-table
-      class="q-mt-md"
-      :items="resources"
-      @edit="updateResource"
-      @delete="deleteResource"
-    />
-  </q-page>
-</template>
 
 <script lang="ts">
 export default { name: 'SubCompetencyEditorPage' };

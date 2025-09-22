@@ -1,85 +1,3 @@
-<script setup lang="ts">
-import FileUploaderField from 'src/components/common/FileUploaderField.vue';
-import UserPicker from 'src/components/common/UserPicker.vue';
-import {
-  ResourceType,
-  type CompetencyResource,
-  type CreateResourceInput,
-  type UpdateResourceInput,
-} from 'src/models/Competency';
-import { computed, reactive, ref, watch } from 'vue';
-
-const props = defineProps<{
-  label?: string;
-  subCompetencyId?: string; // required for create
-  initial?: CompetencyResource | null; // if provided -> edit mode
-}>();
-const emit = defineEmits<{
-  (e: 'create', payload: CreateResourceInput): void;
-  (e: 'update', payload: UpdateResourceInput): void;
-}>();
-
-const dlg = ref(false);
-function show(): void {
-  dlg.value = true;
-}
-defineExpose({ show });
-
-const isEdit = computed(() => !!props.initial?.id);
-
-const form = reactive<CreateResourceInput>({
-  id: props.initial?.id ?? '',
-  subCompetencyId: props.subCompetencyId ?? '',
-  type: props.initial?.type ?? ResourceType.LINK,
-  name: props.initial?.name ?? '',
-  description: props.initial?.description ?? '',
-  url: props.initial?.url ?? null,
-  personUserId: props.initial?.personUserId ?? null,
-  fileKey: props.initial?.fileKey ?? null,
-});
-
-watch(
-  () => props.initial,
-  (v) => {
-    if (!v) return;
-    Object.assign(form, {
-      id: v.id,
-      type: v.type,
-      name: v.name,
-      description: v.description ?? '',
-      url: v.url ?? null,
-      personUserId: v.personUserId ?? null,
-      fileKey: v.fileKey ?? null,
-    });
-  },
-);
-
-function onSubmit(): void {
-  if (isEdit.value && form.id) {
-    emit('update', {
-      id: form.id,
-      type: form.type,
-      name: form.name,
-      description: form.description ?? '',
-      url: form.url ?? null,
-      personUserId: form.personUserId || null,
-      fileKey: form.fileKey || null,
-    });
-  } else {
-    emit('create', {
-      subCompetencyId: form.subCompetencyId || '',
-      type: form.type,
-      name: form.name,
-      description: form.description ?? '',
-      url: form.url ?? null,
-      personUserId: form.personUserId ?? null,
-      fileKey: form.fileKey ?? null,
-    });
-  }
-  dlg.value = false;
-}
-</script>
-
 <template>
   <q-btn
     :label="label || (isEdit ? 'Edit resource' : 'Add resource')"
@@ -165,6 +83,88 @@ function onSubmit(): void {
     </q-card>
   </q-dialog>
 </template>
+
+<script setup lang="ts">
+import FileUploaderField from 'src/components/common/FileUploaderField.vue';
+import UserPicker from 'src/components/common/UserPicker.vue';
+import {
+  ResourceType,
+  type CompetencyResource,
+  type CreateResourceInput,
+  type UpdateResourceInput,
+} from 'src/models/Competency';
+import { computed, reactive, ref, watch } from 'vue';
+
+const props = defineProps<{
+  label?: string;
+  subCompetencyId?: string; // required for create
+  initial?: CompetencyResource | null; // if provided -> edit mode
+}>();
+const emit = defineEmits<{
+  (e: 'create', payload: CreateResourceInput): void;
+  (e: 'update', payload: UpdateResourceInput): void;
+}>();
+
+const dlg = ref(false);
+function show(): void {
+  dlg.value = true;
+}
+defineExpose({ show });
+
+const isEdit = computed(() => !!props.initial?.id);
+
+const form = reactive<CreateResourceInput>({
+  id: props.initial?.id ?? '',
+  subCompetencyId: props.subCompetencyId ?? '',
+  type: props.initial?.type ?? ResourceType.LINK,
+  name: props.initial?.name ?? '',
+  description: props.initial?.description ?? '',
+  url: props.initial?.url ?? null,
+  personUserId: props.initial?.personUserId ?? null,
+  fileKey: props.initial?.fileKey ?? null,
+});
+
+watch(
+  () => props.initial,
+  (v) => {
+    if (!v) return;
+    Object.assign(form, {
+      id: v.id,
+      type: v.type,
+      name: v.name,
+      description: v.description ?? '',
+      url: v.url ?? null,
+      personUserId: v.personUserId ?? null,
+      fileKey: v.fileKey ?? null,
+    });
+  },
+);
+
+function onSubmit(): void {
+  if (isEdit.value && form.id) {
+    emit('update', {
+      id: form.id,
+      type: form.type,
+      name: form.name,
+      description: form.description ?? '',
+      url: form.url ?? null,
+      personUserId: form.personUserId || null,
+      fileKey: form.fileKey || null,
+    });
+  } else {
+    emit('create', {
+      subCompetencyId: form.subCompetencyId || '',
+      type: form.type,
+      name: form.name,
+      description: form.description ?? '',
+      url: form.url ?? null,
+      personUserId: form.personUserId ?? null,
+      fileKey: form.fileKey ?? null,
+    });
+  }
+  dlg.value = false;
+}
+</script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';

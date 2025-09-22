@@ -1,3 +1,20 @@
+<template>
+  <div>
+    <div class="text-caption q-mb-xs">{{ label || 'Upload file' }}</div>
+    <!-- Your project-specific uploader component -->
+    <amplify-uploader
+      :accept="accept || 'application/pdf, image/*'"
+      :max-files="1"
+      auto-upload
+      @uploaded="onUploaded"
+    />
+    <div v-if="modelValue" class="q-mt-xs text-caption">
+      Saved key: <code>{{ modelValue }}</code>
+      <q-btn flat dense size="sm" label="Clear" @click="$emit('update:modelValue', null)" />
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import AmplifyUploader from 'src/components/utils/AmplifyUploader';
 
@@ -26,23 +43,6 @@ function onUploaded(payload: { files?: UploadedFilePreview[] }): void {
   emit('update:modelValue', key);
 }
 </script>
-
-<template>
-  <div>
-    <div class="text-caption q-mb-xs">{{ label || 'Upload file' }}</div>
-    <!-- Your project-specific uploader component -->
-    <amplify-uploader
-      :accept="accept || 'application/pdf, image/*'"
-      :max-files="1"
-      auto-upload
-      @uploaded="onUploaded"
-    />
-    <div v-if="modelValue" class="q-mt-xs text-caption">
-      Saved key: <code>{{ modelValue }}</code>
-      <q-btn flat dense size="sm" label="Clear" @click="$emit('update:modelValue', null)" />
-    </div>
-  </div>
-</template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';

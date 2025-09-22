@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import { type CreateCompetencyInput, type UpdateCompetencyInput } from 'src/models/Competency';
-import { reactive, watch } from 'vue';
-
-const props = defineProps<{ modelValue: CreateCompetencyInput }>();
-const emit = defineEmits<{ (e: 'save', value: UpdateCompetencyInput): void }>();
-
-const form = reactive<CreateCompetencyInput>({ ...props.modelValue });
-
-watch(
-  () => props.modelValue,
-  (v) => Object.assign(form, v),
-);
-
-function onSave(): void {
-  emit('save', { ...form });
-}
-</script>
-
 <template>
   <q-form @submit.prevent="onSave">
     <div class="row q-col-gutter-md">
@@ -43,6 +24,25 @@ function onSave(): void {
     </div>
   </q-form>
 </template>
+
+<script setup lang="ts">
+import { type CreateCompetencyInput, type UpdateCompetencyInput } from 'src/models/Competency';
+import { reactive, watch } from 'vue';
+
+const props = defineProps<{ modelValue: CreateCompetencyInput }>();
+const emit = defineEmits<{ (e: 'save', value: UpdateCompetencyInput): void }>();
+
+const form = reactive<CreateCompetencyInput>({ ...props.modelValue });
+
+watch(
+  () => props.modelValue,
+  (v) => Object.assign(form, v),
+);
+
+function onSave(): void {
+  emit('save', { ...form });
+}
+</script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';

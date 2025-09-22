@@ -1,3 +1,20 @@
+<template>
+  <q-select
+    :label="label || 'Select user'"
+    :options="users"
+    :option-label="(u) => u.name || u.email || u.id"
+    :option-value="(u) => u.id"
+    :loading="loading"
+    :model-value="modelValue"
+    @update:model-value="onSelect"
+    emit-value
+    map-options
+    clearable
+    dense
+    filled
+  />
+</template>
+
 <script setup lang="ts">
 import { useUsers } from 'src/composables/useUsers';
 import { type User, type UserRole } from 'src/models/User';
@@ -32,23 +49,6 @@ function onSelect(id: string): void {
   emit('update:modelValue', id);
 }
 </script>
-
-<template>
-  <q-select
-    :label="label || 'Select user'"
-    :options="users"
-    :option-label="(u) => u.name || u.email || u.id"
-    :option-value="(u) => u.id"
-    :loading="loading"
-    :model-value="modelValue"
-    @update:model-value="onSelect"
-    emit-value
-    map-options
-    clearable
-    dense
-    filled
-  />
-</template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
