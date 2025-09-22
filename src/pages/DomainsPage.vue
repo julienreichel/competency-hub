@@ -22,52 +22,19 @@
       @select="goToDomain"
     />
 
-    <q-dialog v-model="dialog.open">
-      <q-card style="min-width: 360px">
-        <q-card-section>
-          <div class="text-h6">
-            {{ dialog.mode === 'create' ? $t('domains.createTitle') : $t('domains.editTitle') }}
-          </div>
-        </q-card-section>
-        <q-card-section class="q-gutter-md">
-          <q-input
-            v-model="form.name"
-            :label="$t('domains.fields.name')"
-            :rules="[requiredRule]"
-            autofocus
-          />
-          <div class="column q-gutter-xs">
-            <div class="text-subtitle2">{{ $t('domains.fields.color') }}</div>
-            <q-color
-              v-model="form.colorCode"
-              :default-value="DEFAULT_COLOR"
-              format="hex"
-              default-view="palette"
-              class="domain-color-picker"
-            />
-            <div class="text-caption text-grey-7">
-              {{ form.colorCode ?? DEFAULT_COLOR }}
-            </div>
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('common.cancel')" color="primary" @click="closeDialog" />
-          <q-btn
-            color="primary"
-            :label="
-              dialog.mode === 'create' ? $t('domains.actions.create') : $t('domains.actions.save')
-            "
-            :loading="dialog.loading"
-            @click="submitDialog"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <domain-dialog
+      v-model="dialog.open"
+      :mode="dialog.mode"
+      :form="form"
+      @submit="submitDialog"
+      @cancel="closeDialog"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import DomainDialog from 'src/components/domain/DomainDialog.vue';
 import DomainList from 'src/components/domain/DomainList.vue';
 import { useAuth } from 'src/composables/useAuth';
 import type { Domain } from 'src/models/Domain';
@@ -80,8 +47,6 @@ const $q = useQuasar();
 const router = useRouter();
 const { t } = useI18n();
 const { hasRole } = useAuth();
-
-const DEFAULT_COLOR = '#607D8B';
 
 const domains = ref<Domain[]>([]);
 const loading = ref(false);
@@ -97,9 +62,6 @@ const form = reactive({
   name: '',
   colorCode: null as string | null,
 });
-
-const requiredRule = (value: string): true | string =>
-  value?.trim() ? true : t('validation.required');
 
 async function loadDomains(): Promise<void> {
   loading.value = true;
@@ -130,11 +92,10 @@ function openEditDialog(domain: Pick<Domain, 'id' | 'name' | 'colorCode'>): void
 }
 
 function closeDialog(): void {
-  if (dialog.loading) return;
   dialog.open = false;
 }
 
-async function submitDialog(): Promise<void> {
+async function submitDialog(form: { name: string; colorCode: string | null }): Promise<void> {
   const trimmedName = form.name.trim();
   if (!trimmedName) {
     $q.notify({ type: 'warning', message: t('validation.required') });
