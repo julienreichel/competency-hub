@@ -35,30 +35,7 @@
       </div>
 
       <div v-else class="q-pa-md">
-        <div v-if="filteredCompetencies.length === 0" class="text-grey-6 text-center q-mt-lg">
-          {{ $t('competencies.emptyState') }}
-        </div>
-        <div v-else class="column q-gutter-md">
-          <q-card v-for="competency in filteredCompetencies" :key="competency.id" flat bordered>
-            <q-card-section class="row items-center justify-between q-gutter-sm">
-              <div>
-                <div class="text-subtitle1">{{ competency.name }}</div>
-                <div class="text-caption text-grey-7">
-                  {{ competency.description || $t('competencies.noDescription') }}
-                </div>
-              </div>
-              <div class="row items-center q-gutter-sm">
-                <q-btn
-                  flat
-                  color="primary"
-                  icon="edit"
-                  :label="$t('common.edit')"
-                  @click="openEditor(competency.id)"
-                />
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
+        <competency-list :competencies="filteredCompetencies" @edit="openEditor" />
       </div>
     </q-card>
 
@@ -99,14 +76,16 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router';
-import { onMounted, reactive, ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
-import { useI18n } from 'vue-i18n';
-import { domainRepository } from 'src/models/repositories/DomainRepository';
-import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
+import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
+import { domainRepository } from 'src/models/repositories/DomainRepository';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
+
+import CompetencyList from 'src/components/competency/CompetencyList.vue';
 
 const route = useRoute();
 const router = useRouter();
