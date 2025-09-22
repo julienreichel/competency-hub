@@ -23,7 +23,6 @@
 
 <script setup lang="ts">
 import type { Competency } from 'src/models/Competency';
-import { defineEmits, defineProps } from 'vue';
 
 defineProps<{
   competencies: Competency[];

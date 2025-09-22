@@ -1,19 +1,23 @@
 <template>
   <q-page class="q-pa-lg column q-gutter-lg">
-    <div class="row items-center q-gutter-sm">
-      <q-btn flat round icon="arrow_back" color="primary" @click="goBack" />
-      <div class="column">
-        <div class="text-caption text-grey-7">{{ $t('domains.title') }}</div>
-        <div class="text-h5">{{ domain?.name ?? $t('domains.loading') }}</div>
-      </div>
-      <q-space />
-      <q-btn
-        color="primary"
-        icon="add"
-        :label="$t('competencies.addCompetency')"
-        @click="openCreateDialog"
-      />
-    </div>
+    <breadcrumb-header
+      :breadcrumbs="[
+        { label: $t('domains.title'), to: { name: 'domains' } },
+        { label: domain?.name ?? $t('domains.loading') },
+      ]"
+      :title="domain?.name ?? $t('domains.loading')"
+      :loading="loading"
+      :back-target="{ name: 'domains' }"
+    >
+      <template #default>
+        <q-btn
+          color="primary"
+          icon="add"
+          :label="$t('competencies.addCompetency')"
+          @click="openCreateDialog"
+        />
+      </template>
+    </breadcrumb-header>
 
     <q-card flat bordered>
       <q-input
@@ -77,6 +81,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
@@ -135,10 +140,6 @@ async function loadData(): Promise<void> {
   } finally {
     loading.value = false;
   }
-}
-
-function goBack(): void {
-  void router.push({ name: 'domains' });
 }
 
 function openCreateDialog(): void {
