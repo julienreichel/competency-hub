@@ -32,7 +32,11 @@
             </div>
           </div>
           <div class="row items-center q-gutter-xs">
-            <resource-form-dialog label="Edit" :initial="resource" @update="handleUpdate" />
+            <resource-form-dialog
+              :initial="resource"
+              :sub-competency-id="resource.subCompetencyId"
+              @update="handleUpdate"
+            />
             <q-btn flat color="negative" icon="delete" @click="emit('delete', resource.id)" />
           </div>
         </q-card-section>

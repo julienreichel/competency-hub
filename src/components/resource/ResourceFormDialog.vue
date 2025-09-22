@@ -1,6 +1,8 @@
 <template>
   <q-btn
-    :label="label || (isEdit ? 'Edit resource' : 'Add resource')"
+    :label="label"
+    :flat="isEdit"
+    :icon="isEdit ? 'edit' : 'add'"
     color="primary"
     @click="dlg = true"
   />
@@ -52,6 +54,7 @@
               <file-uploader-field
                 v-model="form.fileKey"
                 label="Upload file"
+                :sub-competency-id="subCompetencyId"
                 :accept="'application/pdf, image/*'"
               />
             </template>
@@ -97,7 +100,7 @@ import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps<{
   label?: string;
-  subCompetencyId?: string; // required for create
+  subCompetencyId: string; // required for create
   initial?: CompetencyResource | null; // if provided -> edit mode
 }>();
 const emit = defineEmits<{

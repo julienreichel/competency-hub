@@ -21,6 +21,11 @@ export default {
     actions: 'Actions',
     refresh: 'Refresh',
     create: 'Create',
+    clear: 'Clear',
+  },
+
+  resource: {
+    openFile: 'Open file',
   },
 
   // Admin section
