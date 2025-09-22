@@ -2,7 +2,7 @@ import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
 import { Domain } from '../Domain';
 
-export interface CreateDomainInput extends Record<string, unknown> {
+export interface CreateDomainInput {
   name: string;
   colorCode?: string | null;
 }

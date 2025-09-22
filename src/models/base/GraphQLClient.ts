@@ -754,6 +754,73 @@ export class GraphQLClient {
       throw error;
     }
   }
+  async createStudentProgress(
+    data: Schema['StudentSubCompetencyProgress']['createType'],
+  ): Promise<Schema['StudentSubCompetencyProgress']['type'] | null> {
+    try {
+      const result = await this.client.models.StudentSubCompetencyProgress.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating StudentSubCompetencyProgress:', error);
+      throw error;
+    }
+  }
+
+  async updateStudentProgress(
+    data: Schema['StudentSubCompetencyProgress']['updateType'],
+  ): Promise<Schema['StudentSubCompetencyProgress']['type'] | null> {
+    try {
+      const result = await this.client.models.StudentSubCompetencyProgress.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating StudentSubCompetencyProgress:', error);
+      throw error;
+    }
+  }
+
+  async createValidationRequest(
+    data: Schema['ValidationRequest']['createType'],
+  ): Promise<Schema['ValidationRequest']['type'] | null> {
+    try {
+      const result = await this.client.models.ValidationRequest.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating ValidationRequest:', error);
+      throw error;
+    }
+  }
+
+  async updateValidationRequest(
+    data: Schema['ValidationRequest']['updateType'],
+  ): Promise<Schema['ValidationRequest']['type'] | null> {
+    try {
+      const result = await this.client.models.ValidationRequest.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error deciding ValidationRequest:', error);
+      throw error;
+    }
+  }
 }
 
 // Singleton instance
