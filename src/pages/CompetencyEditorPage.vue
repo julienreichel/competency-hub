@@ -25,24 +25,17 @@
     <sub-competency-list
       class="q-mt-md"
       :items="subs"
-      @edit="openSubCompetency"
+      @open="openSubCompetency"
       @rename="renameSubCompetency"
       @delete="deleteSubCompetency"
     />
 
-    <!-- quick add dialog -->
-    <q-dialog v-model="dialog">
-      <q-card style="min-width: 420px">
-        <q-card-section class="text-h6">{{ t('competencies.newSubCompetency') }}</q-card-section>
-        <q-card-section>
-          <q-input v-model="addName" :label="t('competencies.name')" autofocus />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="t('common.cancel')" v-close-popup />
-          <q-btn color="primary" :label="t('common.create')" @click="closeDialog" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <quick-add-sub-competency-dialog
+      v-model="dialog"
+      v-model:addName="addName"
+      @submit="closeDialog"
+      @cancel="dialog = false"
+    />
   </q-page>
 </template>
 
@@ -50,6 +43,7 @@
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
+import QuickAddSubCompetencyDialog from 'src/components/competency/QuickAddSubCompetencyDialog.vue';
 import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
 import {
   type Competency,

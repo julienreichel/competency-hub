@@ -50,12 +50,19 @@
 
         <!-- Digital specific -->
         <template v-if="form.type === 'Link'">
-          <q-input v-model="form.url" :label="$t('resources.fields.url')" dense filled />
+          <q-input
+            v-model="form.url"
+            :label="$t('resources.fields.url')"
+            dense
+            filled
+            class="col-12"
+          />
         </template>
 
         <template v-else-if="form.type === 'Document'">
           <file-uploader-field
             v-model="form.fileKey"
+            class="col-12"
             :label="$t('resources.fields.upload')"
             :sub-competency-id="subCompetencyId"
             :accept="'application/pdf, image/*'"

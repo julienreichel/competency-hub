@@ -16,6 +16,7 @@
     </div>
     <q-space />
     <q-spinner v-if="loading" size="sm" />
+    <slot />
   </div>
 </template>
 

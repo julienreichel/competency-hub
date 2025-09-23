@@ -82,9 +82,6 @@
             @uploaded="handleUploaded"
             @failed="handleFailed"
           >
-            <template #header>
-              <div class="text-body2">{{ t('profile.uploadInstructions') }}</div>
-            </template>
           </amplify-uploader>
         </div>
       </div>

@@ -17,7 +17,12 @@
             </div>
           </div>
           <div class="row items-center q-gutter-xs">
-            <q-btn flat color="primary" icon="edit" @click="emit('edit', String(sub.id))" />
+            <q-btn
+              flat
+              color="primary"
+              icon="arrow_forward"
+              @click="emit('open', String(sub.id))"
+            />
             <q-btn flat color="negative" icon="delete" @click="emit('delete', String(sub.id))" />
           </div>
         </q-card-section>
@@ -33,7 +38,7 @@ import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{ items: CreateSubCompetencyInput[] }>();
 const emit = defineEmits<{
-  (e: 'edit', id: string): void;
+  (e: 'open', id: string): void;
   (e: 'delete', id: string): void;
 }>();
 

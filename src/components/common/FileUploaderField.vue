@@ -3,6 +3,7 @@
     <div class="text-caption q-mb-xs">{{ label }}</div>
     <amplify-uploader
       v-if="!modelValue"
+      class="full-width"
       :accept="accept || 'application/pdf, image/*'"
       :max-files="1"
       auto-upload

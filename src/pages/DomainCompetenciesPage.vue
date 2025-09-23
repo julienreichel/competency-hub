@@ -39,43 +39,17 @@
       </div>
 
       <div v-else class="q-pa-md">
-        <competency-list :competencies="filteredCompetencies" @edit="openEditor" />
+        <competency-list :competencies="filteredCompetencies" @open="openEditor" />
       </div>
     </q-card>
 
-    <q-dialog v-model="dialog.open">
-      <q-card style="min-width: 360px">
-        <q-card-section>
-          <div class="text-h6">{{ $t('competencies.createTitle') }}</div>
-        </q-card-section>
-        <q-card-section class="q-gutter-md">
-          <q-input
-            v-model="form.name"
-            :label="$t('competencies.fields.name')"
-            :rules="[requiredRule]"
-          />
-          <q-input
-            v-model="form.description"
-            type="textarea"
-            :label="$t('competencies.fields.description')"
-          />
-          <q-input
-            v-model="form.objectives"
-            type="textarea"
-            :label="$t('competencies.fields.objectives')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('common.cancel')" color="primary" @click="closeDialog" />
-          <q-btn
-            color="primary"
-            :label="$t('competencies.actions.create')"
-            :loading="dialog.loading"
-            @click="submitDialog"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <create-competency-dialog
+      v-model="dialog.open"
+      :form="form"
+      :loading="dialog.loading"
+      @submit="submitDialog"
+      @cancel="closeDialog"
+    />
   </q-page>
 </template>
 
@@ -91,6 +65,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 import CompetencyList from 'src/components/competency/CompetencyList.vue';
+import CreateCompetencyDialog from 'src/components/competency/CreateCompetencyDialog.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -103,6 +78,12 @@ const competencies = ref<Competency[]>([]);
 const loading = ref(false);
 const search = ref('');
 
+type FormType = {
+  name: string;
+  description?: string;
+  objectives?: string;
+};
+
 const dialog = reactive({
   open: false,
   loading: false,
@@ -113,9 +94,6 @@ const form = reactive({
   description: '',
   objectives: '',
 });
-
-const requiredRule = (value: string): true | string =>
-  value?.trim() ? true : t('validation.required');
 
 const filteredCompetencies = computed(() => {
   const term = search.value.trim().toLowerCase();
@@ -150,11 +128,10 @@ function openCreateDialog(): void {
 }
 
 function closeDialog(): void {
-  if (dialog.loading) return;
   dialog.open = false;
 }
 
-async function submitDialog(): Promise<void> {
+async function submitDialog(form: FormType): Promise<void> {
   const trimmedName = form.name.trim();
   if (!trimmedName) {
     $q.notify({ type: 'warning', message: t('validation.required') });

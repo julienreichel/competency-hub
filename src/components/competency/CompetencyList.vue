@@ -13,7 +13,12 @@
             </div>
           </div>
           <div class="row items-center q-gutter-sm">
-            <q-btn flat color="primary" icon="edit" @click="$emit('edit', competency.id)" />
+            <q-btn
+              flat
+              color="primary"
+              icon="arrow_forward"
+              @click="$emit('open', competency.id)"
+            />
           </div>
         </q-card-section>
       </q-card>
@@ -29,7 +34,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'edit', id: string): void;
+  (e: 'open', id: string): void;
 }>();
 </script>
 
