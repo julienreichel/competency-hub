@@ -4,6 +4,7 @@ import { BaseModel } from './base/BaseModel';
 import { CompetencyResource, type AmplifyResource } from './CompetencyResource';
 import { Domain, type AmplifyDomain } from './Domain';
 import { SubCompetency, type AmplifySubCompetency, type SubCompetencyInit } from './SubCompetency';
+import type { User } from './User';
 
 import { isPresent, normaliseCollection, type RelationCollection } from './utils';
 
@@ -69,6 +70,14 @@ export class Competency extends BaseModel {
     );
 
     this.validate();
+  }
+
+  /**
+   * Attach user progress and validation requests to all sub-competencies from a User instance
+   * @param user - User instance
+   */
+  attachUserProgressAndValidations(user: User): void {
+    this.subCompetencies.forEach((sub) => sub.attachUserProgressAndValidations(user));
   }
 
   static fromAmplify(raw: AmplifyCompetency): Competency {
