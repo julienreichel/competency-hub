@@ -19,12 +19,18 @@
     <div class="row items-center q-gutter-sm">
       <div class="text-h6">{{ t('competencies.subCompetencies') }}</div>
       <q-space />
-      <q-btn color="primary" :label="t('competencies.addSubCompetency')" @click="openDialog" />
+      <q-btn
+        v-if="hasRole('Admin') || hasRole('Educator')"
+        color="primary"
+        :label="t('competencies.addSubCompetency')"
+        @click="openDialog"
+      />
     </div>
 
     <sub-competency-list
       class="q-mt-md"
       :items="subs"
+      :show-delete="hasRole('Admin') || hasRole('Educator')"
       @open="openSubCompetency"
       @rename="renameSubCompetency"
       @delete="deleteSubCompetency"
@@ -45,6 +51,7 @@ import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
 import QuickAddSubCompetencyDialog from 'src/components/competency/QuickAddSubCompetencyDialog.vue';
 import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
+import { useAuth } from 'src/composables/useAuth';
 import {
   type Competency,
   type SubCompetency,
@@ -60,6 +67,7 @@ const $q = useQuasar();
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const { hasRole } = useAuth();
 
 let domainId = route.params.domainId as string | undefined;
 const domainName = ref<string>(t('domains.title'));

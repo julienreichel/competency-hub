@@ -11,6 +11,7 @@
     >
       <template #default>
         <q-btn
+          v-if="hasRole('Admin') || hasRole('Educator')"
           color="primary"
           icon="add"
           :label="$t('competencies.addCompetency')"
@@ -56,6 +57,7 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
+import { useAuth } from 'src/composables/useAuth';
 import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
@@ -71,6 +73,7 @@ const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
 const { t } = useI18n();
+const { hasRole } = useAuth();
 
 const domainId = route.params.domainId as string;
 const domain = ref<Domain | null>(null);

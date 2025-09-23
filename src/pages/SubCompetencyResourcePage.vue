@@ -24,6 +24,7 @@
       <div class="text-h6">{{ t('resources.title') }}</div>
       <q-space />
       <resource-form-dialog
+        v-if="hasRole('Admin') || hasRole('Educator')"
         :label="t('resources.addResource')"
         :sub-competency-id="subId"
         @create="createResource"
@@ -33,6 +34,7 @@
     <resource-table
       class="q-mt-md"
       :items="resources"
+      :show-actions="hasRole('Admin') || hasRole('Educator')"
       @edit="updateResource"
       @delete="deleteResource"
     />
@@ -59,10 +61,12 @@ import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRe
 import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
 import ResourceFormDialog from 'src/components/resource/ResourceFormDialog.vue';
 import ResourceTable from 'src/components/resource/ResourceTable.vue';
+import { useAuth } from 'src/composables/useAuth';
 
 const $q = useQuasar();
 const { t } = useI18n();
 const route = useRoute();
+const { hasRole } = useAuth();
 
 let domainId = route.params.domainId as string | undefined;
 const competencyId = route.params.competencyId as string;

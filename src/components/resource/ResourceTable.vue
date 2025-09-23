@@ -31,7 +31,7 @@
               }}</a>
             </div>
           </div>
-          <div class="row items-center q-gutter-xs">
+          <div v-if="showActions" class="row items-center q-gutter-xs">
             <resource-form-dialog
               :initial="resource"
               :sub-competency-id="resource.subCompetencyId"
@@ -55,7 +55,10 @@ import ResourceFormDialog from './ResourceFormDialog.vue';
 
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-const props = defineProps<{ items: CompetencyResource[] }>();
+const props = defineProps<{
+  items: CompetencyResource[];
+  showActions?: boolean;
+}>();
 const emit = defineEmits<{
   (e: 'edit', payload: UpdateCompetencyInput): void;
   (e: 'delete', id: string): void;

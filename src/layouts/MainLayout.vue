@@ -81,6 +81,15 @@
           />
         </template>
 
+        <template v-if="hasRole('Student')">
+          <essential-link
+            title="Domains"
+            caption="Browse domains"
+            icon="category"
+            link="/domains"
+          />
+        </template>
+
         <template v-if="hasRole('Educator')">
           <essential-link
             title="My Students"
@@ -137,7 +146,7 @@
 
           <essential-link
             title="Domains"
-            caption="Organise competencies"
+            caption="Manage competencies"
             icon="category"
             link="/domains"
           />

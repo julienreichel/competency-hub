@@ -23,7 +23,13 @@
               icon="arrow_forward"
               @click="emit('open', String(sub.id))"
             />
-            <q-btn flat color="negative" icon="delete" @click="emit('delete', String(sub.id))" />
+            <q-btn
+              v-if="props.showDelete !== false"
+              flat
+              color="negative"
+              icon="delete"
+              @click="emit('delete', String(sub.id))"
+            />
           </div>
         </q-card-section>
       </q-card>
@@ -36,7 +42,10 @@ import { type CreateSubCompetencyInput } from 'src/models/Competency';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const props = defineProps<{ items: CreateSubCompetencyInput[] }>();
+const props = defineProps<{
+  items: CreateSubCompetencyInput[];
+  showDelete?: boolean;
+}>();
 const emit = defineEmits<{
   (e: 'open', id: string): void;
   (e: 'delete', id: string): void;
