@@ -104,6 +104,9 @@ export class GraphQLClient {
             'students.student.*',
             'parents.parent.*',
             'children.student.*',
+            'studentProgress.*',
+            'validationsRequested.*',
+            'validationRequests.*',
           ],
         },
       );

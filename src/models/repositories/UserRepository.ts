@@ -59,7 +59,7 @@ export class UserRepository
     if (!rawUser) {
       throw new Error(`Failed to update user with id ${id}`);
     }
-    return (await this.findById(id)) ?? User.fromAmplify(rawUser);
+    return User.fromAmplify(rawUser);
   }
 
   /**

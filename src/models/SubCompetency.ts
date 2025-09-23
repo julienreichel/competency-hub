@@ -3,7 +3,11 @@ import { BaseModel } from './base/BaseModel';
 import { Competency, type AmplifyCompetency } from './Competency';
 import type { AmplifyResource } from './CompetencyResource';
 import { CompetencyResource, type ResourceInit } from './CompetencyResource';
+import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
+import type { User } from './User';
+import { UserRole } from './User';
 import { isPresent, normaliseCollection } from './utils';
+import type { ValidationRequest } from './ValidationRequest';
 
 export type AmplifySubCompetency = NonNullable<Schema['SubCompetency']['type']>;
 
@@ -18,6 +22,8 @@ export interface SubCompetencyInit {
   createdAt?: string;
   updatedAt?: string;
   resources?: Array<ResourceInit | CompetencyResource>;
+  studentProgress?: StudentSubCompetencyProgress[];
+  validationRequests?: ValidationRequest[];
 }
 
 export interface CreateSubCompetencyInput {
@@ -40,6 +46,9 @@ export class SubCompetency extends BaseModel {
   public level: number;
   public readonly resources: CompetencyResource[];
 
+  public studentProgress: StudentSubCompetencyProgress[] = [];
+  public validationRequests: ValidationRequest[] = [];
+
   constructor(data: SubCompetencyInit) {
     super(data);
     this.competencyId = data.competencyId;
@@ -57,7 +66,44 @@ export class SubCompetency extends BaseModel {
       resource instanceof CompetencyResource ? resource.clone() : new CompetencyResource(resource),
     );
 
+    this.studentProgress = Array.isArray(data.studentProgress) ? data.studentProgress : [];
+    this.validationRequests = Array.isArray(data.validationRequests) ? data.validationRequests : [];
     this.validate();
+  }
+
+  /**
+   * Attach student progress and validation requests from a User object, filtering by this sub-competency's id.
+   */
+  attachUserProgressAndValidations(user: User): void {
+    if (user.studentProgress) {
+      this.studentProgress = user.studentProgress.filter(
+        (progress) => progress.subCompetencyId === this.id,
+      );
+    } else {
+      this.studentProgress = [];
+    }
+    if (
+      user.role === UserRole.STUDENT &&
+      (!this.studentProgress || this.studentProgress.length === 0)
+    ) {
+      this.studentProgress = [
+        new StudentSubCompetencyProgress({
+          id: `${user.id}-${this.id}`,
+          studentId: user.id,
+          subCompetencyId: this.id,
+          status: 'NotStarted',
+          percent: 0,
+          lockOverride: 'Locked',
+          recommended: null,
+          updatedAt: null,
+        }),
+      ];
+    }
+    if (user.validationsRequested) {
+      this.validationRequests = user.validationsRequested.filter(
+        (req) => req.subCompetencyId === this.id,
+      );
+    }
   }
 
   static fromAmplify(raw: AmplifySubCompetency): SubCompetency {
@@ -104,6 +150,8 @@ export class SubCompetency extends BaseModel {
       updatedAt: this.updatedAt,
 
       resources: this.resources.map((resource) => resource.toJSON()),
+      studentProgress: this.studentProgress.map((sp) => sp.toJSON()),
+      validationRequests: this.validationRequests.map((vr) => vr.toJSON()),
     };
   }
 
@@ -119,6 +167,8 @@ export class SubCompetency extends BaseModel {
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
       resources: this.resources.map((resource) => resource.clone()),
+      studentProgress: this.studentProgress.map((sp) => sp.clone()),
+      validationRequests: this.validationRequests.map((vr) => vr.clone()),
     });
   }
 }
