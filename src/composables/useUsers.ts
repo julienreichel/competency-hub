@@ -1,6 +1,7 @@
 import { userRepository } from 'src/models/repositories/UserRepository';
 import { UserRole, type UpdateUserData, type User } from 'src/models/User';
 import { ref } from 'vue';
+import { useAuth } from './useAuth';
 
 type UpdatableUserFields = {
   name?: string;
@@ -11,12 +12,15 @@ type UpdatableUserFields = {
   lastActive?: string | null | undefined;
 };
 
+let currentUser: User | null = null;
+
 // eslint-disable-next-line max-lines-per-function
 export function useUsers(): {
   loading: typeof loading;
   error: typeof error;
   fetchUsers: () => Promise<User[]>;
   getUserById: (id: string) => Promise<User | null>;
+  getCurrentUser: () => Promise<User | null>;
   addUserToGroup: (userId: string, groupName: string) => Promise<User | null>;
   updateUser: (id: string, data: UpdatableUserFields) => Promise<User | null>;
   assignEducatorToStudent: (
@@ -65,6 +69,17 @@ export function useUsers(): {
     } finally {
       loading.value = false;
     }
+  };
+
+  const getCurrentUser = async (): Promise<User | null> => {
+    const { userAttributes } = useAuth();
+    const userId = userAttributes.value.sub;
+    if (!userId) return null;
+    if (currentUser && currentUser.id === userId) {
+      return currentUser;
+    }
+    currentUser = await userRepository.findById(userId);
+    return currentUser;
   };
 
   // Admin mutation wrappers
@@ -297,6 +312,7 @@ export function useUsers(): {
     error,
     fetchUsers,
     getUserById,
+    getCurrentUser,
     addUserToGroup,
     updateUser,
     getUsersByIds,

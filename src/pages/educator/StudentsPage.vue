@@ -106,6 +106,7 @@ const {
   unassignEducatorFromStudent,
   fetchUsers,
   getUserById,
+  getCurrentUser,
   loading,
   error,
 } = useUsers();
@@ -174,14 +175,8 @@ function mergeUsersIntoState(users: User[] | undefined): void {
 }
 
 async function loadCurrentEducator(): Promise<void> {
-  const id = currentEducatorId.value;
-  if (!id) {
-    currentEducator.value = null;
-    return;
-  }
-
   try {
-    const educator = await getUserById(id);
+    const educator = await getCurrentUser();
     if (!educator) {
       currentEducator.value = null;
       return;

@@ -102,6 +102,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
+import { useUsers } from '../composables/useUsers';
 
 import '@aws-amplify/ui-vue/styles.css';
 
@@ -115,6 +116,7 @@ interface Role {
 const router = useRouter();
 const route = useRoute();
 const { initAuth, isAuthenticated, userAttributes } = useAuth();
+const { getCurrentUser } = useUsers();
 const { t } = useI18n();
 const $q = useQuasar();
 
@@ -215,20 +217,8 @@ async function handleAuthenticated(): Promise<void> {
   try {
     await initAuth();
 
-    // Get user email and Cognito userId (sub) from auth composable
-    const email = userAttributes.value.email;
-    const userId = String(userAttributes.value.sub);
-    if (!email || !userId) {
-      $q.notify({
-        type: 'negative',
-        message: 'No email or userId found in user attributes.',
-        position: 'top',
-      });
-      return;
-    }
-
     // Fetch user from backend by Cognito sub (id)
-    const user = await userRepository.findById(userId);
+    const user = await getCurrentUser();
     if (!user) {
       $q.notify({
         type: 'negative',
