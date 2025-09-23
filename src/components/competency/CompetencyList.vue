@@ -4,30 +4,19 @@
       {{ $t('competencies.emptyState') }}
     </div>
     <div v-else class="column q-gutter-md">
-      <q-card v-for="competency in competencies" :key="competency.id" flat bordered>
-        <q-card-section class="row items-center justify-between q-gutter-sm">
-          <div>
-            <div class="text-subtitle1">{{ competency.name }}</div>
-            <div class="text-caption text-grey-7">
-              {{ competency.description || $t('competencies.noDescription') }}
-            </div>
-          </div>
-          <div class="row items-center q-gutter-sm">
-            <q-btn
-              flat
-              color="primary"
-              icon="arrow_forward"
-              @click="$emit('open', competency.id)"
-            />
-          </div>
-        </q-card-section>
-      </q-card>
+      <competency-card
+        v-for="competency in competencies"
+        :key="competency.id"
+        :competency="competency"
+        @open="$emit('open', $event)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Competency } from 'src/models/Competency';
+import CompetencyCard from './CompetencyCard.vue';
 
 defineProps<{
   competencies: Competency[];
