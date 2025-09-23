@@ -55,10 +55,9 @@ import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import {
   type CompetencyResource,
   type CreateResourceInput,
-  type SubCompetency,
   type UpdateResourceInput,
-  type UpdateSubCompetencyInput,
-} from 'src/models/Competency';
+} from 'src/models/CompetencyResource';
+import { type SubCompetency, type UpdateSubCompetencyInput } from 'src/models/SubCompetency';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';

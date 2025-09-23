@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SubCompetency } from '../../src/models/Competency';
+import { SubCompetency } from '../../src/models/SubCompetency';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { SubCompetencyRepository } from '../../src/models/repositories/SubCompetencyRepository';
 

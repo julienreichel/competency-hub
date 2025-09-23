@@ -4,7 +4,7 @@ import {
   SubCompetency,
   type CreateSubCompetencyInput,
   type UpdateSubCompetencyInput,
-} from '../Competency';
+} from '../SubCompetency';
 
 interface SubCompetencyFilter extends Record<string, unknown> {
   competencyId?: { eq: string };

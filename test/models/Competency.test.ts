@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  Competency,
-  CompetencyResource,
-  ResourceType,
-  SubCompetency,
-} from '../../src/models/Competency';
-
+import { Competency } from '../../src/models/Competency';
+import { CompetencyResource, ResourceType } from '../../src/models/CompetencyResource';
+import { SubCompetency } from '../../src/models/SubCompetency';
 describe('Competency taxonomy models', () => {
   const resourceInit = {
     id: 'resource-1',

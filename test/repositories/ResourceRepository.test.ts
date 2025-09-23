@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CompetencyResource, ResourceType } from '../../src/models/Competency';
+import { CompetencyResource, ResourceType } from '../../src/models/CompetencyResource';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { ResourceRepository } from '../../src/models/repositories/ResourceRepository';
 

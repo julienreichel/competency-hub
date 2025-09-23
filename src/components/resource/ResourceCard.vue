@@ -55,7 +55,8 @@
 
 <script setup lang="ts">
 import UserDetailsDialog from 'src/components/ui/UserDetailsDialog.vue';
-import type { CompetencyResource, UpdateCompetencyInput } from 'src/models/Competency';
+import type { UpdateCompetencyInput } from 'src/models/Competency';
+import type { CompetencyResource } from 'src/models/CompetencyResource';
 import type { User } from 'src/models/User';
 import { ref } from 'vue';
 import ResourceFormDialog from './ResourceFormDialog.vue';

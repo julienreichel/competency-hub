@@ -95,7 +95,7 @@ import {
   type CompetencyResource,
   type CreateResourceInput,
   type UpdateResourceInput,
-} from 'src/models/Competency';
+} from 'src/models/CompetencyResource';
 import { computed, reactive, watch } from 'vue';
 
 const props = defineProps<{

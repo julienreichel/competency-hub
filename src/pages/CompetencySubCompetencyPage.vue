@@ -66,11 +66,8 @@ import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsFo
 import QuickAddSubCompetencyDialog from 'src/components/competency/QuickAddSubCompetencyDialog.vue';
 import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
 import { useAuth } from 'src/composables/useAuth';
-import {
-  type Competency,
-  type SubCompetency,
-  type UpdateCompetencyInput,
-} from 'src/models/Competency';
+import { type Competency, type UpdateCompetencyInput } from 'src/models/Competency';
+import { type SubCompetency } from 'src/models/SubCompetency';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import { onMounted, ref } from 'vue';

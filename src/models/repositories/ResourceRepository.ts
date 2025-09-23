@@ -4,7 +4,7 @@ import {
   CompetencyResource,
   type CreateResourceInput,
   type UpdateResourceInput,
-} from '../Competency';
+} from '../CompetencyResource';
 
 interface ResourceFilter extends Record<string, unknown> {
   subCompetencyId?: { eq: string };

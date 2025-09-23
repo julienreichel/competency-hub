@@ -18,7 +18,8 @@
 </template>
 
 <script setup lang="ts">
-import { type CompetencyResource, type UpdateCompetencyInput } from 'src/models/Competency';
+import { type UpdateCompetencyInput } from 'src/models/Competency';
+import { type CompetencyResource } from 'src/models/CompetencyResource';
 import ResourceCard from './ResourceCard.vue';
 
 const props = defineProps<{
