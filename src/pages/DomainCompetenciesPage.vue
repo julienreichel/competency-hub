@@ -158,7 +158,7 @@ async function submitDialog(form: FormType): Promise<void> {
 }
 
 function openEditor(competencyId: string): void {
-  void router.push({ name: 'competency-editor', params: { competencyId } });
+  void router.push({ name: 'competency-sub-competency', params: { competencyId } });
 }
 
 onMounted(() => {

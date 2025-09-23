@@ -3,12 +3,15 @@
     <breadcrumb-header
       :breadcrumbs="[
         { label: domainName, to: { name: 'domain-competencies', params: { domainId } } },
-        { label: competencyName, to: { name: 'competency-editor', params: { competencyId } } },
+        {
+          label: competencyName,
+          to: { name: 'competency-sub-competency', params: { competencyId } },
+        },
         { label: sub && sub.name ? sub.name : t('subCompetencies.loading') },
       ]"
       :title="sub && sub.name ? sub.name : t('subCompetencies.loading')"
       :loading="loading"
-      :back-target="{ name: 'competency-editor', params: { competencyId } }"
+      :back-target="{ name: 'competency-sub-competency', params: { competencyId } }"
     />
 
     <q-separator class="q-mb-lg" />

@@ -63,14 +63,14 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'competencies/:competencyId',
-        name: 'competency-editor',
-        component: () => import('pages/CompetencyEditorPage.vue'),
+        name: 'competency-sub-competency',
+        component: () => import('src/pages/CompetencySubCompetencyPage.vue'),
         meta: { roles: ['Admin', 'Educator'] },
       },
       {
         path: 'competencies/:competencyId/sub/:subId',
-        name: 'sub-competency-editor',
-        component: () => import('pages/SubCompetencyEditorPage.vue'),
+        name: 'sub-competency-resource',
+        component: () => import('src/pages/SubCompetencyResourcePage.vue'),
         meta: { roles: ['Admin', 'Educator'] },
       },
       {

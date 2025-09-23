@@ -117,7 +117,7 @@ async function deleteSubCompetency(id: string): Promise<void> {
 }
 
 async function openSubCompetency(id: string): Promise<void> {
-  await router.push({ name: 'sub-competency-editor', params: { competencyId, subId: id } });
+  await router.push({ name: 'sub-competency-resource', params: { competencyId, subId: id } });
 }
 
 function openDialog(): void {
