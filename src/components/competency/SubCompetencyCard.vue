@@ -10,9 +10,25 @@
         <div class="text-caption text-grey-7 q-mt-xs">
           {{ sub.description || t('subCompetencies.noDescription') }}
         </div>
+        <div v-if="sub.objectives" class="q-mt-sm">
+          <div class="text-caption">{{ sub.objectives }}</div>
+        </div>
       </div>
       <div class="row items-center q-gutter-xs">
-        <q-btn flat color="primary" icon="arrow_forward" @click="$emit('open', String(sub.id))" />
+        <q-btn
+          v-if="showOpen !== false"
+          flat
+          color="primary"
+          icon="arrow_forward"
+          @click="$emit('open', String(sub.id))"
+        />
+        <q-btn
+          v-if="showEdit"
+          flat
+          color="secondary"
+          icon="edit"
+          @click="$emit('edit', String(sub.id))"
+        />
         <q-btn
           v-if="showDelete !== false"
           flat
@@ -31,11 +47,14 @@ import { useI18n } from 'vue-i18n';
 
 defineProps<{
   sub: CreateSubCompetencyInput;
+  showOpen?: boolean;
+  showEdit?: boolean;
   showDelete?: boolean;
 }>();
 
 defineEmits<{
   (e: 'open', id: string): void;
+  (e: 'edit', id: string): void;
   (e: 'delete', id: string): void;
 }>();
 

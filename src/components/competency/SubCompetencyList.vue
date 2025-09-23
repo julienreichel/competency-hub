@@ -8,6 +8,7 @@
         v-for="sub in itemsWithId"
         :key="String(sub.id)"
         :sub="sub"
+        show-open
         :show-delete="props.showDelete"
         @open="emit('open', $event)"
         @delete="emit('delete', $event)"

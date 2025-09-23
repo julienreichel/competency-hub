@@ -8,6 +8,7 @@
         v-for="competency in competencies"
         :key="competency.id"
         :competency="competency"
+        show-open
         @open="$emit('open', $event)"
       />
     </div>

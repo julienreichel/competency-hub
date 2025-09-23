@@ -26,13 +26,27 @@
           }}</a>
         </div>
       </div>
-      <div v-if="showActions" class="row items-center q-gutter-xs">
+      <div class="row items-center q-gutter-xs">
+        <q-btn
+          v-if="showOpen !== false"
+          flat
+          color="primary"
+          icon="arrow_forward"
+          @click="$emit('open', resource.id)"
+        />
         <resource-form-dialog
+          v-if="showEdit"
           :initial="resource"
           :sub-competency-id="resource.subCompetencyId"
           @update="$emit('edit', $event)"
         />
-        <q-btn flat color="negative" icon="delete" @click="$emit('delete', resource.id)" />
+        <q-btn
+          v-if="showDelete"
+          flat
+          color="negative"
+          icon="delete"
+          @click="$emit('delete', resource.id)"
+        />
       </div>
     </q-card-section>
     <user-details-dialog :model-value="userDialogOpen" :user="userDialogUser" />
@@ -48,10 +62,13 @@ import ResourceFormDialog from './ResourceFormDialog.vue';
 
 defineProps<{
   resource: CompetencyResource;
-  showActions?: boolean;
+  showOpen?: boolean;
+  showEdit?: boolean;
+  showDelete?: boolean;
 }>();
 
 defineEmits<{
+  (e: 'open', id: string): void;
   (e: 'edit', payload: UpdateCompetencyInput): void;
   (e: 'delete', id: string): void;
 }>();

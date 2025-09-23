@@ -8,7 +8,8 @@
         v-for="resource in props.items"
         :key="resource.id"
         :resource="resource"
-        :show-actions="props.showActions"
+        :show-edit="props.showActions"
+        :show-delete="props.showActions"
         @edit="emit('edit', $event)"
         @delete="emit('delete', $event)"
       />

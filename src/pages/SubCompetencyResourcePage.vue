@@ -14,9 +14,17 @@
       :back-target="{ name: 'competency-sub-competency', params: { competencyId } }"
     />
 
-    <q-separator class="q-mb-lg" />
-
-    <sub-competency-form v-if="sub" :model-value="sub" @save="saveSub" />
+    <template v-if="sub">
+      <sub-competency-card
+        v-if="!editing"
+        :sub="sub"
+        :show-edit="hasRole('Admin') || hasRole('Educator')"
+        :show-open="false"
+        :show-delete="false"
+        @edit="editing = true"
+      />
+      <sub-competency-form v-else :model-value="sub" @save="onSaveSub" @cancel="editing = false" />
+    </template>
 
     <q-separator class="q-my-lg" />
 
@@ -58,6 +66,7 @@ import { useRoute } from 'vue-router';
 import { resourceRepository } from 'src/models/repositories/ResourceRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 
+import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
 import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
 import ResourceFormDialog from 'src/components/resource/ResourceFormDialog.vue';
 import ResourceTable from 'src/components/resource/ResourceTable.vue';
@@ -74,6 +83,7 @@ const subId = route.params.subId as string;
 
 const loading = ref(false);
 const sub = ref<SubCompetency | null>(null);
+const editing = ref(false);
 const domainName = ref<string>(t('domains.title'));
 const competencyName = ref<string>(t('competencies.title'));
 
@@ -99,10 +109,11 @@ async function load(): Promise<void> {
   }
 }
 
-async function saveSub(updated: UpdateSubCompetencyInput): Promise<void> {
+async function onSaveSub(updated: UpdateSubCompetencyInput): Promise<void> {
   await subCompetencyRepository.update(subId, updated);
   $q.notify({ type: 'positive', message: 'Sub-competency saved' });
   await load();
+  editing.value = false;
 }
 
 async function createResource(payload: CreateResourceInput): Promise<void> {

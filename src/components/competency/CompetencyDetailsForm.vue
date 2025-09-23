@@ -10,12 +10,11 @@
           :rules="[(v) => !!v || 'Required']"
         />
       </div>
-      <div class="col-12 col-md-8">
-        <q-input v-model="form.objectives" label="Objectives" type="textarea" autogrow filled />
-      </div>
-
       <div class="col-12">
         <q-input v-model="form.description" type="textarea" autogrow label="Description" filled />
+      </div>
+      <div class="col-12 col-md-8">
+        <q-input v-model="form.objectives" label="Objectives" type="textarea" autogrow filled />
       </div>
     </div>
 

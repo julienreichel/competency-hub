@@ -10,9 +10,22 @@
       :back-target="{ name: 'domain-competencies', params: { domainId } }"
     />
 
-    <q-separator class="q-mb-md" />
-
-    <competency-details-form v-if="competency" :model-value="competency" @save="saveCompetency" />
+    <template v-if="competency">
+      <competency-card
+        v-if="!editing"
+        :competency="competency"
+        :show-edit="hasRole('Admin') || hasRole('Educator')"
+        :show-open="false"
+        :show-delete="false"
+        @edit="editing = true"
+      />
+      <competency-details-form
+        v-else
+        :model-value="competency"
+        @save="onSaveCompetency"
+        @cancel="editing = false"
+      />
+    </template>
 
     <q-separator class="q-my-lg" />
 
@@ -48,6 +61,7 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
+import CompetencyCard from 'src/components/competency/CompetencyCard.vue';
 import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
 import QuickAddSubCompetencyDialog from 'src/components/competency/QuickAddSubCompetencyDialog.vue';
 import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
@@ -74,6 +88,7 @@ const domainName = ref<string>(t('domains.title'));
 const competencyId = route.params.competencyId as string;
 const loading = ref(false);
 const competency = ref<Competency | null>(null);
+const editing = ref(false);
 const subs = ref<SubCompetency[]>([]);
 const addName = ref<string>('');
 const dialog = ref<boolean>(false);
@@ -93,10 +108,11 @@ async function load(): Promise<void> {
   }
 }
 
-async function saveCompetency(updated: UpdateCompetencyInput): Promise<void> {
+async function onSaveCompetency(updated: UpdateCompetencyInput): Promise<void> {
   await competencyRepository.update(competencyId, updated);
   $q.notify({ type: 'positive', message: 'Competency saved' });
   await load();
+  editing.value = false;
 }
 
 async function addSubCompetency(name: string): Promise<void> {
