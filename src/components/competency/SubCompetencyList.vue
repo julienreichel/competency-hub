@@ -9,7 +9,8 @@
         :key="String(sub.id)"
         :sub="sub"
         show-open
-        :show-delete="props.showDelete"
+        :show-delete="showDelete || false"
+        :show-student-progress="showStudentProgress || false"
         @open="emit('open', $event)"
         @delete="emit('delete', $event)"
       />
@@ -18,14 +19,15 @@
 </template>
 
 <script setup lang="ts">
-import { type CreateSubCompetencyInput } from 'src/models/Competency';
+import { type SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SubCompetencyCard from './SubCompetencyCard.vue';
 
 const props = defineProps<{
-  items: CreateSubCompetencyInput[];
+  items: SubCompetency[];
   showDelete?: boolean;
+  showStudentProgress?: boolean;
 }>();
 const emit = defineEmits<{
   (e: 'open', id: string): void;

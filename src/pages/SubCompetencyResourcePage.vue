@@ -19,8 +19,7 @@
         v-if="!editing"
         :sub="sub"
         :show-edit="hasRole('Admin') || hasRole('Educator')"
-        :show-open="false"
-        :show-delete="false"
+        :show-student-progress="hasRole('Student')"
         @edit="editing = true"
       />
       <sub-competency-form v-else :model-value="sub" @save="onSaveSub" @cancel="editing = false" />
@@ -52,6 +51,7 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
+import { useUsers } from 'src/composables/useUsers';
 import {
   type CompetencyResource,
   type CreateResourceInput,
@@ -88,6 +88,13 @@ const competencyName = ref<string>(t('competencies.title'));
 
 onMounted(async () => {
   await load();
+
+  // Attach user progress to sub-competency
+  const { getCurrentUser } = useUsers();
+  const user = await getCurrentUser();
+  if (user && sub.value) {
+    sub.value.attachUserProgressAndValidations(user);
+  }
 
   if (!sub.value?.competency?.name) return;
   competencyName.value = sub.value.competency.name;

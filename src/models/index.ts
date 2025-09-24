@@ -3,17 +3,13 @@ export { User, UserRole } from './User';
 export type { CreateUserData, UpdateUserData } from './User';
 
 export { Competency } from './Competency';
-export type {
-  CreateCompetencyInput,
-  CreateSubCompetencyInput,
-  UpdateCompetencyInput,
-  UpdateSubCompetencyInput,
-} from './Competency';
+export type { CreateCompetencyInput, UpdateCompetencyInput } from './Competency';
 export { CompetencyResource, ResourceType } from './CompetencyResource';
 export type { CreateResourceInput, UpdateResourceInput } from './CompetencyResource';
 export { Domain } from './Domain';
 export type { DomainInit } from './Domain';
 export { SubCompetency } from './SubCompetency';
+export type { CreateSubCompetencyInput, UpdateSubCompetencyInput } from './SubCompetency';
 
 // Export base classes
 export { BaseModel } from './base/BaseModel';

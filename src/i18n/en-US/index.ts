@@ -22,6 +22,8 @@ export default {
     refresh: 'Refresh',
     create: 'Create',
     clear: 'Clear',
+    yes: 'Yes',
+    no: 'No',
   },
 
   resource: {
@@ -208,6 +210,19 @@ export default {
     name: 'Sub-competency name',
     emptyState: 'No sub-competencies found',
     noDescription: 'No description provided',
+    studentProgress: 'Student Progress',
+    status: 'Status',
+    percent: 'Percent',
+    locked: 'Locked',
+    recommended: 'Recommended',
+  },
+
+  progressStatus: {
+    NotStarted: 'Not started',
+    InProgress: 'In progress',
+    PendingValidation: 'Pending validation',
+    Validated: 'Validated',
+    Locked: 'Locked',
   },
 
   // Validation messages

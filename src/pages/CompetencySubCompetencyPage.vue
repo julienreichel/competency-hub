@@ -15,8 +15,6 @@
         v-if="!editing"
         :competency="competency"
         :show-edit="hasRole('Admin') || hasRole('Educator')"
-        :show-open="false"
-        :show-delete="false"
         @edit="editing = true"
       />
       <competency-details-form
@@ -44,6 +42,7 @@
       class="q-mt-md"
       :items="subs"
       :show-delete="hasRole('Admin') || hasRole('Educator')"
+      :show-student-progress="hasRole('Student')"
       @open="openSubCompetency"
       @rename="renameSubCompetency"
       @delete="deleteSubCompetency"
@@ -66,6 +65,7 @@ import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsFo
 import QuickAddSubCompetencyDialog from 'src/components/competency/QuickAddSubCompetencyDialog.vue';
 import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useUsers } from 'src/composables/useUsers';
 import { type Competency, type UpdateCompetencyInput } from 'src/models/Competency';
 import { type SubCompetency } from 'src/models/SubCompetency';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
@@ -98,6 +98,14 @@ async function load(): Promise<void> {
     competency.value = c;
     domainId = c?.domainId;
     if (c?.domain?.name) domainName.value = c?.domain?.name;
+
+    // Attach user progress to sub-competencies
+    const { getCurrentUser } = useUsers();
+    const user = await getCurrentUser();
+    if (user && c) {
+      c.attachUserProgressAndValidations(user);
+    }
+
     // Ensure stable level
     subs.value = (c?.subCompetencies ?? []).sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
   } finally {

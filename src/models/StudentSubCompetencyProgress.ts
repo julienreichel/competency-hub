@@ -56,7 +56,6 @@ export class StudentSubCompetencyProgress {
     if (!this.subCompetencyId?.trim()) throw new Error('subCompetencyId is required');
     if (!this.status) throw new Error('status is required');
     if (typeof this.percent !== 'number') throw new Error('percent is required');
-    if (typeof this.updatedAt !== 'number') throw new Error('updatedAt is required');
   }
 
   toJSON(): StudentSubCompetencyProgressInit {

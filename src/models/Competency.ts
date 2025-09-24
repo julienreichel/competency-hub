@@ -9,18 +9,6 @@ import type { User } from './User';
 import { isPresent, normaliseCollection, type RelationCollection } from './utils';
 
 export type AmplifyCompetency = NonNullable<Schema['Competency']['type']>;
-
-export interface CreateSubCompetencyInput {
-  id?: string;
-  competencyId: string;
-  name: string;
-  description?: string | null;
-  objectives?: string | null;
-  level?: number;
-}
-
-export type UpdateSubCompetencyInput = Partial<CreateSubCompetencyInput>;
-
 export interface CompetencyInit {
   id: string;
   domainId: string;

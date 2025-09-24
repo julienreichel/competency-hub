@@ -31,7 +31,7 @@
 import {
   type CreateSubCompetencyInput,
   type UpdateSubCompetencyInput,
-} from 'src/models/Competency';
+} from 'src/models/SubCompetency';
 import { reactive, watch } from 'vue';
 
 const props = defineProps<{ modelValue: CreateSubCompetencyInput }>();
