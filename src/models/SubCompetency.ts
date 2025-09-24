@@ -7,7 +7,6 @@ import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { User } from './User';
 import { UserRole } from './User';
 import { isPresent, normaliseCollection } from './utils';
-import type { ValidationRequest } from './ValidationRequest';
 
 export type AmplifySubCompetency = NonNullable<Schema['SubCompetency']['type']>;
 
@@ -23,7 +22,6 @@ export interface SubCompetencyInit {
   updatedAt?: string;
   resources?: Array<ResourceInit | CompetencyResource>;
   studentProgress?: StudentSubCompetencyProgress[];
-  validationRequests?: ValidationRequest[];
 }
 
 export interface CreateSubCompetencyInput {
@@ -45,9 +43,7 @@ export class SubCompetency extends BaseModel {
   public objectives: string | null;
   public level: number;
   public readonly resources: CompetencyResource[];
-
   public studentProgress: StudentSubCompetencyProgress[] = [];
-  public validationRequests: ValidationRequest[] = [];
 
   constructor(data: SubCompetencyInit) {
     super(data);
@@ -66,8 +62,17 @@ export class SubCompetency extends BaseModel {
       resource instanceof CompetencyResource ? resource.clone() : new CompetencyResource(resource),
     );
 
-    this.studentProgress = Array.isArray(data.studentProgress) ? data.studentProgress : [];
-    this.validationRequests = Array.isArray(data.validationRequests) ? data.validationRequests : [];
+    // Parse studentProgress array if provided, using fromAmplify if needed
+    if (Array.isArray(data.studentProgress)) {
+      this.studentProgress = data.studentProgress.map((sp) =>
+        sp instanceof StudentSubCompetencyProgress
+          ? sp
+          : StudentSubCompetencyProgress.fromAmplify(sp),
+      );
+    } else {
+      this.studentProgress = [];
+    }
+
     this.validate();
   }
 
@@ -113,6 +118,22 @@ export class SubCompetency extends BaseModel {
           ? raw.competency
           : Competency.fromAmplify(raw.competency as unknown as AmplifyCompetency);
     }
+    // Parse studentProgress if present
+    let studentProgress: StudentSubCompetencyProgress[] = [];
+    if (raw.studentProgress) {
+      const arr = Array.isArray(raw.studentProgress)
+        ? raw.studentProgress
+        : Array.isArray((raw.studentProgress as { items?: unknown }).items)
+          ? ((raw.studentProgress as { items?: unknown }).items as object[])
+          : [];
+      studentProgress = arr
+        .map((entry) =>
+          entry && typeof entry === 'object' && 'id' in entry
+            ? StudentSubCompetencyProgress.fromAmplify(entry)
+            : null,
+        )
+        .filter((item): item is StudentSubCompetencyProgress => item !== null);
+    }
     return new SubCompetency({
       id: raw.id,
       competencyId: raw.competencyId,
@@ -122,6 +143,7 @@ export class SubCompetency extends BaseModel {
       objectives: raw.objectives ?? null,
       level: typeof raw.level === 'number' ? raw.level : 0,
       resources,
+      studentProgress,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });
@@ -146,7 +168,6 @@ export class SubCompetency extends BaseModel {
 
       resources: this.resources.map((resource) => resource.toJSON()),
       studentProgress: this.studentProgress.map((sp) => sp.toJSON()),
-      validationRequests: this.validationRequests.map((vr) => vr.toJSON()),
     };
   }
 
@@ -163,7 +184,6 @@ export class SubCompetency extends BaseModel {
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
       resources: this.resources.map((resource) => resource.clone()),
       studentProgress: this.studentProgress.map((sp) => sp.clone()),
-      validationRequests: this.validationRequests.map((vr) => vr.clone()),
     });
   }
   /**

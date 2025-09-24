@@ -1,6 +1,5 @@
 import type { Schema } from '../../amplify/data/resource';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
-import { ValidationRequest } from './ValidationRequest';
 import { BaseModel } from './base/BaseModel';
 
 // Constants
@@ -66,8 +65,6 @@ export interface UserRelationInit {
   students?: UserRelationInit[];
   children?: UserRelationInit[];
   studentProgress?: StudentSubCompetencyProgress[];
-  validationsRequested?: ValidationRequest[];
-  validationRequests?: ValidationRequest[];
 }
 
 type UserInit = UserRelationInit;
@@ -90,8 +87,6 @@ export class User extends BaseModel {
   public readonly students: User[];
   public readonly children: User[];
   public readonly studentProgress: StudentSubCompetencyProgress[];
-  public readonly validationsRequested: ValidationRequest[];
-  public readonly validationRequests: ValidationRequest[];
 
   constructor(data: UserInit) {
     super(data);
@@ -107,10 +102,7 @@ export class User extends BaseModel {
     this.students = User.normaliseRelation(data.students);
     this.children = User.normaliseRelation(data.children);
     this.studentProgress = Array.isArray(data.studentProgress) ? data.studentProgress : [];
-    this.validationsRequested = Array.isArray(data.validationsRequested)
-      ? data.validationsRequested
-      : [];
-    this.validationRequests = Array.isArray(data.validationRequests) ? data.validationRequests : [];
+
     this.validate();
   }
 
@@ -131,8 +123,6 @@ export class User extends BaseModel {
       students: User.extractUsersFromEntries(raw.students, 'student'),
       children: User.extractUsersFromEntries(raw.children, 'student'),
       studentProgress: User.normaliseStudentProgress(raw.studentProgress),
-      validationsRequested: User.normaliseValidationRequests(raw.validationsRequested),
-      validationRequests: User.normaliseValidationRequests(raw.validationRequests),
     });
   }
   private static normaliseStudentProgress(
@@ -151,24 +141,6 @@ export class User extends BaseModel {
           : null,
       )
       .filter((item): item is StudentSubCompetencyProgress => item !== null);
-  }
-
-  private static normaliseValidationRequests(
-    entries: AmplifyUser['validationRequests'],
-  ): ValidationRequest[] {
-    if (!entries) return [];
-    const arr = Array.isArray(entries)
-      ? entries
-      : Array.isArray((entries as { items?: unknown }).items)
-        ? ((entries as { items?: unknown }).items as unknown[])
-        : [];
-    return arr
-      .map((entry) =>
-        entry && typeof entry === 'object' && 'id' in entry
-          ? ValidationRequest.fromAmplify(entry)
-          : null,
-      )
-      .filter((item): item is ValidationRequest => item !== null);
   }
 
   static create(data: UserInit): User {
@@ -365,19 +337,7 @@ export class User extends BaseModel {
 
       const value = (entry as Record<string, unknown>)[key];
       if (value && typeof value === 'object' && 'id' in value) {
-        const candidate = value as Partial<AmplifyUser> & { id: string };
-        return {
-          id: candidate.id,
-          name: candidate.name ?? candidate.id,
-          role: User.normaliseRole(candidate.role),
-          email: candidate.email ?? '',
-          avatar: candidate.avatar ?? '',
-          picture: candidate.picture ?? null,
-          contactInfo: candidate.contactInfo ?? '',
-          lastActive: candidate.lastActive ?? null,
-          ...(candidate.createdAt !== undefined ? { createdAt: candidate.createdAt } : {}),
-          ...(candidate.updatedAt !== undefined ? { updatedAt: candidate.updatedAt } : {}),
-        };
+        return value as unknown as UserRelationInit;
       }
 
       return null;

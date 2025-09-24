@@ -105,8 +105,6 @@ export class GraphQLClient {
             'parents.parent.*',
             'children.student.*',
             'studentProgress.*',
-            'validationsRequested.*',
-            'validationRequests.*',
           ],
         },
       );
@@ -582,6 +580,8 @@ export class GraphQLClient {
             'updatedAt',
             'resources.*',
             'resources.person.*',
+            'studentProgress.*',
+            'studentProgress.student.*',
           ],
         },
       );
@@ -787,40 +787,6 @@ export class GraphQLClient {
       return result.data;
     } catch (error) {
       console.error('Error updating StudentSubCompetencyProgress:', error);
-      throw error;
-    }
-  }
-
-  async createValidationRequest(
-    data: Schema['ValidationRequest']['createType'],
-  ): Promise<Schema['ValidationRequest']['type'] | null> {
-    try {
-      const result = await this.client.models.ValidationRequest.create(data, {
-        authMode: 'userPool',
-      });
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data;
-    } catch (error) {
-      console.error('Error creating ValidationRequest:', error);
-      throw error;
-    }
-  }
-
-  async updateValidationRequest(
-    data: Schema['ValidationRequest']['updateType'],
-  ): Promise<Schema['ValidationRequest']['type'] | null> {
-    try {
-      const result = await this.client.models.ValidationRequest.update(data, {
-        authMode: 'userPool',
-      });
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data;
-    } catch (error) {
-      console.error('Error deciding ValidationRequest:', error);
       throw error;
     }
   }

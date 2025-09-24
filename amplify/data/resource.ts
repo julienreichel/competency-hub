@@ -20,8 +20,6 @@ const schema = a
         children: a.hasMany('ParentLink', 'parentId'),
         helperResources: a.hasMany('Resource', 'personUserId'),
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'studentId'),
-        validationsRequested: a.hasMany('ValidationRequest', 'studentId'),
-        validationRequests: a.hasMany('ValidationRequest', 'educatorId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -83,7 +81,6 @@ const schema = a
         level: a.integer().default(0),
         resources: a.hasMany('Resource', 'subCompetencyId'),
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'subCompetencyId'),
-        validationRequests: a.hasMany('ValidationRequest', 'subCompetencyId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -122,25 +119,6 @@ const schema = a
         allow.authenticated().to(['read']),
         allow.owner().to(['create', 'update', 'read']),
         allow.groups(['Educator', 'Admin']).to(['create', 'update', 'read']),
-      ]),
-
-    ValidationRequest: a
-      .model({
-        studentId: a.id().required(),
-        student: a.belongsTo('User', 'studentId'),
-        subCompetencyId: a.id().required(),
-        subCompetency: a.belongsTo('SubCompetency', 'subCompetencyId'),
-        status: a.enum(['Pending', 'Approved', 'Rejected']),
-        studentNote: a.string(),
-        educatorId: a.id(),
-        educator: a.belongsTo('User', 'educatorId'),
-        educatorNote: a.string(),
-        decidedAt: a.string(),
-      })
-      .authorization((allow) => [
-        allow.authenticated().to(['read']),
-        allow.owner().to(['create', 'update', 'read']),
-        allow.groups(['Educator', 'Admin']).to(['create', 'update', 'read']), // educator/admin can update status
       ]),
 
     addUserToGroup: a

@@ -4,6 +4,8 @@ export type AmplifyStudentSubCompetencyProgress = NonNullable<
   Schema['StudentSubCompetencyProgress']['type']
 >;
 
+import { User, type UserRelationInit } from './User';
+
 export interface StudentSubCompetencyProgressInit {
   id: string;
   studentId: string;
@@ -13,6 +15,7 @@ export interface StudentSubCompetencyProgressInit {
   lockOverride?: 'Locked' | 'Unlocked' | null;
   recommended?: boolean | null;
   updatedAt: string | null;
+  student?: UserRelationInit | null;
 }
 export type StudentSubCompetencyProgressUpdate = Partial<StudentSubCompetencyProgressInit>;
 
@@ -25,6 +28,7 @@ export class StudentSubCompetencyProgress {
   public lockOverride: 'Locked' | 'Unlocked' | null;
   public recommended: boolean | null;
   public updatedAt: string | null;
+  public readonly student: User | null;
 
   constructor(data: StudentSubCompetencyProgressInit) {
     this.id = data.id;
@@ -35,10 +39,16 @@ export class StudentSubCompetencyProgress {
     this.lockOverride = data.lockOverride ?? null;
     this.recommended = data.recommended ?? null;
     this.updatedAt = data.updatedAt;
+    this.student = data.student ? User.create(data.student) : null;
+
     this.validate();
   }
 
   static fromAmplify(raw: AmplifyStudentSubCompetencyProgress): StudentSubCompetencyProgress {
+    let student: UserRelationInit | null = null;
+    if (raw.student && typeof raw.student === 'object' && 'id' in raw.student) {
+      student = raw.student as unknown as UserRelationInit;
+    }
     return new StudentSubCompetencyProgress({
       id: raw.id,
       studentId: raw.studentId,
@@ -48,6 +58,7 @@ export class StudentSubCompetencyProgress {
       lockOverride: raw.lockOverride ?? null,
       recommended: raw.recommended ?? null,
       updatedAt: raw.updatedAt ?? null,
+      student,
     });
   }
 
@@ -58,7 +69,7 @@ export class StudentSubCompetencyProgress {
     if (typeof this.percent !== 'number') throw new Error('percent is required');
   }
 
-  toJSON(): StudentSubCompetencyProgressInit {
+  toJSON(): Record<string, unknown> {
     return {
       id: this.id,
       studentId: this.studentId,
@@ -68,10 +79,13 @@ export class StudentSubCompetencyProgress {
       lockOverride: this.lockOverride,
       recommended: this.recommended,
       updatedAt: this.updatedAt,
+      student: this.student?.toJSON() ? this.student.toJSON() : null,
     };
   }
 
   clone(): StudentSubCompetencyProgress {
-    return new StudentSubCompetencyProgress(this.toJSON());
+    return new StudentSubCompetencyProgress(
+      this.toJSON() as unknown as StudentSubCompetencyProgressInit,
+    );
   }
 }
