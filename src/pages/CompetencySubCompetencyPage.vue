@@ -15,6 +15,7 @@
         v-if="!editing"
         :competency="competency"
         :show-edit="hasRole('Admin') || hasRole('Educator')"
+        :show-progress="hasRole('Student')"
         @edit="editing = true"
       />
       <competency-details-form
@@ -103,7 +104,7 @@ async function load(): Promise<void> {
     const { getCurrentUser } = useUsers();
     const user = await getCurrentUser();
     if (user && c) {
-      c.attachUserProgressAndValidations(user);
+      c.attachUserProgress(user);
     }
 
     // Ensure stable level

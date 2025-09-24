@@ -64,8 +64,8 @@ export class Competency extends BaseModel {
    * Attach user progress and validation requests to all sub-competencies from a User instance
    * @param user - User instance
    */
-  attachUserProgressAndValidations(user: User): void {
-    this.subCompetencies.forEach((sub) => sub.attachUserProgressAndValidations(user));
+  attachUserProgress(user: User): void {
+    this.subCompetencies.forEach((sub) => sub.attachUserProgress(user));
   }
 
   static fromAmplify(raw: AmplifyCompetency): Competency {
@@ -143,6 +143,43 @@ export class Competency extends BaseModel {
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
       subCompetencies: this.subCompetencies.map((sub) => sub.clone()),
     });
+  }
+
+  /**
+   * Get the status of the competency based on its sub-competencies.
+   * - "Locked" if all subs are locked
+   * - "Validated" if all subs are validated
+   * - "InProgress" if any sub is InProgress, PendingValidation, or Validated
+   * - "NotStarted" otherwise
+   */
+  getStatus(): 'Locked' | 'Validated' | 'InProgress' | 'NotStarted' {
+    if (!this.subCompetencies.length) return 'Locked';
+    const allLocked = this.subCompetencies.every(
+      (sub) => sub.getStatus && sub.getStatus() === 'Locked',
+    );
+    if (allLocked) return 'Locked';
+    const allValidated = this.subCompetencies.every(
+      (sub) => sub.getStatus && sub.getStatus() === 'Validated',
+    );
+    if (allValidated) return 'Validated';
+    const anyInProgress = this.subCompetencies.some((sub) => {
+      const status = sub.getStatus ? sub.getStatus() : undefined;
+      return status === 'InProgress' || status === 'PendingValidation' || status === 'Validated';
+    });
+    if (anyInProgress) return 'InProgress';
+    return 'NotStarted';
+  }
+
+  /**
+   * Get the progress of the competency as a number between 0 and 1.
+   * Progress = nb sub validated / nb sub
+   */
+  getProgress(): number {
+    if (!this.subCompetencies.length) return 0;
+    const validatedCount = this.subCompetencies.filter(
+      (sub) => sub.getStatus && sub.getStatus() === 'Validated',
+    ).length;
+    return validatedCount / this.subCompetencies.length;
   }
 }
 export const mapResourcesFromAmplify = (resources: unknown): CompetencyResource[] =>

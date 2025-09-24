@@ -74,7 +74,7 @@ export class SubCompetency extends BaseModel {
   /**
    * Attach student progress and validation requests from a User object, filtering by this sub-competency's id.
    */
-  attachUserProgressAndValidations(user: User): void {
+  attachUserProgress(user: User): void {
     if (user.studentProgress) {
       this.studentProgress = user.studentProgress.filter(
         (progress) => progress.subCompetencyId === this.id,
@@ -98,11 +98,6 @@ export class SubCompetency extends BaseModel {
           updatedAt: null,
         }),
       ];
-    }
-    if (user.validationsRequested) {
-      this.validationRequests = user.validationsRequested.filter(
-        (req) => req.subCompetencyId === this.id,
-      );
     }
   }
 
@@ -170,5 +165,20 @@ export class SubCompetency extends BaseModel {
       studentProgress: this.studentProgress.map((sp) => sp.clone()),
       validationRequests: this.validationRequests.map((vr) => vr.clone()),
     });
+  }
+  /**
+   * Get the status of the sub-competency for the current user context.
+   * - "Locked" if lockOverride is 'Locked' or studentProgress[0] is locked
+   * - Otherwise, returns the status from studentProgress[0] (default 'NotStarted')
+   */
+  getStatus(): 'Locked' | 'Validated' | 'InProgress' | 'PendingValidation' | 'NotStarted' {
+    // If no progress, treat as Locked
+    if (!this.studentProgress || this.studentProgress.length === 0) return 'Locked';
+    const progress = this.studentProgress[0];
+    if (!progress) return 'Locked';
+    if (progress.lockOverride === 'Locked') return 'Locked';
+    // If status is missing, treat as NotStarted
+    if (!progress.status) return 'NotStarted';
+    return progress.status;
   }
 }

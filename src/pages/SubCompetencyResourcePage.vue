@@ -93,7 +93,7 @@ onMounted(async () => {
   const { getCurrentUser } = useUsers();
   const user = await getCurrentUser();
   if (user && sub.value) {
-    sub.value.attachUserProgressAndValidations(user);
+    sub.value.attachUserProgress(user);
   }
 
   if (!sub.value?.competency?.name) return;

@@ -1,9 +1,3 @@
-<script lang="ts">
-import { defineComponent } from 'vue';
-export default defineComponent({
-  name: 'StudentProgressBadge',
-});
-</script>
 <template>
   <div v-if="studentProgress">
     <div class="row items-center q-gutter-sm">
@@ -28,7 +22,10 @@ export default defineComponent({
         </q-chip>
       </template>
     </div>
-    <div v-if="studentProgress.status !== 'NotStarted'" class="q-mt-xs">
+    <div
+      v-if="studentProgress.status !== 'NotStarted' && studentProgress.status !== 'Locked'"
+      class="q-mt-xs"
+    >
       <q-linear-progress
         :value="studentProgress.percent / 100"
         :color="getStatusColor(studentProgress.status)"
@@ -41,11 +38,15 @@ export default defineComponent({
 </template>
 
 <script setup lang="ts">
-import type { StudentSubCompetencyProgress } from 'src/models/StudentSubCompetencyProgress';
 import { useI18n } from 'vue-i18n';
 
 defineProps<{
-  studentProgress: StudentSubCompetencyProgress | null;
+  studentProgress: {
+    status: string;
+    percent: number;
+    recommended?: boolean | null;
+    lockOverride?: string | null;
+  } | null;
 }>();
 
 const { t } = useI18n();
@@ -62,6 +63,7 @@ function getStatusColor(status: string): string {
 
 function getStatusIcon(status: string): string {
   const icons: Record<string, string> = {
+    Locked: 'lock',
     NotStarted: 'lock',
     InProgress: 'schedule',
     PendingValidation: 'schedule',
@@ -69,4 +71,11 @@ function getStatusIcon(status: string): string {
   };
   return icons[status] || 'help';
 }
+</script>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+export default defineComponent({
+  name: 'StudentProgressBadge',
+});
 </script>

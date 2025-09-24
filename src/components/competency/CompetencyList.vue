@@ -9,6 +9,7 @@
         :key="competency.id"
         :competency="competency"
         show-open
+        :show-progress="showProgress || false"
         @open="$emit('open', $event)"
       />
     </div>
@@ -21,6 +22,7 @@ import CompetencyCard from './CompetencyCard.vue';
 
 defineProps<{
   competencies: Competency[];
+  showProgress?: boolean;
 }>();
 
 defineEmits<{

@@ -40,7 +40,11 @@
       </div>
 
       <div v-else class="q-pa-md">
-        <competency-list :competencies="filteredCompetencies" @open="openEditor" />
+        <competency-list
+          :competencies="filteredCompetencies"
+          @open="openEditor"
+          :show-progress="hasRole('Student')"
+        />
       </div>
     </q-card>
 
@@ -58,6 +62,7 @@
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useUsers } from 'src/composables/useUsers';
 import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
@@ -115,6 +120,13 @@ async function loadData(): Promise<void> {
   try {
     domain.value = await domainRepository.findById(domainId, true);
     competencies.value = domain.value?.competencies ?? [];
+
+    // Attach user progress to sub-competencies
+    const { getCurrentUser } = useUsers();
+    const user = await getCurrentUser();
+    if (user) {
+      competencies.value.forEach((c) => c.attachUserProgress(user));
+    }
   } catch (error) {
     console.error(error);
     $q.notify({ type: 'negative', message: t('competencies.messages.loadError') });
