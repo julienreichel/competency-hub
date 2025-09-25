@@ -25,6 +25,24 @@
       <sub-competency-form v-else :model-value="sub" @save="onSaveSub" @cancel="editing = false" />
     </template>
 
+    <div
+      v-if="
+        isStudent &&
+        studentProgress &&
+        studentProgress.status === 'InProgress' &&
+        studentProgress.lockOverride !== 'Locked'
+      "
+      class="q-mt-md"
+    >
+      <q-btn
+        color="primary"
+        :loading="studentProgressUpdating"
+        :disable="studentProgressUpdating"
+        :label="t('subCompetencies.pendingValidationAction')"
+        @click="submitPendingValidation"
+      />
+    </div>
+
     <template v-if="hasRole('Educator')">
       <q-separator class="q-my-lg" />
       <sub-competency-student-table
@@ -33,6 +51,7 @@
         @unlock="handleUnlock"
         @recommend="handleRecommend"
         @lock="handleLock"
+        @validate="handleValidate"
       />
     </template>
 
@@ -110,15 +129,26 @@ const competencyName = ref<string>(t('competencies.title'));
 const currentUser = ref<User | null>(null);
 const students = ref<User[]>([]);
 const studentActionsLoading = ref(false);
+const studentProgressUpdating = ref(false);
 const resources = ref<CompetencyResource[]>([]);
 
 const studentsLoading = computed(() => loading.value || studentActionsLoading.value);
+const isStudent = computed(() => currentUser.value?.role === UserRole.STUDENT);
+const studentProgress = computed<StudentSubCompetencyProgress | null>(() => {
+  if (!isStudent.value || !currentUser.value?.studentProgress) return null;
+  return (
+    currentUser.value?.studentProgress.find(
+      (progress) => progress.subCompetencyId === sub.value?.id,
+    ) ?? null
+  );
+});
 
 onMounted(async () => {
   await load();
   await loadCurrentUser();
   syncSubToCurrentUser();
-  attachStudentsToSub();
+  attachProgressToStudents();
+  await autoAdvanceStudentProgress();
 });
 
 async function load(): Promise<void> {
@@ -155,14 +185,10 @@ function syncSubToCurrentUser(): void {
   }
 }
 
-function attachStudentsToSub(): void {
-  if (!sub.value || !currentUser.value) {
+function attachProgressToStudents(): void {
+  if (!sub.value || !currentUser.value || currentUser.value.role !== UserRole.EDUCATOR) {
     return;
   }
-  if (currentUser.value.role !== UserRole.EDUCATOR) {
-    return;
-  }
-
   const list = Array.isArray(currentUser.value.students) ? currentUser.value.students : [];
   list.forEach((student) => student.attachProgress(sub.value as SubCompetency));
   students.value = [...list];
@@ -171,14 +197,19 @@ function attachStudentsToSub(): void {
 function updateLocalProgressCache(student: User, progress: StudentSubCompetencyProgress): void {
   if (!sub.value) return;
 
-  const progressIndex = sub.value.studentProgress.findIndex((entry) => entry.id === progress.id);
+  let progressIndex = sub.value.studentProgress.findIndex((entry) => entry.id === progress.id);
   if (progressIndex === -1) {
     sub.value.studentProgress.push(progress);
   } else {
     sub.value.studentProgress.splice(progressIndex, 1, progress);
   }
 
-  student.studentProgress = [progress];
+  progressIndex = student.studentProgress.findIndex((entry) => entry.id === progress.id);
+  if (progressIndex === -1) {
+    student.studentProgress.push(progress);
+  } else {
+    student.studentProgress.splice(progressIndex, 1, progress);
+  }
 
   if (currentUser.value?.role === UserRole.EDUCATOR) {
     const educatorStudentIndex = currentUser.value.students.findIndex(
@@ -187,6 +218,56 @@ function updateLocalProgressCache(student: User, progress: StudentSubCompetencyP
     if (educatorStudentIndex !== -1) {
       currentUser.value.students.splice(educatorStudentIndex, 1, student);
     }
+    const localIndex = students.value.findIndex((entry) => entry.id === student.id);
+    if (localIndex !== -1) {
+      students.value.splice(localIndex, 1, student);
+    }
+    students.value = [...students.value];
+  }
+}
+
+async function autoAdvanceStudentProgress(): Promise<void> {
+  if (!isStudent.value || studentProgressUpdating.value) return;
+  const user = currentUser.value;
+  if (!user) return;
+  const progress = studentProgress.value;
+  if (!progress) return;
+  if (progress.status !== 'NotStarted') {
+    return;
+  }
+
+  studentProgressUpdating.value = true;
+  try {
+    const updated = await StudentProgressRepository.updateProgress(progress.id, {
+      status: 'InProgress',
+    });
+    updateLocalProgressCache(user, updated);
+  } catch (error) {
+    console.error('Failed to auto-start student progress', error);
+  } finally {
+    studentProgressUpdating.value = false;
+  }
+}
+
+async function submitPendingValidation(): Promise<void> {
+  if (!isStudent.value || studentProgressUpdating.value || !currentUser.value) return;
+  const progress = studentProgress.value;
+  if (!progress || progress.lockOverride === 'Locked' || progress.status !== 'InProgress') {
+    return;
+  }
+
+  studentProgressUpdating.value = true;
+  try {
+    const updated = await StudentProgressRepository.updateProgress(progress.id, {
+      status: 'PendingValidation',
+    });
+    updateLocalProgressCache(currentUser.value, updated);
+    $q.notify({ type: 'positive', message: t('subCompetencies.pendingValidationSuccess') });
+  } catch (error) {
+    console.error('Failed to request validation', error);
+    $q.notify({ type: 'negative', message: t('subCompetencies.progressUpdateError') });
+  } finally {
+    studentProgressUpdating.value = false;
   }
 }
 
@@ -209,13 +290,11 @@ async function applyProgressUpdate(
         continue;
       }
       let updated;
-      console.log('progress', progress);
       if (progress.local) {
         updated = await StudentProgressRepository.createProgress({ ...progress, ...updates });
       } else {
         updated = await StudentProgressRepository.updateProgress(progress.id, updates);
       }
-      console.log('updated', updated);
 
       updateLocalProgressCache(row.student, updated);
       updatedCount += 1;
@@ -277,6 +356,23 @@ async function handleLock(rows: SubCompetencyStudentRow[]): Promise<void> {
       return updates;
     },
     t('subCompetencies.lockSuccess'),
+  );
+}
+
+async function handleValidate(rows: SubCompetencyStudentRow[]): Promise<void> {
+  await applyProgressUpdate(
+    rows,
+    (progress) => {
+      const updates: StudentSubCompetencyProgressUpdate = {};
+      if (progress.status !== 'Validated') {
+        updates.status = 'Validated';
+      }
+      if (progress.lockOverride === 'Locked') {
+        updates.lockOverride = 'Unlocked';
+      }
+      return updates;
+    },
+    t('subCompetencies.validateSuccess'),
   );
 }
 

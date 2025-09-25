@@ -219,9 +219,13 @@ export default {
     unlockAction: 'Unlock',
     recommendAction: 'Recommend',
     lockAction: 'Lock',
+    validateAction: 'Validate',
+    pendingValidationAction: 'I think I acquired this',
     unlockSuccess: 'Student access unlocked.',
     recommendSuccess: 'Sub-competency recommended to the selected students.',
     lockSuccess: 'Student access locked.',
+    validateSuccess: 'Student marked as validated.',
+    pendingValidationSuccess: 'Request sent for validation.',
     progressUpdateError: 'Could not update student progress. Please try again.',
   },
 

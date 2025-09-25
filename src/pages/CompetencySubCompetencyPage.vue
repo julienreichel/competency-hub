@@ -94,15 +94,15 @@ const dialog = ref<boolean>(false);
 async function load(): Promise<void> {
   loading.value = true;
   try {
-    // Expect repo to return competency + subCompetencies array (or fetch separately)
+    const { getCurrentUser } = useUsers();
+    const user = await getCurrentUser();
+
     const c = await competencyRepository.findById(competencyId, true);
     competency.value = c;
     domainId = c?.domainId;
     if (c?.domain?.name) domainName.value = c?.domain?.name;
 
     // Attach user progress to sub-competencies
-    const { getCurrentUser } = useUsers();
-    const user = await getCurrentUser();
     if (user && c) {
       c.attachUserProgress(user);
     }

@@ -118,6 +118,7 @@ const schema = a
       .authorization((allow) => [
         allow.authenticated().to(['read']),
         allow.owner().to(['create', 'update', 'read']),
+        allow.groups(['Student']).to(['update', 'read']),
         allow.groups(['Educator', 'Admin']).to(['create', 'update', 'read']),
       ]),
 

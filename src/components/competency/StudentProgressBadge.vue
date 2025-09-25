@@ -27,10 +27,7 @@
         </q-chip>
       </template>
     </div>
-    <div
-      v-if="studentProgress.status !== 'NotStarted' && studentProgress.status !== 'Locked'"
-      class="q-mt-xs"
-    >
+    <div v-if="studentProgress.status === 'InProgress'" class="q-mt-xs">
       <q-linear-progress
         :value="studentProgress.percent / 100"
         :color="getStatusColor(studentProgress.status)"

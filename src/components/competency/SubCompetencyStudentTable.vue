@@ -33,7 +33,14 @@
             @click="trigger('recommend', selected)"
           />
           <q-btn
-            color="secondary"
+            color="positive"
+            icon="check"
+            :label="t('subCompetencies.validateAction')"
+            :disable="!canBulkValidate"
+            @click="trigger('validate', selected)"
+          />
+          <q-btn
+            color="negative"
             icon="lock"
             :label="t('subCompetencies.lockAction')"
             :disable="!canBulkLock"
@@ -85,7 +92,15 @@
           <q-btn
             flat
             dense
-            color="secondary"
+            color="positive"
+            icon="check"
+            :disable="props.row.progress?.status === 'Validated'"
+            @click="trigger('validate', [props.row])"
+          />
+          <q-btn
+            flat
+            dense
+            color="negative"
             icon="lock"
             :disable="props.row.locked"
             @click="trigger('lock', [props.row])"
@@ -122,6 +137,7 @@ const emit = defineEmits<{
   unlock: [rows: SubCompetencyStudentRow[]];
   recommend: [rows: SubCompetencyStudentRow[]];
   lock: [rows: SubCompetencyStudentRow[]];
+  validate: [rows: SubCompetencyStudentRow[]];
 }>();
 
 const { t } = useI18n();
@@ -178,18 +194,20 @@ watch(
 const canBulkUnlock = computed(() => selected.value.some((row) => row.locked));
 const canBulkRecommend = computed(() => selected.value.some((row) => !row.recommended));
 const canBulkLock = computed(() => selected.value.some((row) => !row.locked));
+const canBulkValidate = computed(() =>
+  selected.value.some((row) => row.progress?.status !== 'Validated'),
+);
 
 function trigger(
-  action: 'unlock' | 'recommend' | 'lock',
+  action: 'unlock' | 'recommend' | 'lock' | 'validate',
   payload: SubCompetencyStudentRow[],
 ): void {
   if (!payload.length) return;
   if (action === 'unlock') emit('unlock', payload);
   if (action === 'recommend') emit('recommend', payload);
   if (action === 'lock') emit('lock', payload);
+  if (action === 'validate') emit('validate', payload);
 }
-
-const loading = computed(() => props.loading);
 </script>
 
 <script lang="ts">

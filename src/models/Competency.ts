@@ -153,19 +153,19 @@ export class Competency extends BaseModel {
    * - "NotStarted" otherwise
    */
   getStatus(): 'Locked' | 'Validated' | 'InProgress' | 'NotStarted' {
+    console.log(this.subCompetencies);
     if (!this.subCompetencies.length) return 'Locked';
-    const allLocked = this.subCompetencies.every(
-      (sub) => sub.getStatus && sub.getStatus() === 'Locked',
-    );
+    const allLocked = this.subCompetencies.every((sub) => sub.getStatus() === 'Locked');
+    console.log(allLocked);
     if (allLocked) return 'Locked';
-    const allValidated = this.subCompetencies.every(
-      (sub) => sub.getStatus && sub.getStatus() === 'Validated',
-    );
+    const allValidated = this.subCompetencies.every((sub) => sub.getStatus() === 'Validated');
+    console.log(allValidated);
     if (allValidated) return 'Validated';
     const anyInProgress = this.subCompetencies.some((sub) => {
-      const status = sub.getStatus ? sub.getStatus() : undefined;
+      const status = sub.getStatus();
       return status === 'InProgress' || status === 'PendingValidation' || status === 'Validated';
     });
+    console.log(anyInProgress);
     if (anyInProgress) return 'InProgress';
     return 'NotStarted';
   }
@@ -175,11 +175,12 @@ export class Competency extends BaseModel {
    * Progress = nb sub validated / nb sub
    */
   getProgress(): number {
+    const PERCENT = 100;
     if (!this.subCompetencies.length) return 0;
     const validatedCount = this.subCompetencies.filter(
       (sub) => sub.getStatus && sub.getStatus() === 'Validated',
     ).length;
-    return validatedCount / this.subCompetencies.length;
+    return (validatedCount / this.subCompetencies.length) * PERCENT;
   }
 }
 export const mapResourcesFromAmplify = (resources: unknown): CompetencyResource[] =>
