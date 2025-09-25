@@ -21,6 +21,7 @@ export class StudentProgressRepository {
       percent: percent ?? 0,
       lockOverride: lockOverride ?? 'Unlocked',
       recommended: recommended ?? false,
+      updatedAt: new Date().toISOString(),
     });
     if (!raw) {
       throw new Error('Failed to create progress');
@@ -39,6 +40,8 @@ export class StudentProgressRepository {
     if (percent !== undefined) data.percent = percent;
     if (lockOverride !== undefined) data.lockOverride = lockOverride;
     if (recommended !== undefined) data.recommended = recommended;
+
+    data.updatedAt = new Date().toISOString();
 
     const raw = await graphQLClient.updateStudentProgress(data);
     if (!raw) {

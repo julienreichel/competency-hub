@@ -1,4 +1,52 @@
 export default {
+  dashboard: {
+    welcome: 'Welcome back, {name}!',
+    defaultName: 'there',
+    subtitle: {
+      student: 'Here is your learning snapshot.',
+      parent: "Monitor your children's progress at a glance.",
+      educator: 'Track your classroom progress.',
+      admin: 'Platform-wide overview.',
+    },
+    recentActivity: 'Recent Activity',
+    noRecentActivity: 'No recent activity yet.',
+    quickActions: 'Quick Actions',
+    updatedOn: 'Updated on {date}',
+    updatedUnknown: 'Last update unknown',
+    activityPercent: '{percent}% complete',
+    activityDefaultSubtitle: 'Keep up the great work!',
+    labels: {
+      unknownSub: 'Sub-competency',
+      unknownActor: 'Learner',
+    },
+    cards: {
+      totalCompetencies: 'Total competencies',
+      validated: 'Validated',
+      inProgress: 'In progress',
+      pendingValidation: 'Pending validation',
+      locked: 'Locked',
+      recommended: '{count} recommended',
+      totalChildren: 'Children',
+      totalStudents: 'Students',
+      activeCompetencies: 'Active competencies',
+      pendingReviews: 'Pending reviews',
+      totalUsers: 'Users',
+      adminStudents: 'Students',
+      adminEducators: 'Educators',
+      adminParents: 'Parents',
+      adminAdmins: '{count} admins',
+    },
+    actions: {
+      myCompetencies: 'My competencies',
+      viewAssessments: 'View assessments',
+      viewReports: 'View reports',
+      viewChildren: 'View children',
+      manageStudents: 'Manage students',
+      manageUsers: 'Manage users',
+      manageDomains: 'Manage domains',
+    },
+  },
+
   // Common terms
   common: {
     view: 'View',

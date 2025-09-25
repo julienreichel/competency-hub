@@ -83,10 +83,10 @@ export class User extends BaseModel {
   public contactInfo: string;
   public lastActive: string | undefined;
 
-  public readonly educators: User[];
-  public readonly parents: User[];
-  public readonly students: User[];
-  public readonly children: User[];
+  public educators: User[];
+  public parents: User[];
+  public students: User[];
+  public children: User[];
   public studentProgress: StudentSubCompetencyProgress[];
 
   constructor(data: UserInit) {
