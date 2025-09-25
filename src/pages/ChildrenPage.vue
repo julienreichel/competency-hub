@@ -13,97 +13,15 @@
     <!-- Children Cards -->
     <div class="row q-gutter-lg">
       <div v-for="child in children" :key="child.id" class="col-12 col-md-6 col-lg-4">
-        <q-card class="child-card">
-          <q-card-section>
-            <div class="row items-center">
-              <q-avatar size="60px" color="primary" text-color="white">
-                <q-img v-if="child.avatar" :src="child.avatar" :alt="child.name" />
-                <span v-else>{{ getInitials(child.name) }}</span>
-              </q-avatar>
-              <div class="q-ml-md">
-                <div class="text-h6">{{ child.name }}</div>
-                <div class="text-subtitle2 text-grey-6">
-                  Grade {{ child.grade }} • Age {{ child.age }}
-                </div>
-                <div class="text-caption text-grey-5">
-                  {{ child.school }}
-                </div>
-              </div>
-            </div>
-          </q-card-section>
-
-          <!-- Progress Overview -->
-          <q-card-section>
-            <div class="text-subtitle1 q-mb-sm">Recent Progress</div>
-            <div class="row q-gutter-sm">
-              <div class="col">
-                <div class="text-caption">Assessments</div>
-                <div class="text-h6 text-green">{{ child.stats.completedAssessments }}</div>
-              </div>
-              <div class="col">
-                <div class="text-caption">Avg Score</div>
-                <div class="text-h6 text-blue">{{ child.stats.averageScore }}%</div>
-              </div>
-              <div class="col">
-                <div class="text-caption">Study Time</div>
-                <div class="text-h6 text-purple">{{ child.stats.studyHours }}h</div>
-              </div>
-            </div>
-          </q-card-section>
-
-          <!-- Subject Progress -->
-          <q-card-section>
-            <div class="text-subtitle1 q-mb-sm">Subject Progress</div>
-            <div v-for="subject in child.subjects" :key="subject.name" class="q-mb-xs">
-              <div class="row items-center justify-between">
-                <span class="text-caption">{{ subject.name }}</span>
-                <span class="text-caption">{{ subject.progress }}%</span>
-              </div>
-              <q-linear-progress
-                :value="subject.progress / 100"
-                :color="getProgressColor(subject.progress)"
-                size="8px"
-              />
-            </div>
-          </q-card-section>
-
-          <!-- Quick Actions -->
-          <q-card-actions>
-            <q-btn
-              flat
-              color="primary"
-              icon="analytics"
-              label="View Reports"
-              @click="viewChildReports(child)"
-            />
-            <q-btn
-              flat
-              color="primary"
-              icon="school"
-              label="Competencies"
-              @click="viewChildCompetencies(child)"
-            />
-            <q-btn flat icon="more_vert">
-              <q-menu>
-                <q-list>
-                  <q-item clickable @click="editChild(child)">
-                    <q-item-section>Edit Profile</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="viewDetailedProgress(child)">
-                    <q-item-section>Detailed Progress</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="contactTeachers(child)">
-                    <q-item-section>Contact Teachers</q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <q-item clickable @click="removeChild(child)">
-                    <q-item-section>Remove Child</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-          </q-card-actions>
-        </q-card>
+        <child-card
+          :child="child"
+          @view-reports="viewChildReports"
+          @view-competencies="viewChildCompetencies"
+          @edit="editChild"
+          @view-detailed="viewDetailedProgress"
+          @contact="contactTeachers"
+          @remove="removeChild"
+        />
       </div>
     </div>
 
@@ -175,25 +93,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import ChildCard from 'src/components/parent/ChildCard.vue';
+import { useUsers } from 'src/composables/useUsers';
+import type { User } from 'src/models/User';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-interface Child {
+interface SubjectProgress {
+  name: string;
+  progress: number;
+}
+
+interface ChildStats {
+  completedAssessments: number;
+  averageScore: number;
+  studyHours: number;
+}
+
+interface ChildCardData {
   id: string;
   name: string;
   age: number;
   grade: string;
   school: string;
-  avatar?: string;
-  stats: {
-    completedAssessments: number;
-    averageScore: number;
-    studyHours: number;
-  };
-  subjects: Array<{
-    name: string;
-    progress: number;
-  }>;
+  avatar?: string | null;
+  stats: ChildStats;
+  subjects: SubjectProgress[];
 }
+
+type Child = ChildCardData & { user?: User | null };
 
 interface NewChild {
   name: string;
@@ -202,6 +130,9 @@ interface NewChild {
   school: string;
   studentId: string;
 }
+
+const router = useRouter();
+const { getCurrentUser } = useUsers();
 
 const showAddChildDialog = ref(false);
 
@@ -230,11 +161,10 @@ const gradeOptions = [
   '12th Grade',
 ];
 
-// Mock data - replace with actual API call
-const children = ref<Child[]>([
+const mockChildrenTemplate: Child[] = [
   {
     id: '1',
-    name: 'Emma Johnson',
+    name: '...Loading',
     age: 12,
     grade: '7th Grade',
     school: 'Lincoln Middle School',
@@ -252,7 +182,7 @@ const children = ref<Child[]>([
   },
   {
     id: '2',
-    name: 'Alex Johnson',
+    name: '...Loading',
     age: 9,
     grade: '4th Grade',
     school: 'Riverside Elementary',
@@ -268,35 +198,56 @@ const children = ref<Child[]>([
       { name: 'Art', progress: 95 },
     ],
   },
-]);
+];
+
+function cloneChild(child: Child): Child {
+  return {
+    ...child,
+    stats: { ...child.stats },
+    subjects: child.subjects.map((subject) => ({ ...subject })),
+    user: child.user ?? null,
+  };
+}
+
+function cloneMockChildren(): Child[] {
+  return mockChildrenTemplate.map((child) => cloneChild(child));
+}
+
+const children = ref<Child[]>(cloneMockChildren());
+
+async function loadChildren(): Promise<void> {
+  const current = await getCurrentUser();
+  if (!current) {
+    children.value = cloneMockChildren();
+    return;
+  }
+
+  const childUsers = Array.isArray(current.children) ? current.children : [];
+  if (!childUsers.length) {
+    children.value = cloneMockChildren();
+    return;
+  }
+
+  children.value = childUsers.map((childUser, index) => {
+    const child = mockChildrenTemplate[index % mockChildrenTemplate.length];
+    const template = cloneChild(child as Child);
+    return {
+      ...template,
+      id: childUser.id,
+      name: childUser.name,
+      avatar: childUser.avatar || childUser.picture || template.avatar || null,
+      user: childUser,
+    };
+  });
+}
+
+onMounted(() => {
+  void loadChildren();
+});
 
 const isNewChildValid = computed(() => {
   return newChild.value.name && newChild.value.age && newChild.value.grade;
 });
-
-// Constants
-const MAX_INITIALS = 2;
-const PROGRESS_THRESHOLDS = {
-  EXCELLENT: 90,
-  GOOD: 80,
-  FAIR: 70,
-} as const;
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((word) => word.charAt(0))
-    .join('')
-    .toUpperCase()
-    .slice(0, MAX_INITIALS);
-}
-
-function getProgressColor(progress: number): string {
-  if (progress >= PROGRESS_THRESHOLDS.EXCELLENT) return 'green';
-  if (progress >= PROGRESS_THRESHOLDS.GOOD) return 'blue';
-  if (progress >= PROGRESS_THRESHOLDS.FAIR) return 'orange';
-  return 'red';
-}
 
 function viewChildReports(child: Child): void {
   console.log('Viewing reports for:', child.name);
@@ -304,8 +255,11 @@ function viewChildReports(child: Child): void {
 }
 
 function viewChildCompetencies(child: Child): void {
+  if (child.user) {
+    void router.push({ name: 'user-competencies', params: { userId: child.user.id } });
+    return;
+  }
   console.log('Viewing competencies for:', child.name);
-  // TODO: Navigate to child-specific competencies page
 }
 
 function editChild(child: Child): void {
@@ -346,13 +300,4 @@ function addChild(): void {
 }
 </script>
 
-<style scoped>
-.child-card {
-  height: 100%;
-  transition: transform 0.2s ease-in-out;
-}
-
-.child-card:hover {
-  transform: translateY(-2px);
-}
-</style>
+<style scoped></style>
