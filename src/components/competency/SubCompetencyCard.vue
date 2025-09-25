@@ -1,6 +1,6 @@
 <template>
   <q-card flat bordered>
-    <q-card-section class="row items-center justify-between q-gutter-sm">
+    <q-card-section class="row justify-between item-start q-gutter-sm full-height">
       <div class="column col">
         <div v-if="showContext && sub.competency">
           <div v-if="sub.competency.domain" class="text-h6">{{ sub.competency.domain.name }}</div>
@@ -20,7 +20,7 @@
           <div class="text-caption">{{ sub.objectives }}</div>
         </div>
       </div>
-      <div class="col-auto column q-gutter-xs">
+      <div class="col-auto column justify-between q-gutter-xs">
         <div v-if="studentProgress" class="col-auto">
           <student-progress-badge :student-progress="studentProgress" />
         </div>

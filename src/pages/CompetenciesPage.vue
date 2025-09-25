@@ -1,14 +1,22 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg">
-      <q-icon name="psychology" class="q-mr-sm" />
-      My Competencies
+    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
+      <q-icon name="psychology" />
+      <span>{{ t('competencies.title') }}</span>
     </div>
 
-    <!-- Filter and Search -->
+    <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
+      {{ errorMessage }}
+    </q-banner>
+
     <div class="row q-gutter-md q-mb-lg">
       <div class="col-12 col-md-4">
-        <q-input v-model="searchQuery" outlined placeholder="Search competencies..." clearable>
+        <q-input
+          v-model="searchQuery"
+          outlined
+          :placeholder="t('competencies.searchPlaceholder')"
+          clearable
+        >
           <template #prepend>
             <q-icon name="search" />
           </template>
@@ -19,7 +27,9 @@
           v-model="statusFilter"
           :options="statusOptions"
           outlined
-          label="Filter by Status"
+          :label="t('common.status')"
+          emit-value
+          map-options
           clearable
         />
       </div>
@@ -28,239 +38,264 @@
           v-model="domainFilter"
           :options="domainOptions"
           outlined
-          label="Filter by Domain"
+          :label="t('domains.title')"
+          emit-value
+          map-options
           clearable
         />
       </div>
     </div>
 
-    <!-- Progress Overview -->
-    <div class="row q-gutter-md q-mb-lg">
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-blue-1">
+    <div class="row q-col-gutter-md q-mb-lg">
+      <div v-for="card in summaryCards" :key="card.key" class="col-12 col-sm-6 col-lg-3">
+        <q-card flat bordered :class="card.color">
           <q-card-section>
-            <div class="text-h6 text-blue-8">Total</div>
-            <div class="text-h4 text-blue-10">24</div>
-            <div class="text-caption text-blue-7">Competencies</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-green-1">
-          <q-card-section>
-            <div class="text-h6 text-green-8">Acquired</div>
-            <div class="text-h4 text-green-10">8</div>
-            <div class="text-caption text-green-7">Completed</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-orange-1">
-          <q-card-section>
-            <div class="text-h6 text-orange-8">In Progress</div>
-            <div class="text-h4 text-orange-10">6</div>
-            <div class="text-caption text-orange-7">Active</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-grey-3">
-          <q-card-section>
-            <div class="text-h6 text-grey-8">Locked</div>
-            <div class="text-h4 text-grey-10">10</div>
-            <div class="text-caption text-grey-7">Not Started</div>
+            <div class="text-caption text-grey-7">{{ card.caption }}</div>
+            <div class="text-h5">{{ card.value }}</div>
           </q-card-section>
         </q-card>
       </div>
     </div>
 
-    <!-- Competencies Grid -->
-    <div class="row q-gutter-md">
-      <div
-        v-for="competency in filteredCompetencies"
-        :key="competency.id"
-        class="col-12 col-md-6 col-lg-4"
-      >
-        <q-card class="cursor-pointer" @click="openCompetency(competency)">
-          <q-card-section>
-            <div class="row items-center">
-              <div class="col">
-                <div class="text-h6">{{ competency.domain }}</div>
-                <div class="text-subtitle2 text-grey-7">{{ competency.subDomain }}</div>
-              </div>
-              <div class="col-auto">
-                <q-chip
-                  :color="getStatusColor(competency.status)"
-                  text-color="white"
-                  :icon="getStatusIcon(competency.status)"
-                >
-                  {{ competency.status }}
-                </q-chip>
-              </div>
-            </div>
-
-            <div class="q-mt-md">
-              <p class="text-body2">{{ competency.description }}</p>
-            </div>
-
-            <div class="q-mt-md">
-              <div class="text-caption text-grey-6 q-mb-xs">Progress</div>
-              <q-linear-progress
-                :value="competency.progress / 100"
-                :color="getStatusColor(competency.status)"
-                size="8px"
-                rounded
-              />
-              <div class="text-caption text-right q-mt-xs">{{ competency.progress }}%</div>
-            </div>
-          </q-card-section>
-
-          <q-card-actions align="right">
-            <q-btn
-              flat
-              :color="getStatusColor(competency.status)"
-              :label="getActionLabel(competency.status)"
-              @click.stop="handleAction(competency)"
-            />
-          </q-card-actions>
-        </q-card>
+    <div class="row q-col-gutter-md">
+      <div v-for="sub in filteredSubCompetencies" :key="sub.id" class="col-12 col-md-6 col-lg-4">
+        <sub-competency-card
+          class="full-height"
+          :sub="sub"
+          :show-open="true"
+          :show-edit="false"
+          :show-delete="false"
+          :show-student-progress="true"
+          :show-context="true"
+          @open="handleOpen"
+        />
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-if="filteredCompetencies.length === 0" class="text-center q-mt-xl">
+    <div v-if="!loading && filteredSubCompetencies.length === 0" class="text-center q-mt-xl">
       <q-icon name="psychology" size="80px" color="grey-5" />
-      <div class="text-h6 text-grey-7 q-mt-md">No competencies found</div>
-      <div class="text-body2 text-grey-6">Try adjusting your search or filter criteria</div>
+      <div class="text-h6 text-grey-7 q-mt-md">{{ t('subCompetencies.emptyState') }}</div>
+      <div class="text-body2 text-grey-6">{{ t('competencies.searchPlaceholder') }}</div>
     </div>
+
+    <q-inner-loading :showing="loading">
+      <q-spinner-tail color="primary" size="64px" />
+    </q-inner-loading>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { useQuasar } from 'quasar';
+import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
+import { useUsers } from 'src/composables/useUsers';
+import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
+import type { SubCompetency } from 'src/models/SubCompetency';
+import type { User } from 'src/models/User';
+import { UserRole } from 'src/models/User';
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-interface Competency {
-  id: string;
-  domain: string;
-  subDomain: string;
-  description: string;
-  status: 'LOCKED' | 'UNLOCKED' | 'IN_PROGRESS' | 'ACQUIRED';
-  progress: number;
-  stage: string;
-}
-
+const { t } = useI18n();
+const $q = useQuasar();
 const router = useRouter();
+const { getCurrentUser } = useUsers();
 
-// Reactive data
+const loading = ref(false);
+const errorMessage = ref<string | null>(null);
 const searchQuery = ref('');
-const statusFilter = ref('');
-const domainFilter = ref('');
+const statusFilter = ref<string | null>(null);
+const domainFilter = ref<string | null>(null);
+const subCompetencies = ref<SubCompetency[]>([]);
+const currentUser = ref<User | null>(null);
 
-// Mock data - replace with actual API call
-const competencies = ref<Competency[]>([
-  {
-    id: '1',
-    domain: 'Mathematics',
-    subDomain: 'Algebra',
-    description: 'Solve linear equations and inequalities',
-    status: 'ACQUIRED',
-    progress: 100,
-    stage: 'Advanced',
-  },
-  {
-    id: '2',
-    domain: 'Science',
-    subDomain: 'Physics',
-    description: "Understand Newton's laws of motion",
-    status: 'IN_PROGRESS',
-    progress: 65,
-    stage: 'Intermediate',
-  },
-  {
-    id: '3',
-    domain: 'Language Arts',
-    subDomain: 'Writing',
-    description: 'Write persuasive essays with clear arguments',
-    status: 'UNLOCKED',
-    progress: 0,
-    stage: 'Beginner',
-  },
-  {
-    id: '4',
-    domain: 'Social Studies',
-    subDomain: 'History',
-    description: 'Analyze primary sources from historical events',
-    status: 'LOCKED',
-    progress: 0,
-    stage: 'Advanced',
-  },
-]);
+const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase());
 
-// Options for filters
-const statusOptions = ['LOCKED', 'UNLOCKED', 'IN_PROGRESS', 'ACQUIRED'];
-const domainOptions = ['Mathematics', 'Science', 'Language Arts', 'Social Studies'];
-
-// Computed
-const filteredCompetencies = computed(() => {
-  return competencies.value.filter((comp) => {
-    const matchesSearch =
-      !searchQuery.value ||
-      comp.domain.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      comp.subDomain.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      comp.description.toLowerCase().includes(searchQuery.value.toLowerCase());
-
-    const matchesStatus = !statusFilter.value || comp.status === statusFilter.value;
-    const matchesDomain = !domainFilter.value || comp.domain === domainFilter.value;
-
-    return matchesSearch && matchesStatus && matchesDomain;
-  });
+const statusOptions = computed(() => {
+  const statuses = new Set<string>();
+  subCompetencies.value.forEach((sub) => statuses.add(sub.getStatus()));
+  return Array.from(statuses).map((status) => ({
+    label: t(`progressStatus.${status}`),
+    value: status,
+  }));
 });
 
-// Methods
-function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    LOCKED: 'grey',
-    UNLOCKED: 'blue',
-    IN_PROGRESS: 'orange',
-    ACQUIRED: 'green',
+const domainOptions = computed(() => {
+  const domains = new Set<string>();
+  subCompetencies.value.forEach((sub) => {
+    const domainName = sub.competency?.domain?.name ?? t('domains.title');
+    domains.add(domainName);
+  });
+  return Array.from(domains).map((domain) => ({ label: domain, value: domain }));
+});
+
+const statusSummary = computed(() => {
+  const summary = {
+    total: subCompetencies.value.length,
+    validated: 0,
+    inProgress: 0,
+    pending: 0,
+    notStarted: 0,
+    locked: 0,
   };
-  return colors[status] || 'grey';
-}
 
-function getStatusIcon(status: string): string {
-  const icons: Record<string, string> = {
-    LOCKED: 'lock',
-    UNLOCKED: 'lock_open',
-    IN_PROGRESS: 'schedule',
-    ACQUIRED: 'check_circle',
-  };
-  return icons[status] || 'help';
-}
+  subCompetencies.value.forEach((sub) => {
+    const status = sub.getStatus();
+    switch (status) {
+      case 'Validated':
+        summary.validated += 1;
+        break;
+      case 'InProgress':
+        summary.inProgress += 1;
+        break;
+      case 'PendingValidation':
+        summary.pending += 1;
+        break;
+      case 'NotStarted':
+        summary.notStarted += 1;
+        break;
+      case 'Locked':
+        summary.locked += 1;
+        break;
+      default:
+        break;
+    }
+  });
 
-function getActionLabel(status: string): string {
-  const labels: Record<string, string> = {
-    LOCKED: 'Locked',
-    UNLOCKED: 'Start',
-    IN_PROGRESS: 'Continue',
-    ACQUIRED: 'Review',
-  };
-  return labels[status] || 'View';
-}
+  return summary;
+});
 
-function openCompetency(competency: Competency): void {
-  // Navigate to competency detail page
-  console.log('Opening competency:', competency.id);
-}
+const summaryCards = computed(() => {
+  const summary = statusSummary.value;
+  const cards = [
+    {
+      key: 'total',
+      caption: t('competencies.summary.total'),
+      value: summary.total,
+      color: 'bg-blue-1',
+    },
+    {
+      key: 'validated',
+      caption: t('competencies.summary.validated'),
+      value: summary.validated,
+      color: 'bg-green-1',
+    },
+    {
+      key: 'inProgress',
+      caption: t('competencies.summary.inProgress'),
+      value: summary.inProgress,
+      color: 'bg-orange-1',
+    },
+    {
+      key: 'pending',
+      caption: t('competencies.summary.pending'),
+      value: summary.pending,
+      color: 'bg-orange-1',
+    },
+    { key: 'notStarted', caption: t('competencies.summary.notStarted'), value: summary.notStarted },
+  ];
 
-function handleAction(competency: Competency): void {
-  if (competency.status === 'UNLOCKED') {
-    // Start the competency
-    competency.status = 'IN_PROGRESS';
-    competency.progress = 10;
-  } else if (competency.status === 'IN_PROGRESS') {
-    // Continue working on competency
-    void router.push(`/assessments?competency=${competency.id}`);
+  return cards.filter((card) => card.key === 'total' || card.value > 0);
+});
+
+const filteredSubCompetencies = computed(() => {
+  const status = statusFilter.value;
+  const domain = domainFilter.value;
+
+  return subCompetencies.value
+    .filter((sub) => {
+      if (status && sub.getStatus() !== status) {
+        return false;
+      }
+
+      const domainName = sub.competency?.domain?.name ?? t('domains.title');
+      if (domain && domainName !== domain) {
+        return false;
+      }
+
+      if (!normalizedSearch.value) {
+        return true;
+      }
+
+      const haystack = [sub.name, sub.description ?? '', sub.competency?.name ?? '', domainName]
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(normalizedSearch.value);
+    })
+    .sort((a, b) => {
+      const domainA = a.competency?.domain?.name ?? '';
+      const domainB = b.competency?.domain?.name ?? '';
+      if (domainA !== domainB) {
+        return domainA.localeCompare(domainB);
+      }
+      const levelA = typeof a.level === 'number' ? a.level : 0;
+      const levelB = typeof b.level === 'number' ? b.level : 0;
+      if (levelA !== levelB) {
+        return levelA - levelB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+});
+
+async function load(): Promise<void> {
+  loading.value = true;
+  errorMessage.value = null;
+  try {
+    const user = await getCurrentUser();
+    currentUser.value = user;
+
+    if (!user) {
+      subCompetencies.value = [];
+      return;
+    }
+
+    const progressIds = Array.from(
+      new Set(
+        (user.studentProgress ?? [])
+          .map((progress) => progress.subCompetencyId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+
+    if (progressIds.length === 0) {
+      subCompetencies.value = [];
+      return;
+    }
+
+    const fetched = await Promise.all(
+      progressIds.map(async (id) => {
+        const sub = await subCompetencyRepository.findById(id);
+        if (sub && user.role === UserRole.STUDENT) {
+          sub.attachUserProgress(user);
+        }
+        return sub;
+      }),
+    );
+
+    subCompetencies.value = fetched.filter((entry): entry is SubCompetency => entry !== null);
+  } catch (error) {
+    console.error('Failed to load competencies', error);
+    const message = error instanceof Error ? error.message : t('competencies.messages.loadError');
+    errorMessage.value = message;
+    $q.notify({ type: 'negative', message });
+  } finally {
+    loading.value = false;
   }
 }
+
+async function handleOpen(subId: string): Promise<void> {
+  const target = subCompetencies.value.find((sub) => sub.id === subId);
+  if (!target) {
+    return;
+  }
+  await router.push({
+    name: 'sub-competency-resource',
+    params: { competencyId: target.competencyId, subId },
+  });
+}
+
+onMounted(load);
 </script>
+
+<style scoped></style>

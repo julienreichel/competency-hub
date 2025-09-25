@@ -95,6 +95,6 @@ export const extractUserRelation = (value: unknown): User | null => {
 /**
  * Checks if a value is present (not null/undefined).
  */
-export function isPresent<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined;
+export function isPresent(field: unknown): boolean {
+  return typeof field !== 'function' && Boolean(field);
 }

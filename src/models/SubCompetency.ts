@@ -191,10 +191,8 @@ export class SubCompetency extends BaseModel {
    */
   getStatus(): 'Locked' | 'Validated' | 'InProgress' | 'PendingValidation' | 'NotStarted' {
     // If no progress, treat as Locked
-    console.log({ ...this }, this.name, this.studentProgress);
     if (!this.studentProgress?.length) return 'Locked';
     const progress = this.studentProgress[0];
-    console.log('progress', progress);
     if (!progress) return 'Locked';
     if (progress.lockOverride === 'Locked') return 'Locked';
     // If status is missing, treat as NotStarted

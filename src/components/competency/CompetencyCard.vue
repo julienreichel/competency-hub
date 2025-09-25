@@ -1,6 +1,6 @@
 <template>
   <q-card flat bordered>
-    <q-card-section class="row items-center justify-between q-gutter-sm">
+    <q-card-section class="row justify-between item-start q-gutter-sm full-height">
       <div class="column col">
         <div v-if="showContext && competency.domain">
           <div class="text-h6">{{ competency.domain.name }}</div>

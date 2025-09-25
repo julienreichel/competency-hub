@@ -181,6 +181,14 @@ export default {
     emptyState: 'No competencies in this domain yet.',
     noDescription: 'No description provided.',
     searchPlaceholder: 'Search competencies...',
+    summary: {
+      total: 'Total sub-competencies',
+      validated: 'Validated',
+      inProgress: 'In progress',
+      pending: 'Pending validation',
+      locked: 'Locked',
+      notStarted: 'Not started',
+    },
     editor: {
       breadcrumb: 'Competency editor',
       loading: 'Loading competency...',
