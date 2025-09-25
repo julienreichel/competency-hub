@@ -27,8 +27,10 @@ export class SubCompetencyRepository
     return SubCompetency.fromAmplify(raw);
   }
 
-  async findById(id: string): Promise<SubCompetency | null> {
-    const competency = await graphQLClient.getSubCompetency(id);
+  async findById(id: string, withDetails: boolean = false): Promise<SubCompetency | null> {
+    const competency = withDetails
+      ? await graphQLClient.getSubCompetencyWithDetails(id)
+      : await graphQLClient.getSubCompetency(id);
     if (!competency) {
       return null;
     }

@@ -580,6 +580,37 @@ export class GraphQLClient {
             'updatedAt',
             'resources.*',
             'resources.person.*',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['SubCompetency']['type'];
+    } catch (error) {
+      console.error(`Error getting SubCompetency with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  async getSubCompetencyWithDetails(id: string): Promise<Schema['SubCompetency']['type'] | null> {
+    try {
+      const result = await this.client.models.SubCompetency.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'competencyId',
+            'competency.*',
+            'competency.domain.*',
+            'name',
+            'description',
+            'objectives',
+            'level',
+            'createdAt',
+            'updatedAt',
+            'resources.*',
+            'resources.person.*',
             'studentProgress.*',
             'studentProgress.student.*',
           ],

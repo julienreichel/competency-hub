@@ -154,7 +154,7 @@ onMounted(async () => {
 async function load(): Promise<void> {
   loading.value = true;
   try {
-    const fetched = await subCompetencyRepository.findById(subId);
+    const fetched = await subCompetencyRepository.findById(subId, true);
     sub.value = fetched;
     resources.value = fetched?.resources ?? [];
     if (fetched?.competency?.name) {
