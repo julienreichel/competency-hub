@@ -4,7 +4,7 @@
       <div class="column col">
         <div v-if="showContext && sub.competency">
           <div v-if="sub.competency.domain" class="text-h6">{{ sub.competency.domain.name }}</div>
-          <div class="text-subtitle2 text-grey-7">>{{ sub.competency.name }}</div>
+          <div class="text-subtitle2 text-grey-7">{{ sub.competency.name }}</div>
         </div>
         <div class="row items-center q-gutter-xs full-width">
           <div class="col">

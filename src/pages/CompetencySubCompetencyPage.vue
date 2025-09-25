@@ -8,7 +8,19 @@
       :title="competency?.name ?? t('competencies.loading')"
       :loading="loading"
       :back-target="{ name: 'domain-competencies', params: { domainId } }"
-    />
+    >
+      <template #default>
+        <div class="row q-gutter-sm">
+          <q-btn
+            v-if="canManage && subs.length === 0 && !loading"
+            color="negative"
+            icon="delete"
+            :label="t('common.delete')"
+            @click="confirmDeleteCompetency"
+          />
+        </div>
+      </template>
+    </breadcrumb-header>
 
     <template v-if="competency">
       <competency-card
@@ -32,7 +44,7 @@
       <div class="text-h6">{{ t('competencies.subCompetencies') }}</div>
       <q-space />
       <q-btn
-        v-if="hasRole('Admin') || hasRole('Educator')"
+        v-if="canManage"
         color="primary"
         :label="t('competencies.addSubCompetency')"
         @click="openDialog"
@@ -42,7 +54,7 @@
     <sub-competency-list
       class="q-mt-md"
       :items="subs"
-      :show-delete="hasRole('Admin') || hasRole('Educator')"
+      :show-delete="canManage"
       :show-student-progress="hasRole('Student')"
       @open="openSubCompetency"
       @rename="renameSubCompetency"
@@ -71,7 +83,7 @@ import { type Competency, type UpdateCompetencyInput } from 'src/models/Competen
 import { type SubCompetency } from 'src/models/SubCompetency';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -80,6 +92,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { hasRole } = useAuth();
+const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
 
 let domainId = route.params.domainId as string | undefined;
 const domainName = ref<string>(t('domains.title'));
@@ -158,6 +171,30 @@ function openDialog(): void {
 async function closeDialog(): Promise<void> {
   await addSubCompetency(addName.value || 'New sub-competency');
   dialog.value = false;
+}
+
+function confirmDeleteCompetency(): void {
+  if (!competency.value) return;
+  $q.dialog({
+    title: t('competencies.title'),
+    message: t('competencies.messages.deleteConfirm', { name: competency.value.name }),
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void deleteCompetency();
+  });
+}
+
+async function deleteCompetency(): Promise<void> {
+  if (!competency.value) return;
+  try {
+    await competencyRepository.delete(competency.value.id);
+    $q.notify({ type: 'positive', message: t('competencies.messages.deleted') });
+    await router.push({ name: 'domain-competencies', params: { domainId } });
+  } catch (error) {
+    console.error(error);
+    $q.notify({ type: 'negative', message: t('competencies.messages.error') });
+  }
 }
 
 onMounted(load);

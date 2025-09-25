@@ -10,13 +10,22 @@
       :back-target="{ name: 'domains' }"
     >
       <template #default>
-        <q-btn
-          v-if="hasRole('Admin') || hasRole('Educator')"
-          color="primary"
-          icon="add"
-          :label="$t('competencies.addCompetency')"
-          @click="openCreateDialog"
-        />
+        <div class="row q-gutter-sm">
+          <q-btn
+            v-if="canManage"
+            color="primary"
+            icon="add"
+            :label="$t('competencies.addCompetency')"
+            @click="openCreateDialog"
+          />
+          <q-btn
+            v-if="hasRole('Admin') && competencies.length === 0 && !loading"
+            color="negative"
+            icon="delete"
+            :label="$t('common.delete')"
+            @click="confirmDeleteDomain"
+          />
+        </div>
       </template>
     </breadcrumb-header>
 
@@ -62,7 +71,6 @@
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import { useAuth } from 'src/composables/useAuth';
-import { useUsers } from 'src/composables/useUsers';
 import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
@@ -79,6 +87,7 @@ const router = useRouter();
 const $q = useQuasar();
 const { t } = useI18n();
 const { hasRole } = useAuth();
+const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
 
 const domainId = route.params.domainId as string;
 const domain = ref<Domain | null>(null);
@@ -122,11 +131,6 @@ async function loadData(): Promise<void> {
     competencies.value = domain.value?.competencies ?? [];
 
     // Attach user progress to sub-competencies
-    const { getCurrentUser } = useUsers();
-    const user = await getCurrentUser();
-    if (user) {
-      competencies.value.forEach((c) => c.attachUserProgress(user));
-    }
   } catch (error) {
     console.error(error);
     $q.notify({ type: 'negative', message: t('competencies.messages.loadError') });
@@ -174,6 +178,30 @@ async function submitDialog(form: FormType): Promise<void> {
 
 function openEditor(competencyId: string): void {
   void router.push({ name: 'competency-sub-competency', params: { competencyId } });
+}
+
+function confirmDeleteDomain(): void {
+  if (!domain.value) return;
+  $q.dialog({
+    title: t('domains.title'),
+    message: t('domains.messages.deleteConfirm', { name: domain.value.name }),
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void deleteDomain();
+  });
+}
+
+async function deleteDomain(): Promise<void> {
+  if (!domain.value) return;
+  try {
+    await domainRepository.delete(domain.value.id);
+    $q.notify({ type: 'positive', message: t('domains.messages.deleted') });
+    await router.push({ name: 'domains' });
+  } catch (error) {
+    console.error(error);
+    $q.notify({ type: 'negative', message: t('domains.messages.error') });
+  }
 }
 
 onMounted(() => {

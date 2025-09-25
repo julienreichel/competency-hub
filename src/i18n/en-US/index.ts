@@ -128,6 +128,8 @@ export default {
     messages: {
       created: 'Domain created successfully.',
       updated: 'Domain updated successfully.',
+      deleted: 'Domain deleted successfully.',
+      deleteConfirm: 'Delete the domain "{name}"? This action cannot be undone.',
       error: 'Something went wrong. Please try again.',
     },
     fields: {
@@ -208,6 +210,8 @@ export default {
     },
     messages: {
       created: 'Competency created successfully.',
+      deleted: 'Competency deleted successfully.',
+      deleteConfirm: 'Delete the competency "{name}"? This action cannot be undone.',
       error: 'Could not save the competency. Please try again.',
       loadError: 'Could not load domain details. Please try again.',
     },
