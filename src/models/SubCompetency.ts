@@ -84,24 +84,22 @@ export class SubCompetency extends BaseModel {
       this.studentProgress = user.studentProgress.filter(
         (progress) => progress.subCompetencyId === this.id,
       );
-    } else {
-      this.studentProgress = [];
     }
-    if (
-      user.role === UserRole.STUDENT &&
-      (!this.studentProgress || this.studentProgress.length === 0)
-    ) {
+    if (user.role === UserRole.STUDENT && !this.studentProgress?.length) {
       this.studentProgress = [
-        new StudentSubCompetencyProgress({
-          id: `${user.id}-${this.id}`,
-          studentId: user.id,
-          subCompetencyId: this.id,
-          status: 'NotStarted',
-          percent: 0,
-          lockOverride: 'Locked',
-          recommended: null,
-          updatedAt: null,
-        }),
+        new StudentSubCompetencyProgress(
+          {
+            id: `${user.id}-${this.id}`,
+            studentId: user.id,
+            subCompetencyId: this.id,
+            status: 'NotStarted',
+            percent: 0,
+            lockOverride: 'Locked',
+            recommended: null,
+            updatedAt: null,
+          },
+          true,
+        ),
       ];
     }
   }

@@ -2,6 +2,7 @@
   <q-btn
     :label="label"
     :flat="isEdit"
+    :dense="isEdit"
     :icon="isEdit ? 'edit' : 'add'"
     color="primary"
     @click="open = true"

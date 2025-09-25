@@ -15,7 +15,7 @@ export interface StudentSubCompetencyProgressInit {
   lockOverride?: 'Locked' | 'Unlocked' | null;
   recommended?: boolean | null;
   updatedAt: string | null;
-  student?: UserRelationInit | null;
+  student?: UserRelationInit | User | null;
 }
 export type StudentSubCompetencyProgressUpdate = Partial<StudentSubCompetencyProgressInit>;
 
@@ -29,8 +29,9 @@ export class StudentSubCompetencyProgress {
   public recommended: boolean | null;
   public updatedAt: string | null;
   public readonly student: User | null;
+  public readonly local: boolean;
 
-  constructor(data: StudentSubCompetencyProgressInit) {
+  constructor(data: StudentSubCompetencyProgressInit, local: boolean = false) {
     this.id = data.id;
     this.studentId = data.studentId;
     this.subCompetencyId = data.subCompetencyId;
@@ -40,6 +41,7 @@ export class StudentSubCompetencyProgress {
     this.recommended = data.recommended ?? null;
     this.updatedAt = data.updatedAt;
     this.student = data.student ? User.create(data.student) : null;
+    this.local = local;
 
     this.validate();
   }

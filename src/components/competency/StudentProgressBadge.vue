@@ -17,8 +17,13 @@
         </q-chip>
       </template>
       <template v-else-if="studentProgress.recommended">
-        <q-chip color="grey" text-color="white" icon="star">
+        <q-chip color="yellow" text-color="black" icon="star">
           {{ t('subCompetencies.recommended') }}
+        </q-chip>
+      </template>
+      <template v-else>
+        <q-chip color="grey" text-color="white" icon="schedule">
+          {{ t('progressStatus.NotStarted') }}
         </q-chip>
       </template>
     </div>
@@ -64,7 +69,7 @@ function getStatusColor(status: string): string {
 function getStatusIcon(status: string): string {
   const icons: Record<string, string> = {
     Locked: 'lock',
-    NotStarted: 'lock',
+    NotStarted: 'schedule',
     InProgress: 'schedule',
     PendingValidation: 'schedule',
     Validated: 'check_circle',

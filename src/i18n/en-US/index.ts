@@ -211,10 +211,18 @@ export default {
     emptyState: 'No sub-competencies found',
     noDescription: 'No description provided',
     studentProgress: 'Student Progress',
+    studentProgressHint: 'Select one or more students to manage their access.',
     status: 'Status',
     percent: 'Percent',
     locked: 'Locked',
     recommended: 'Recommended',
+    unlockAction: 'Unlock',
+    recommendAction: 'Recommend',
+    lockAction: 'Lock',
+    unlockSuccess: 'Student access unlocked.',
+    recommendSuccess: 'Sub-competency recommended to the selected students.',
+    lockSuccess: 'Student access locked.',
+    progressUpdateError: 'Could not update student progress. Please try again.',
   },
 
   progressStatus: {

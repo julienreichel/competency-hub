@@ -22,7 +22,7 @@ describe('User Model', () => {
   const baseParent = buildRelation('parent-1', UserRole.PARENT);
   const baseStudent = buildRelation('student-1', UserRole.STUDENT);
 
-  const baseInit: Parameters<typeof User.create>[0] = {
+  const baseInit: UserRelationInit = {
     id: 'user-1',
     name: 'John Doe',
     role: UserRole.STUDENT,
@@ -36,7 +36,7 @@ describe('User Model', () => {
     students: [baseStudent],
   };
 
-  const makeUser = (overrides: Partial<Parameters<typeof User.create>[0]> = {}): User =>
+  const makeUser = (overrides: Partial<UserRelationInit> = {}): User =>
     User.create({ ...baseInit, ...overrides });
 
   describe('constructor', () => {

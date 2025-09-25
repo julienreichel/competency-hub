@@ -13,14 +13,16 @@
           <div class="text-caption">{{ competency.objectives }}</div>
         </div>
       </div>
-      <div class="col-auto column items-center q-gutter-sm">
+      <div class="col-auto column q-gutter-sm">
         <div v-if="progress" class="col-auto">
           <student-progress-badge :student-progress="progress" />
         </div>
-        <div class="row">
+        <div class="row q-gutter-xs">
+          <q-space />
           <q-btn
             v-if="showOpen !== false"
             flat
+            dense
             color="primary"
             icon="arrow_forward"
             @click="$emit('open', competency.id)"
@@ -28,6 +30,7 @@
           <q-btn
             v-if="showEdit"
             flat
+            dense
             color="secondary"
             icon="edit"
             @click="$emit('edit', competency.id)"

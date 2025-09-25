@@ -11,12 +11,16 @@ export class StudentProgressRepository {
     subCompetencyId,
     status,
     percent,
+    lockOverride,
+    recommended,
   }: StudentSubCompetencyProgressInit): Promise<StudentSubCompetencyProgress> {
     const raw = await graphQLClient.createStudentProgress({
       studentId,
       subCompetencyId,
       status: status ?? 'NotStarted',
       percent: percent ?? 0,
+      lockOverride: lockOverride ?? 'Unlocked',
+      recommended: recommended ?? false,
     });
     if (!raw) {
       throw new Error('Failed to create progress');

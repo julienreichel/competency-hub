@@ -26,10 +26,11 @@
           }}</a>
         </div>
       </div>
-      <div class="row items-center q-gutter-xs">
+      <div class="row q-gutter-xs">
         <q-btn
           v-if="showOpen !== false"
           flat
+          dense
           color="primary"
           icon="arrow_forward"
           @click="$emit('open', resource.id)"
@@ -43,6 +44,7 @@
         <q-btn
           v-if="showDelete"
           flat
+          dense
           color="negative"
           icon="delete"
           @click="$emit('delete', resource.id)"

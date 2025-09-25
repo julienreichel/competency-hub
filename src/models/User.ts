@@ -1,5 +1,6 @@
 import type { Schema } from '../../amplify/data/resource';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
+import type { SubCompetency } from './SubCompetency';
 import { BaseModel } from './base/BaseModel';
 
 // Constants
@@ -74,19 +75,19 @@ type UserInit = UserRelationInit;
  * Encapsulates user business logic and validation
  */
 export class User extends BaseModel {
-  public readonly name: string;
-  public readonly role: UserRole;
+  public name: string;
+  public role: UserRole;
   public readonly email: string;
-  public readonly avatar: string;
-  public readonly picture?: string | null;
-  public readonly contactInfo: string;
-  public readonly lastActive: string | undefined;
+  public avatar: string;
+  public picture?: string | null;
+  public contactInfo: string;
+  public lastActive: string | undefined;
 
   public readonly educators: User[];
   public readonly parents: User[];
   public readonly students: User[];
   public readonly children: User[];
-  public readonly studentProgress: StudentSubCompetencyProgress[];
+  public studentProgress: StudentSubCompetencyProgress[];
 
   constructor(data: UserInit) {
     super(data);
@@ -143,7 +144,9 @@ export class User extends BaseModel {
       .filter((item): item is StudentSubCompetencyProgress => item !== null);
   }
 
-  static create(data: UserInit): User {
+  static create(data: UserInit | User): User {
+    if (data instanceof User) return data.clone();
+
     return new User({
       ...data,
       role: User.normaliseRole(data.role),
@@ -361,6 +364,34 @@ export class User extends BaseModel {
       }
     }
     return UserRole.UNKNOWN;
+  }
+
+  /**
+   * Attach student progress and validation requests from a User object, filtering by this sub-competency's id.
+   */
+  attachProgress(sub: SubCompetency): void {
+    if (sub.studentProgress) {
+      this.studentProgress = sub.studentProgress.filter(
+        (progress) => progress.studentId === this.id,
+      );
+    }
+    if (this.role === UserRole.STUDENT && !this.studentProgress?.length) {
+      this.studentProgress = [
+        new StudentSubCompetencyProgress(
+          {
+            id: `${this.id}-${sub.id}`,
+            studentId: this.id,
+            subCompetencyId: sub.id,
+            status: 'NotStarted',
+            percent: 0,
+            lockOverride: 'Locked',
+            recommended: null,
+            updatedAt: null,
+          },
+          true,
+        ),
+      ];
+    }
   }
 
   get educatorIds(): string[] {

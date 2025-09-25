@@ -20,14 +20,16 @@
           <div class="text-caption">{{ sub.objectives }}</div>
         </div>
       </div>
-      <div class="col-auto column items-center q-gutter-xs">
+      <div class="col-auto column q-gutter-xs">
         <div v-if="studentProgress" class="col-auto">
           <student-progress-badge :student-progress="studentProgress" />
         </div>
-        <div class="row">
+        <div class="row q-gutter-xs">
+          <q-space />
           <q-btn
             v-if="showOpen && !locked"
             flat
+            dense
             color="primary"
             icon="arrow_forward"
             @click="$emit('open', String(sub.id))"
@@ -35,6 +37,7 @@
           <q-btn
             v-if="showEdit"
             flat
+            dense
             color="secondary"
             icon="edit"
             @click="$emit('edit', String(sub.id))"
@@ -42,6 +45,7 @@
           <q-btn
             v-if="showDelete"
             flat
+            dense
             color="negative"
             icon="delete"
             @click="$emit('delete', String(sub.id))"

@@ -25,6 +25,17 @@
       <sub-competency-form v-else :model-value="sub" @save="onSaveSub" @cancel="editing = false" />
     </template>
 
+    <template v-if="hasRole('Educator')">
+      <q-separator class="q-my-lg" />
+      <sub-competency-student-table
+        :students="students"
+        :loading="studentsLoading"
+        @unlock="handleUnlock"
+        @recommend="handleRecommend"
+        @lock="handleLock"
+      />
+    </template>
+
     <q-separator class="q-my-lg" />
 
     <div class="row items-center q-gutter-sm">
@@ -57,16 +68,26 @@ import {
   type CreateResourceInput,
   type UpdateResourceInput,
 } from 'src/models/CompetencyResource';
+import {
+  type StudentSubCompetencyProgress,
+  type StudentSubCompetencyProgressUpdate,
+} from 'src/models/StudentSubCompetencyProgress';
 import { type SubCompetency, type UpdateSubCompetencyInput } from 'src/models/SubCompetency';
-import { onMounted, ref } from 'vue';
+import type { User } from 'src/models/User';
+import { UserRole } from 'src/models/User';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 import { resourceRepository } from 'src/models/repositories/ResourceRepository';
+import { StudentProgressRepository } from 'src/models/repositories/StudentProgressRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 
 import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
 import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
+import SubCompetencyStudentTable, {
+  type SubCompetencyStudentRow,
+} from 'src/components/competency/SubCompetencyStudentTable.vue';
 import ResourceFormDialog from 'src/components/resource/ResourceFormDialog.vue';
 import ResourceTable from 'src/components/resource/ResourceTable.vue';
 import { useAuth } from 'src/composables/useAuth';
@@ -75,6 +96,7 @@ const $q = useQuasar();
 const { t } = useI18n();
 const route = useRoute();
 const { hasRole } = useAuth();
+const { getCurrentUser } = useUsers();
 
 let domainId = route.params.domainId as string | undefined;
 const competencyId = route.params.competencyId as string;
@@ -85,34 +107,177 @@ const sub = ref<SubCompetency | null>(null);
 const editing = ref(false);
 const domainName = ref<string>(t('domains.title'));
 const competencyName = ref<string>(t('competencies.title'));
+const currentUser = ref<User | null>(null);
+const students = ref<User[]>([]);
+const studentActionsLoading = ref(false);
+const resources = ref<CompetencyResource[]>([]);
+
+const studentsLoading = computed(() => loading.value || studentActionsLoading.value);
 
 onMounted(async () => {
   await load();
-
-  // Attach user progress to sub-competency
-  const { getCurrentUser } = useUsers();
-  const user = await getCurrentUser();
-  if (user && sub.value) {
-    sub.value.attachUserProgress(user);
-  }
-
-  if (!sub.value?.competency?.name) return;
-  competencyName.value = sub.value.competency.name;
-
-  if (!sub.value?.competency?.domain?.name) return;
-  domainName.value = sub.value.competency.domain?.name;
-  domainId = sub.value.competency.domainId;
+  await loadCurrentUser();
+  syncSubToCurrentUser();
+  attachStudentsToSub();
 });
-const resources = ref<CompetencyResource[]>([]);
 
 async function load(): Promise<void> {
   loading.value = true;
   try {
-    sub.value = await subCompetencyRepository.findById(subId);
-    resources.value = sub.value?.resources ?? [];
+    const fetched = await subCompetencyRepository.findById(subId);
+    sub.value = fetched;
+    resources.value = fetched?.resources ?? [];
+    if (fetched?.competency?.name) {
+      competencyName.value = fetched.competency.name;
+    }
+    if (fetched?.competency?.domain?.name) {
+      domainName.value = fetched.competency.domain.name;
+      domainId = fetched.competency.domainId;
+    }
   } finally {
     loading.value = false;
   }
+}
+
+async function loadCurrentUser(): Promise<void> {
+  const user = await getCurrentUser();
+  currentUser.value = user ?? null;
+  if (!user) {
+    students.value = [];
+    return;
+  }
+}
+
+function syncSubToCurrentUser(): void {
+  if (!sub.value || !currentUser.value) return;
+  if (currentUser.value.role === UserRole.STUDENT) {
+    sub.value.attachUserProgress(currentUser.value);
+  }
+}
+
+function attachStudentsToSub(): void {
+  if (!sub.value || !currentUser.value) {
+    return;
+  }
+  if (currentUser.value.role !== UserRole.EDUCATOR) {
+    return;
+  }
+
+  const list = Array.isArray(currentUser.value.students) ? currentUser.value.students : [];
+  list.forEach((student) => student.attachProgress(sub.value as SubCompetency));
+  students.value = [...list];
+}
+
+function updateLocalProgressCache(student: User, progress: StudentSubCompetencyProgress): void {
+  if (!sub.value) return;
+
+  const progressIndex = sub.value.studentProgress.findIndex((entry) => entry.id === progress.id);
+  if (progressIndex === -1) {
+    sub.value.studentProgress.push(progress);
+  } else {
+    sub.value.studentProgress.splice(progressIndex, 1, progress);
+  }
+
+  student.studentProgress = [progress];
+
+  if (currentUser.value?.role === UserRole.EDUCATOR) {
+    const educatorStudentIndex = currentUser.value.students.findIndex(
+      (entry) => entry.id === student.id,
+    );
+    if (educatorStudentIndex !== -1) {
+      currentUser.value.students.splice(educatorStudentIndex, 1, student);
+    }
+  }
+}
+
+async function applyProgressUpdate(
+  rows: SubCompetencyStudentRow[],
+  builder: (progress: StudentSubCompetencyProgress) => StudentSubCompetencyProgressUpdate,
+  successMessage: string,
+): Promise<void> {
+  if (!rows.length) return;
+
+  studentActionsLoading.value = true;
+  try {
+    let updatedCount = 0;
+    for (const row of rows) {
+      const progress = row.progress;
+      if (!progress) continue;
+
+      const updates = builder(progress);
+      if (!updates || Object.keys(updates).length === 0) {
+        continue;
+      }
+      let updated;
+      console.log('progress', progress);
+      if (progress.local) {
+        updated = await StudentProgressRepository.createProgress({ ...progress, ...updates });
+      } else {
+        updated = await StudentProgressRepository.updateProgress(progress.id, updates);
+      }
+      console.log('updated', updated);
+
+      updateLocalProgressCache(row.student, updated);
+      updatedCount += 1;
+    }
+
+    if (updatedCount > 0) {
+      $q.notify({ type: 'positive', message: successMessage });
+    }
+  } catch (error) {
+    console.error('Failed to update student progress', error);
+    $q.notify({ type: 'negative', message: t('subCompetencies.progressUpdateError') });
+  } finally {
+    studentActionsLoading.value = false;
+  }
+}
+
+async function handleUnlock(rows: SubCompetencyStudentRow[]): Promise<void> {
+  await applyProgressUpdate(
+    rows,
+    (progress) => {
+      const updates: StudentSubCompetencyProgressUpdate = {};
+      if (progress.lockOverride !== 'Unlocked') {
+        updates.lockOverride = 'Unlocked';
+      }
+      return updates;
+    },
+    t('subCompetencies.unlockSuccess'),
+  );
+}
+
+async function handleRecommend(rows: SubCompetencyStudentRow[]): Promise<void> {
+  await applyProgressUpdate(
+    rows,
+    (progress) => {
+      const updates: StudentSubCompetencyProgressUpdate = {};
+      if (!progress.recommended) {
+        updates.recommended = true;
+      }
+      if (progress.lockOverride === 'Locked') {
+        updates.lockOverride = 'Unlocked';
+      }
+      return updates;
+    },
+    t('subCompetencies.recommendSuccess'),
+  );
+}
+
+async function handleLock(rows: SubCompetencyStudentRow[]): Promise<void> {
+  await applyProgressUpdate(
+    rows,
+    (progress) => {
+      const updates: StudentSubCompetencyProgressUpdate = {};
+      if (progress.lockOverride !== 'Locked') {
+        updates.lockOverride = 'Locked';
+      }
+      if (progress.recommended) {
+        updates.recommended = false;
+      }
+      return updates;
+    },
+    t('subCompetencies.lockSuccess'),
+  );
 }
 
 async function onSaveSub(updated: UpdateSubCompetencyInput): Promise<void> {
@@ -141,8 +306,6 @@ async function deleteResource(id: string): Promise<void> {
   resources.value = resources.value.filter((r) => r.id !== id);
   $q.notify({ type: 'positive', message: 'CompetencyResource deleted' });
 }
-
-onMounted(load);
 </script>
 
 <script lang="ts">
