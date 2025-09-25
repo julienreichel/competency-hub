@@ -47,6 +47,13 @@
             @click="emit('view', props.row.id)"
           />
           <q-btn
+            flat
+            color="accent"
+            icon="psychology"
+            :label="t('educator.viewCompetencies')"
+            @click="emit('viewCompetencies', props.row.id)"
+          />
+          <q-btn
             v-if="currentEducatorId"
             :color="isAssigned(props.row) ? 'negative' : 'primary'"
             :icon="isAssigned(props.row) ? 'person_remove' : 'person_add'"
@@ -82,6 +89,7 @@ const emit = defineEmits<{
   assign: [studentId: string];
   unassign: [studentId: string];
   view: [studentId: string];
+  viewCompetencies: [studentId: string];
 }>();
 
 const { t } = useI18n();

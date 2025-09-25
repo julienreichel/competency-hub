@@ -9,6 +9,10 @@
       {{ errorMessage }}
     </q-banner>
 
+    <div v-if="targetUser && viewer && targetUser.id !== viewer.id" class="text-body2 q-mb-md">
+      {{ t('competencies.viewingFor', { name: targetUser.name }) }}
+    </div>
+
     <div class="row q-gutter-md q-mb-lg">
       <div class="col-12 col-md-4">
         <q-input
@@ -46,9 +50,9 @@
       </div>
     </div>
 
-    <div class="row q-col-gutter-md q-mb-lg">
+    <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
       <div v-for="card in summaryCards" :key="card.key" class="col-12 col-sm-6 col-lg-3">
-        <q-card flat bordered :class="card.color">
+        <q-card flat bordered>
           <q-card-section>
             <div class="text-caption text-grey-7">{{ card.caption }}</div>
             <div class="text-h5">{{ card.value }}</div>
@@ -62,10 +66,10 @@
         <sub-competency-card
           class="full-height"
           :sub="sub"
-          :show-open="true"
+          :show-open="allowActions"
           :show-edit="false"
           :show-delete="false"
-          :show-student-progress="true"
+          :show-student-progress="displayProgress"
           :show-context="true"
           @open="handleOpen"
         />
@@ -92,14 +96,15 @@ import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRe
 import type { SubCompetency } from 'src/models/SubCompetency';
 import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const { t } = useI18n();
 const $q = useQuasar();
 const router = useRouter();
-const { getCurrentUser } = useUsers();
+const route = useRoute();
+const { getCurrentUser, getUserById } = useUsers();
 
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
@@ -107,9 +112,29 @@ const searchQuery = ref('');
 const statusFilter = ref<string | null>(null);
 const domainFilter = ref<string | null>(null);
 const subCompetencies = ref<SubCompetency[]>([]);
-const currentUser = ref<User | null>(null);
+const viewer = ref<User | null>(null);
+const targetUser = ref<User | null>(null);
 
 const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase());
+
+const isTargetStudent = computed(() => targetUser.value?.role === UserRole.STUDENT);
+const viewingSelf = computed(() => {
+  const paramId = route.params.userId as string | undefined;
+  if (!paramId) {
+    return viewer.value && targetUser.value && viewer.value.id === targetUser.value.id;
+  }
+  return viewer.value?.id === targetUser.value?.id && viewer.value?.id === paramId;
+});
+
+const allowActions = computed(() => {
+  if (!isTargetStudent.value) return false;
+  const role = viewer.value?.role;
+  if (role === UserRole.EDUCATOR) return true;
+  if (role === UserRole.STUDENT && viewingSelf.value) return true;
+  return false;
+});
+
+const displayProgress = computed(() => isTargetStudent.value);
 
 const statusOptions = computed(() => {
   const statuses = new Set<string>();
@@ -168,30 +193,11 @@ const statusSummary = computed(() => {
 const summaryCards = computed(() => {
   const summary = statusSummary.value;
   const cards = [
-    {
-      key: 'total',
-      caption: t('competencies.summary.total'),
-      value: summary.total,
-      color: 'bg-blue-1',
-    },
-    {
-      key: 'validated',
-      caption: t('competencies.summary.validated'),
-      value: summary.validated,
-      color: 'bg-green-1',
-    },
-    {
-      key: 'inProgress',
-      caption: t('competencies.summary.inProgress'),
-      value: summary.inProgress,
-      color: 'bg-orange-1',
-    },
-    {
-      key: 'pending',
-      caption: t('competencies.summary.pending'),
-      value: summary.pending,
-      color: 'bg-orange-1',
-    },
+    { key: 'total', caption: t('competencies.summary.total'), value: summary.total },
+    { key: 'validated', caption: t('competencies.summary.validated'), value: summary.validated },
+    { key: 'inProgress', caption: t('competencies.summary.inProgress'), value: summary.inProgress },
+    { key: 'pending', caption: t('competencies.summary.pending'), value: summary.pending },
+    { key: 'locked', caption: t('competencies.summary.locked'), value: summary.locked },
     { key: 'notStarted', caption: t('competencies.summary.notStarted'), value: summary.notStarted },
   ];
 
@@ -241,33 +247,47 @@ const filteredSubCompetencies = computed(() => {
 async function load(): Promise<void> {
   loading.value = true;
   errorMessage.value = null;
+  subCompetencies.value = [];
   try {
-    const user = await getCurrentUser();
-    currentUser.value = user;
+    const loggedIn = await getCurrentUser();
+    viewer.value = loggedIn;
 
-    if (!user) {
-      subCompetencies.value = [];
+    const requestedUserId = route.params.userId as string | undefined;
+    let resolvedTarget: User | null = null;
+
+    if (requestedUserId) {
+      if (loggedIn?.id === requestedUserId) {
+        resolvedTarget = loggedIn;
+      } else {
+        resolvedTarget = await getUserById(requestedUserId);
+      }
+    } else {
+      resolvedTarget = loggedIn;
+    }
+
+    targetUser.value = resolvedTarget;
+
+    if (!resolvedTarget || resolvedTarget.role !== UserRole.STUDENT) {
       return;
     }
 
     const progressIds = Array.from(
       new Set(
-        (user.studentProgress ?? [])
+        (resolvedTarget.studentProgress ?? [])
           .map((progress) => progress.subCompetencyId)
           .filter((id): id is string => Boolean(id)),
       ),
     );
 
     if (progressIds.length === 0) {
-      subCompetencies.value = [];
       return;
     }
 
     const fetched = await Promise.all(
       progressIds.map(async (id) => {
         const sub = await subCompetencyRepository.findById(id);
-        if (sub && user.role === UserRole.STUDENT) {
-          sub.attachUserProgress(user);
+        if (sub && resolvedTarget) {
+          sub.attachUserProgress(resolvedTarget);
         }
         return sub;
       }),
@@ -285,6 +305,9 @@ async function load(): Promise<void> {
 }
 
 async function handleOpen(subId: string): Promise<void> {
+  if (!allowActions.value) {
+    return;
+  }
   const target = subCompetencies.value.find((sub) => sub.id === subId);
   if (!target) {
     return;
@@ -295,7 +318,16 @@ async function handleOpen(subId: string): Promise<void> {
   });
 }
 
-onMounted(load);
+onMounted(() => {
+  void load();
+});
+
+watch(
+  () => route.params.userId,
+  () => {
+    void load();
+  },
+);
 </script>
 
 <style scoped></style>

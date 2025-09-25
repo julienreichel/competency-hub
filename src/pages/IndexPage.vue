@@ -218,7 +218,22 @@ async function startNewAssessment(): Promise<void> {
 }
 
 async function browseCompetencies(): Promise<void> {
-  await router.push('/competencies');
+  if (userRole.value === 'Student') {
+    await router.push('/me/competencies');
+    return;
+  }
+
+  if (userRole.value === 'Educator') {
+    await router.push('/educator/students');
+    return;
+  }
+
+  if (userRole.value === 'Parent') {
+    await router.push('/children');
+    return;
+  }
+
+  await router.push('/domains');
 }
 
 async function viewProgressReport(): Promise<void> {

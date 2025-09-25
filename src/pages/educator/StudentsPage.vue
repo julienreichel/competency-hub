@@ -54,6 +54,7 @@
             @assign="handleAssign"
             @unassign="handleUnassign"
             @view="openStudentDialog"
+            @view-competencies="openStudentCompetencies"
           />
         </q-tab-panel>
 
@@ -68,6 +69,7 @@
             @assign="handleAssign"
             @unassign="handleUnassign"
             @view="openStudentDialog"
+            @view-competencies="openStudentCompetencies"
           />
         </q-tab-panel>
       </q-tab-panels>
@@ -92,6 +94,7 @@ import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
 const activeTab = ref<'my' | 'all'>('my');
 const searchTerm = ref('');
@@ -113,6 +116,7 @@ const {
 const { userId } = useAuth();
 const $q = useQuasar();
 const { t } = useI18n();
+const router = useRouter();
 
 const currentEducatorId = computed(() => {
   const id = userId.value;
@@ -198,6 +202,10 @@ async function refreshUsers(): Promise<void> {
   } else {
     $q.notify({ type: 'positive', message: t('educator.refreshSuccess'), position: 'top' });
   }
+}
+
+async function openStudentCompetencies(studentId: string): Promise<void> {
+  await router.push({ name: 'user-competencies', params: { userId: studentId } });
 }
 
 function updateUserInState(updated: User | null): void {

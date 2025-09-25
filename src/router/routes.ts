@@ -32,10 +32,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/ProfilePage.vue'),
       },
       {
-        path: 'competencies',
-        name: 'competencies',
+        path: 'me/competencies',
+        name: 'my-competencies',
         component: () => import('pages/CompetenciesPage.vue'),
-        meta: { roles: ['Student', 'Parent'] },
+        meta: { roles: ['Student'] },
+      },
+      {
+        path: 'competency/:userId',
+        name: 'user-competencies',
+        component: () => import('pages/CompetenciesPage.vue'),
+        meta: { roles: ['Educator', 'Parent'] },
       },
       {
         path: 'assessments',

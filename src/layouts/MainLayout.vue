@@ -65,14 +65,16 @@
         />
 
         <!-- Role-specific menu items -->
-        <template v-if="hasAnyRole(['Student', 'Parent'])">
+        <template v-if="hasRole('Student')">
           <essential-link
             title="My Competencies"
             caption="Track your learning progress"
             icon="psychology"
-            link="/competencies"
+            link="/me/competencies"
           />
+        </template>
 
+        <template v-if="hasAnyRole(['Student', 'Parent'])">
           <essential-link
             title="Assessments"
             caption="View and take assessments"

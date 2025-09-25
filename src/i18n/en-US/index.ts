@@ -90,6 +90,7 @@ export default {
     assignSuccess: 'Student added to your list.',
     unassignSuccess: 'Student removed from your list.',
     refreshSuccess: 'Student list refreshed.',
+    viewCompetencies: 'View competencies',
     assignError: 'Could not assign the student. Please try again.',
     unassignError: 'Could not remove the student. Please try again.',
     assignParent: 'Assign Parent',
@@ -181,6 +182,7 @@ export default {
     emptyState: 'No competencies in this domain yet.',
     noDescription: 'No description provided.',
     searchPlaceholder: 'Search competencies...',
+    viewingFor: 'Viewing competencies for {name}',
     summary: {
       total: 'Total sub-competencies',
       validated: 'Validated',
