@@ -40,6 +40,24 @@ vi.mock('aws-amplify/data', () => ({
         update: vi.fn(),
         delete: vi.fn(),
       },
+      TeachingAssignment: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      ParentLink: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      StudentSubCompetencyProgress: {
+        create: vi.fn(),
+        update: vi.fn(),
+      },
     },
   })),
 }));
@@ -81,9 +99,27 @@ interface MockAmplifyClient {
       update: ReturnType<typeof vi.fn>;
       delete: ReturnType<typeof vi.fn>;
     };
+    TeachingAssignment: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+    ParentLink: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+    StudentSubCompetencyProgress: {
+      create: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+    };
   };
 }
-
+// eslint-disable-next-line max-lines-per-function
 describe('GraphQLClient', () => {
   let graphQLClient: GraphQLClient;
   let mockAmplifyClient: MockAmplifyClient;
@@ -337,6 +373,374 @@ describe('GraphQLClient', () => {
           `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
         );
       });
+    });
+  });
+
+  describe('StudentSubCompetencyProgress operations', () => {
+    const mockProgress = {
+      id: 'progress-1',
+      studentId: 'student-1',
+      subCompetencyId: 'sub-1',
+      status: 'InProgress',
+      percent: 50,
+      lockOverride: 'Unlocked',
+      recommended: false,
+    };
+
+    describe('createStudentProgress', () => {
+      it('should return created progress when successful', async () => {
+        // Arrange
+        mockAmplifyClient.models.StudentSubCompetencyProgress.create.mockResolvedValue({
+          data: mockProgress,
+          errors: null,
+        });
+
+        // Act
+        const result = await graphQLClient.createStudentProgress({
+          studentId: mockProgress.studentId,
+          subCompetencyId: mockProgress.subCompetencyId,
+        });
+
+        // Assert
+        expect(mockAmplifyClient.models.StudentSubCompetencyProgress.create).toHaveBeenCalledWith(
+          { studentId: mockProgress.studentId, subCompetencyId: mockProgress.subCompetencyId },
+          { authMode: 'userPool' },
+        );
+        expect(result).toEqual(mockProgress);
+      });
+
+      it('should throw when GraphQL reports errors', async () => {
+        // Arrange
+        const graphQLErrors = [{ message: 'Denied' }];
+        mockAmplifyClient.models.StudentSubCompetencyProgress.create.mockResolvedValue({
+          data: null,
+          errors: graphQLErrors,
+        });
+
+        // Act & Assert
+        await expect(
+          graphQLClient.createStudentProgress({
+            studentId: mockProgress.studentId,
+            subCompetencyId: mockProgress.subCompetencyId,
+          }),
+        ).rejects.toThrow(`GraphQL errors: ${JSON.stringify(graphQLErrors)}`);
+      });
+
+      it('should propagate network errors', async () => {
+        // Arrange
+        const networkError = new Error('Network down');
+        mockAmplifyClient.models.StudentSubCompetencyProgress.create.mockRejectedValue(
+          networkError,
+        );
+
+        // Act & Assert
+        await expect(
+          graphQLClient.createStudentProgress({
+            studentId: mockProgress.studentId,
+            subCompetencyId: mockProgress.subCompetencyId,
+          }),
+        ).rejects.toThrow('Network down');
+      });
+    });
+
+    describe('updateStudentProgress', () => {
+      it('should return updated progress on success', async () => {
+        // Arrange
+        mockAmplifyClient.models.StudentSubCompetencyProgress.update.mockResolvedValue({
+          data: mockProgress,
+          errors: null,
+        });
+
+        // Act
+        const result = await graphQLClient.updateStudentProgress({
+          id: mockProgress.id,
+          status: 'Validated',
+        });
+
+        // Assert
+        expect(mockAmplifyClient.models.StudentSubCompetencyProgress.update).toHaveBeenCalledWith(
+          { id: mockProgress.id, status: 'Validated' },
+          { authMode: 'userPool' },
+        );
+        expect(result).toEqual(mockProgress);
+      });
+
+      it('should throw when GraphQL returns errors', async () => {
+        // Arrange
+        const graphQLErrors = [{ message: 'Update denied' }];
+        mockAmplifyClient.models.StudentSubCompetencyProgress.update.mockResolvedValue({
+          data: null,
+          errors: graphQLErrors,
+        });
+
+        // Act & Assert
+        await expect(
+          graphQLClient.updateStudentProgress({ id: mockProgress.id, status: 'Validated' }),
+        ).rejects.toThrow(`GraphQL errors: ${JSON.stringify(graphQLErrors)}`);
+      });
+
+      it('should propagate network errors while updating', async () => {
+        // Arrange
+        const networkError = new Error('Network error');
+        mockAmplifyClient.models.StudentSubCompetencyProgress.update.mockRejectedValue(
+          networkError,
+        );
+
+        // Act & Assert
+        await expect(
+          graphQLClient.updateStudentProgress({ id: mockProgress.id, status: 'Validated' }),
+        ).rejects.toThrow('Network error');
+      });
+    });
+  });
+
+  describe('Domain operations', () => {
+    const mockDomain = { id: 'domain-1', name: 'Mathematics' };
+
+    it('creates a domain', async () => {
+      mockAmplifyClient.models.Domain.create.mockResolvedValue({ data: mockDomain, errors: null });
+
+      const result = await graphQLClient.createDomain({ name: mockDomain.name });
+
+      expect(mockAmplifyClient.models.Domain.create).toHaveBeenCalledWith(
+        { name: mockDomain.name },
+        { authMode: 'userPool' },
+      );
+      expect(result).toEqual(mockDomain);
+    });
+
+    it('throws when createDomain reports errors', async () => {
+      const graphQLErrors = [{ message: 'Denied' }];
+      mockAmplifyClient.models.Domain.create.mockResolvedValue({
+        data: null,
+        errors: graphQLErrors,
+      });
+
+      await expect(graphQLClient.createDomain({ name: 'Invalid' })).rejects.toThrow(
+        `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
+      );
+    });
+
+    it('updates, deletes and lists domains', async () => {
+      mockAmplifyClient.models.Domain.update.mockResolvedValue({ data: mockDomain, errors: null });
+      mockAmplifyClient.models.Domain.delete.mockResolvedValue({ data: mockDomain, errors: null });
+      mockAmplifyClient.models.Domain.list.mockResolvedValue({ data: [mockDomain], errors: null });
+
+      await expect(
+        graphQLClient.updateDomain({ id: 'domain-1', name: 'Updated' }),
+      ).resolves.toEqual(mockDomain);
+      await expect(graphQLClient.deleteDomain('domain-1')).resolves.toEqual(mockDomain);
+      const listed = await graphQLClient.listDomains();
+      expect(listed).toEqual([mockDomain]);
+    });
+
+    it('gets domains with hierarchies', async () => {
+      mockAmplifyClient.models.Domain.get.mockResolvedValue({ data: mockDomain, errors: null });
+
+      await graphQLClient.getDomain('domain-1');
+      expect(mockAmplifyClient.models.Domain.get).toHaveBeenCalledWith(
+        { id: 'domain-1' },
+        { authMode: 'userPool' },
+      );
+
+      await graphQLClient.getDomainWithHierarchy('domain-1');
+      expect(mockAmplifyClient.models.Domain.get).toHaveBeenLastCalledWith(
+        { id: 'domain-1' },
+        expect.objectContaining({
+          authMode: 'userPool',
+          selectionSet: expect.arrayContaining(['competencies.*']),
+        }),
+      );
+    });
+  });
+
+  describe('Competency operations', () => {
+    const mockCompetency = { id: 'comp-1', name: 'Fractions' };
+
+    it('handles CRUD for competencies', async () => {
+      mockAmplifyClient.models.Competency.create.mockResolvedValue({
+        data: mockCompetency,
+        errors: null,
+      });
+      mockAmplifyClient.models.Competency.update.mockResolvedValue({
+        data: mockCompetency,
+        errors: null,
+      });
+      mockAmplifyClient.models.Competency.delete.mockResolvedValue({
+        data: mockCompetency,
+        errors: null,
+      });
+      mockAmplifyClient.models.Competency.get.mockResolvedValue({
+        data: mockCompetency,
+        errors: null,
+      });
+      mockAmplifyClient.models.Competency.list.mockResolvedValue({
+        data: [mockCompetency],
+        errors: null,
+      });
+
+      await expect(
+        graphQLClient.createCompetency({ name: 'Fractions', domainId: 'domain-1' }),
+      ).resolves.toEqual(mockCompetency);
+      await expect(
+        graphQLClient.updateCompetency({ id: 'comp-1', name: 'Updated' }),
+      ).resolves.toEqual(mockCompetency);
+      await expect(graphQLClient.deleteCompetency('comp-1')).resolves.toEqual(mockCompetency);
+      await expect(graphQLClient.getCompetency('comp-1')).resolves.toEqual(mockCompetency);
+      const listed = await graphQLClient.listCompetencies();
+      expect(listed).toEqual([mockCompetency]);
+    });
+
+    it('gets competency with details', async () => {
+      mockAmplifyClient.models.Competency.get.mockResolvedValue({
+        data: mockCompetency,
+        errors: null,
+      });
+      await graphQLClient.getCompetencyWithDetails('comp-1');
+      expect(mockAmplifyClient.models.Competency.get).toHaveBeenCalledWith(
+        { id: 'comp-1' },
+        expect.objectContaining({ selectionSet: expect.arrayContaining(['subCompetencies.*']) }),
+      );
+    });
+  });
+
+  describe('SubCompetency operations', () => {
+    const mockSub = { id: 'sub-1', name: 'Identify fractions' };
+
+    it('handles CRUD for sub-competencies', async () => {
+      mockAmplifyClient.models.SubCompetency.create.mockResolvedValue({
+        data: mockSub,
+        errors: null,
+      });
+      mockAmplifyClient.models.SubCompetency.update.mockResolvedValue({
+        data: mockSub,
+        errors: null,
+      });
+      mockAmplifyClient.models.SubCompetency.delete.mockResolvedValue({
+        data: mockSub,
+        errors: null,
+      });
+      mockAmplifyClient.models.SubCompetency.get.mockResolvedValue({ data: mockSub, errors: null });
+      mockAmplifyClient.models.SubCompetency.list.mockResolvedValue({
+        data: [mockSub],
+        errors: null,
+      });
+
+      await expect(
+        graphQLClient.createSubCompetency({ competencyId: 'comp-1', name: 'Identify' }),
+      ).resolves.toEqual(mockSub);
+      await expect(
+        graphQLClient.updateSubCompetency({ id: 'sub-1', name: 'Updated' }),
+      ).resolves.toEqual(mockSub);
+      await expect(graphQLClient.deleteSubCompetency('sub-1')).resolves.toEqual(mockSub);
+      await expect(graphQLClient.getSubCompetency('sub-1')).resolves.toEqual(mockSub);
+      const listed = await graphQLClient.listSubCompetencies();
+      expect(listed).toEqual([mockSub]);
+    });
+
+    it('gets sub-competency with details', async () => {
+      mockAmplifyClient.models.SubCompetency.get.mockResolvedValue({ data: mockSub, errors: null });
+      await graphQLClient.getSubCompetencyWithDetails('sub-1');
+      expect(mockAmplifyClient.models.SubCompetency.get).toHaveBeenCalledWith(
+        { id: 'sub-1' },
+        expect.objectContaining({ selectionSet: expect.arrayContaining(['studentProgress.*']) }),
+      );
+    });
+  });
+
+  describe('Resource operations', () => {
+    const mockResource = { id: 'res-1', name: 'Worksheet', personUserId: 'user-1' };
+
+    it('creates and updates resources removing falsy personUserId', async () => {
+      mockAmplifyClient.models.Resource.create.mockResolvedValue({
+        data: mockResource,
+        errors: null,
+      });
+      mockAmplifyClient.models.Resource.update.mockResolvedValue({
+        data: mockResource,
+        errors: null,
+      });
+
+      await graphQLClient.createResource({
+        id: 'res-1',
+        subCompetencyId: 'sub-1',
+        name: 'Worksheet',
+      });
+      expect(mockAmplifyClient.models.Resource.create).toHaveBeenCalledWith(
+        { id: 'res-1', subCompetencyId: 'sub-1', name: 'Worksheet' },
+        { authMode: 'userPool' },
+      );
+
+      await graphQLClient.updateResource({ id: 'res-1', name: 'Updated' });
+      expect(mockAmplifyClient.models.Resource.update).toHaveBeenCalledWith(
+        { id: 'res-1', name: 'Updated' },
+        { authMode: 'userPool' },
+      );
+    });
+
+    it('handles delete/get/list resource', async () => {
+      mockAmplifyClient.models.Resource.delete.mockResolvedValue({
+        data: mockResource,
+        errors: null,
+      });
+      mockAmplifyClient.models.Resource.get.mockResolvedValue({ data: mockResource, errors: null });
+      mockAmplifyClient.models.Resource.list.mockResolvedValue({
+        data: [mockResource],
+        errors: null,
+      });
+
+      await expect(graphQLClient.deleteResource('res-1')).resolves.toEqual(mockResource);
+      await expect(graphQLClient.getResource('res-1')).resolves.toEqual(mockResource);
+      await expect(graphQLClient.listResources()).resolves.toEqual([mockResource]);
+    });
+  });
+
+  describe('Teaching assignments and parent links', () => {
+    const mockAssignment = { id: 'assign-1' };
+    const mockLink = { id: 'link-1' };
+
+    it('handles teaching assignment CRUD', async () => {
+      mockAmplifyClient.models.TeachingAssignment.list.mockResolvedValue({
+        data: [mockAssignment],
+        errors: null,
+      });
+      mockAmplifyClient.models.TeachingAssignment.create.mockResolvedValue({
+        data: mockAssignment,
+        errors: null,
+      });
+      mockAmplifyClient.models.TeachingAssignment.delete.mockResolvedValue({
+        data: mockAssignment,
+        errors: null,
+      });
+
+      await expect(graphQLClient.listTeachingAssignments()).resolves.toEqual([mockAssignment]);
+      await expect(
+        graphQLClient.createTeachingAssignment({ studentId: 's', educatorId: 'e' }),
+      ).resolves.toEqual(mockAssignment);
+      await expect(graphQLClient.deleteTeachingAssignment('assign-1')).resolves.toEqual(
+        mockAssignment,
+      );
+    });
+
+    it('handles parent link CRUD', async () => {
+      mockAmplifyClient.models.ParentLink.list.mockResolvedValue({
+        data: [mockLink],
+        errors: null,
+      });
+      mockAmplifyClient.models.ParentLink.create.mockResolvedValue({
+        data: mockLink,
+        errors: null,
+      });
+      mockAmplifyClient.models.ParentLink.delete.mockResolvedValue({
+        data: mockLink,
+        errors: null,
+      });
+
+      await expect(graphQLClient.listParentLinks()).resolves.toEqual([mockLink]);
+      await expect(
+        graphQLClient.createParentLink({ studentId: 's', parentId: 'p' }),
+      ).resolves.toEqual(mockLink);
+      await expect(graphQLClient.deleteParentLink('link-1')).resolves.toEqual(mockLink);
     });
   });
 

@@ -84,6 +84,14 @@ describe('CompetencyRepository', () => {
     expect(result.subCompetencies).toHaveLength(1);
   });
 
+  it('throws when create returns null', async () => {
+    mockGraphQLClient.createCompetency.mockResolvedValue(null);
+
+    await expect(repository.create({ domainId: 'domain-1', name: 'Invalid' })).rejects.toThrow(
+      'Failed to create competency',
+    );
+  });
+
   it('retrieves competency by id without details', async () => {
     mockGraphQLClient.getCompetency.mockResolvedValue(rawCompetency);
 
@@ -122,6 +130,15 @@ describe('CompetencyRepository', () => {
     expect(result).toHaveLength(1);
   });
 
+  it('filters out null entries when listing competencies', async () => {
+    mockGraphQLClient.listCompetencies.mockResolvedValue([rawCompetency, null]);
+
+    const result = await repository.findAll();
+
+    expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith(undefined);
+    expect(result).toHaveLength(1);
+  });
+
   it('updates a competency', async () => {
     mockGraphQLClient.updateCompetency.mockResolvedValue({
       ...rawCompetency,
@@ -137,6 +154,14 @@ describe('CompetencyRepository', () => {
     expect(result.description).toBe('Updated description');
   });
 
+  it('throws when update returns null', async () => {
+    mockGraphQLClient.updateCompetency.mockResolvedValue(null);
+
+    await expect(repository.update('comp-1', { name: 'Updated' })).rejects.toThrow(
+      'Failed to update competency comp-1',
+    );
+  });
+
   it('deletes a competency', async () => {
     mockGraphQLClient.deleteCompetency.mockResolvedValue(rawCompetency);
 
@@ -144,6 +169,12 @@ describe('CompetencyRepository', () => {
 
     expect(mockGraphQLClient.deleteCompetency).toHaveBeenCalledWith('comp-1');
     expect(result.id).toBe('comp-1');
+  });
+
+  it('throws when delete returns null', async () => {
+    mockGraphQLClient.deleteCompetency.mockResolvedValue(null);
+
+    await expect(repository.delete('comp-1')).rejects.toThrow('Failed to delete competency comp-1');
   });
 
   it('finds competencies by domain', async () => {
@@ -155,5 +186,17 @@ describe('CompetencyRepository', () => {
       domainId: { eq: 'domain-1' },
     });
     expect(result[0]?.domainId).toBe('domain-1');
+  });
+
+  it('searches competencies by name within a domain', async () => {
+    mockGraphQLClient.listCompetencies.mockResolvedValue([rawCompetency]);
+
+    const result = await repository.searchByName('domain-1', 'Foundations');
+
+    expect(mockGraphQLClient.listCompetencies).toHaveBeenCalledWith({
+      domainId: { eq: 'domain-1' },
+      name: { contains: 'Foundations' },
+    });
+    expect(result).toHaveLength(1);
   });
 });

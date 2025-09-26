@@ -301,4 +301,132 @@ describe('UserRepository', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('relationship management', () => {
+    const educator = User.create({
+      ...validUserData,
+      id: 'educator-1',
+      role: UserRole.EDUCATOR,
+      email: 'educator@example.com',
+      name: 'Educator One',
+    });
+    const student = User.create({
+      ...validUserData,
+      id: 'student-1',
+      role: UserRole.STUDENT,
+      email: 'student@example.com',
+      name: 'Student One',
+    });
+    const parent = User.create({
+      ...validUserData,
+      id: 'parent-1',
+      role: UserRole.PARENT,
+      email: 'parent@example.com',
+      name: 'Parent One',
+    });
+
+    it('links educator to student when no assignment exists', async () => {
+      // Arrange
+      mockGraphQLClient.listTeachingAssignments.mockResolvedValue([]);
+      mockGraphQLClient.createTeachingAssignment.mockResolvedValue({});
+      const findByIdSpy = vi
+        .spyOn(userRepository, 'findById')
+        .mockResolvedValueOnce(student)
+        .mockResolvedValueOnce(educator);
+
+      // Act
+      const result = await userRepository.linkEducatorToStudent('student-1', 'educator-1');
+
+      // Assert
+      expect(mockGraphQLClient.createTeachingAssignment).toHaveBeenCalledWith({
+        studentId: 'student-1',
+        educatorId: 'educator-1',
+      });
+      expect(findByIdSpy).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({ student, educator });
+
+      findByIdSpy.mockRestore();
+    });
+
+    it('does not duplicate educator assignment when link exists', async () => {
+      // Arrange
+      mockGraphQLClient.listTeachingAssignments.mockResolvedValue([{ id: 'assignment-1' }]);
+      const findByIdSpy = vi
+        .spyOn(userRepository, 'findById')
+        .mockResolvedValueOnce(student)
+        .mockResolvedValueOnce(educator);
+
+      // Act
+      await userRepository.linkEducatorToStudent('student-1', 'educator-1');
+
+      // Assert
+      expect(mockGraphQLClient.createTeachingAssignment).not.toHaveBeenCalled();
+      expect(findByIdSpy).toHaveBeenCalledTimes(2);
+
+      findByIdSpy.mockRestore();
+    });
+
+    it('unlinks educator from student and refreshes users', async () => {
+      // Arrange
+      mockGraphQLClient.listTeachingAssignments.mockResolvedValue([{ id: 'assignment-1' }]);
+      mockGraphQLClient.deleteTeachingAssignment.mockResolvedValue({});
+      const findByIdSpy = vi
+        .spyOn(userRepository, 'findById')
+        .mockResolvedValueOnce(student)
+        .mockResolvedValueOnce(educator);
+
+      // Act
+      const result = await userRepository.unlinkEducatorFromStudent('student-1', 'educator-1');
+
+      // Assert
+      expect(mockGraphQLClient.deleteTeachingAssignment).toHaveBeenCalledWith('assignment-1');
+      expect(findByIdSpy).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({ student, educator });
+
+      findByIdSpy.mockRestore();
+    });
+
+    it('links parent to student when no link exists', async () => {
+      // Arrange
+      mockGraphQLClient.listParentLinks.mockResolvedValue([]);
+      mockGraphQLClient.createParentLink.mockResolvedValue({});
+      const findByIdSpy = vi
+        .spyOn(userRepository, 'findById')
+        .mockResolvedValueOnce(student)
+        .mockResolvedValueOnce(parent);
+
+      // Act
+      const result = await userRepository.linkParentToStudent('student-1', 'parent-1');
+
+      // Assert
+      expect(mockGraphQLClient.createParentLink).toHaveBeenCalledWith({
+        studentId: 'student-1',
+        parentId: 'parent-1',
+      });
+      expect(result).toEqual({ student, parent });
+
+      findByIdSpy.mockRestore();
+    });
+
+    it('unlinks parent from student removing all links', async () => {
+      // Arrange
+      mockGraphQLClient.listParentLinks.mockResolvedValue([{ id: 'link-1' }, { id: 'link-2' }]);
+      mockGraphQLClient.deleteParentLink.mockResolvedValue({});
+      const findByIdSpy = vi
+        .spyOn(userRepository, 'findById')
+        .mockResolvedValueOnce(student)
+        .mockResolvedValueOnce(parent);
+
+      // Act
+      const result = await userRepository.unlinkParentFromStudent('student-1', 'parent-1');
+
+      // Assert
+      expect(mockGraphQLClient.deleteParentLink).toHaveBeenCalledTimes(2);
+      expect(mockGraphQLClient.deleteParentLink).toHaveBeenCalledWith('link-1');
+      expect(mockGraphQLClient.deleteParentLink).toHaveBeenCalledWith('link-2');
+      expect(result).toEqual({ student, parent });
+
+      findByIdSpy.mockRestore();
+    });
+  });
 });
