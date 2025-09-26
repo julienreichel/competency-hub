@@ -283,11 +283,18 @@ export default {
     lockAction: 'Lock',
     validateAction: 'Validate',
     pendingValidationAction: 'I think I acquired this',
+    progressSteps: {
+      remember: 'I can remember',
+      explain: 'I understand and can explain',
+      apply: 'I can apply this',
+      master: 'I acquired this',
+    },
     unlockSuccess: 'Student access unlocked.',
     recommendSuccess: 'Sub-competency recommended to the selected students.',
     lockSuccess: 'Student access locked.',
     validateSuccess: 'Student marked as validated.',
     pendingValidationSuccess: 'Request sent for validation.',
+    progressStepSuccess: 'Progress updated.',
     progressUpdateError: 'Could not update student progress. Please try again.',
   },
 

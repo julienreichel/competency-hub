@@ -26,21 +26,25 @@
     </template>
 
     <div
-      v-if="
-        isStudent &&
-        studentProgress &&
-        studentProgress.status === 'InProgress' &&
-        studentProgress.lockOverride !== 'Locked'
-      "
+      v-if="isStudent && studentProgress && studentProgress.lockOverride !== 'Locked'"
       class="q-mt-md"
     >
-      <q-btn
-        color="primary"
-        :loading="studentProgressUpdating"
-        :disable="studentProgressUpdating"
-        :label="t('subCompetencies.pendingValidationAction')"
-        @click="submitPendingValidation"
-      />
+      <div class="row q-col-gutter-sm">
+        <div
+          v-for="step in visibleProgressSteps"
+          :key="step.percent"
+          class="col-12 col-sm-6 col-md-3"
+        >
+          <q-btn
+            :label="step.label"
+            :color="step.color"
+            class="full-width"
+            :disable="studentProgressUpdating || !step.enabled"
+            :loading="studentProgressUpdating && pendingPercent === step.percent"
+            @click="handleProgressStep(step)"
+          />
+        </div>
+      </div>
     </div>
 
     <template v-if="hasRole('Educator')">
@@ -131,6 +135,11 @@ const students = ref<User[]>([]);
 const studentActionsLoading = ref(false);
 const studentProgressUpdating = ref(false);
 const resources = ref<CompetencyResource[]>([]);
+const pendingPercent = ref<number | null>(null);
+const REMEMBER_PROGRESS_PERCENT = 25;
+const EXPLAIN_PROGRESS_PERCENT = 50;
+const APPLY_PROGRESS_PERCENT = 75;
+const FINAL_PROGRESS_PERCENT = 100;
 
 const studentsLoading = computed(() => loading.value || studentActionsLoading.value);
 const isStudent = computed(() => currentUser.value?.role === UserRole.STUDENT);
@@ -141,6 +150,50 @@ const studentProgress = computed<StudentSubCompetencyProgress | null>(() => {
       (progress) => progress.subCompetencyId === sub.value?.id,
     ) ?? null
   );
+});
+
+interface ProgressStep {
+  percent: number;
+  label: string;
+  color: string;
+}
+
+type ProgressButton = ProgressStep & { enabled: boolean };
+
+const progressStepDefinitions = computed<ProgressStep[]>(() => [
+  {
+    percent: REMEMBER_PROGRESS_PERCENT,
+    label: t('subCompetencies.progressSteps.remember'),
+    color: 'info',
+  },
+  {
+    percent: EXPLAIN_PROGRESS_PERCENT,
+    label: t('subCompetencies.progressSteps.explain'),
+    color: 'primary',
+  },
+  {
+    percent: APPLY_PROGRESS_PERCENT,
+    label: t('subCompetencies.progressSteps.apply'),
+    color: 'accent',
+  },
+  {
+    percent: FINAL_PROGRESS_PERCENT,
+    label: t('subCompetencies.progressSteps.master'),
+    color: 'positive',
+  },
+]);
+
+const visibleProgressSteps = computed<ProgressButton[]>(() => {
+  const progress = studentProgress.value;
+  if (!progress) return [];
+  const currentPercent = typeof progress.percent === 'number' ? progress.percent : 0;
+  const steps = progressStepDefinitions.value;
+  const nextIndex = steps.findIndex((step) => step.percent > currentPercent);
+  if (nextIndex === -1 || progress.status === 'PendingValidation') {
+    return [];
+  }
+  const nextStep = steps[nextIndex];
+  return [{ ...nextStep, enabled: true }] as ProgressButton[];
 });
 
 onMounted(async () => {
@@ -249,24 +302,46 @@ async function autoAdvanceStudentProgress(): Promise<void> {
   }
 }
 
-async function submitPendingValidation(): Promise<void> {
-  if (!isStudent.value || studentProgressUpdating.value || !currentUser.value) return;
-  const progress = studentProgress.value;
-  if (!progress || progress.lockOverride === 'Locked' || progress.status !== 'InProgress') {
+async function handleProgressStep(step: ProgressButton): Promise<void> {
+  if (
+    !isStudent.value ||
+    studentProgressUpdating.value ||
+    !currentUser.value ||
+    !studentProgress.value
+  ) {
     return;
   }
+  console.log('step', step);
 
+  const progress = studentProgress.value;
+  if (progress.lockOverride === 'Locked') return;
+
+  pendingPercent.value = step.percent;
   studentProgressUpdating.value = true;
   try {
-    const updated = await StudentProgressRepository.updateProgress(progress.id, {
-      status: 'PendingValidation',
-    });
+    const updates: StudentSubCompetencyProgressUpdate = {
+      percent: step.percent,
+    };
+    if (step.percent === FINAL_PROGRESS_PERCENT) {
+      updates.status = 'PendingValidation';
+    } else if (progress.status !== 'InProgress') {
+      updates.status = 'InProgress';
+    }
+    console.log('updates', updates);
+
+    const updated = await StudentProgressRepository.updateProgress(progress.id, updates);
     updateLocalProgressCache(currentUser.value, updated);
-    $q.notify({ type: 'positive', message: t('subCompetencies.pendingValidationSuccess') });
+
+    if (step.percent === FINAL_PROGRESS_PERCENT) {
+      $q.notify({ type: 'positive', message: t('subCompetencies.pendingValidationSuccess') });
+    } else {
+      $q.notify({ type: 'positive', message: t('subCompetencies.progressStepSuccess') });
+    }
   } catch (error) {
-    console.error('Failed to request validation', error);
+    console.error('Failed to update student progress step', error);
     $q.notify({ type: 'negative', message: t('subCompetencies.progressUpdateError') });
   } finally {
+    pendingPercent.value = null;
     studentProgressUpdating.value = false;
   }
 }
