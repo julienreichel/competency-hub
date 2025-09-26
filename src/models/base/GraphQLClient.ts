@@ -39,28 +39,6 @@ export class GraphQLClient {
   });
 
   /**
-   * Create a new User record
-   * @param data - The user data to create
-   * @returns Promise with the created record
-   */
-  async createUser(
-    data: { id: string; email: string } & Record<string, unknown>,
-  ): Promise<Schema['User']['type'] | null> {
-    try {
-      const result = await this.client.models.User.create(data, {
-        authMode: 'userPool',
-      });
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data;
-    } catch (error) {
-      console.error('Error creating User:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Get a User record by ID
    * @param id - The record ID
    * @returns Promise with the record or null

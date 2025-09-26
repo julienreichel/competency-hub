@@ -6,7 +6,6 @@ import { User, UserRole } from '../../src/models/User';
 // Mock the GraphQL client
 vi.mock('../../src/models/base/GraphQLClient', () => ({
   graphQLClient: {
-    createUser: vi.fn(),
     getUser: vi.fn(),
     getUserWithRelations: vi.fn(),
     listUsers: vi.fn(),
@@ -25,7 +24,6 @@ vi.mock('../../src/models/base/GraphQLClient', () => ({
 describe('UserRepository', () => {
   let userRepository: UserRepository;
   const mockGraphQLClient = graphQLClient as unknown as {
-    createUser: ReturnType<typeof vi.fn>;
     getUser: ReturnType<typeof vi.fn>;
     getUserWithRelations: ReturnType<typeof vi.fn>;
     listUsers: ReturnType<typeof vi.fn>;
@@ -51,41 +49,11 @@ describe('UserRepository', () => {
     updatedAt: '2023-01-01T00:00:00Z',
   };
 
-  const createUserData = {
-    id: 'user-2',
-    name: 'Jane Doe',
-    role: UserRole.EDUCATOR,
-    email: 'jane@example.com',
-    avatar: 'avatar-url-2',
-    contactInfo: 'contact-info-2',
-  };
-
   beforeEach(() => {
     userRepository = new UserRepository();
     vi.clearAllMocks();
     mockGraphQLClient.listTeachingAssignments.mockResolvedValue([]);
     mockGraphQLClient.listParentLinks.mockResolvedValue([]);
-  });
-
-  describe('create', () => {
-    it('should create a new user and return User instance', async () => {
-      mockGraphQLClient.createUser.mockResolvedValue(validUserData);
-
-      const result = await userRepository.create(createUserData);
-
-      expect(mockGraphQLClient.createUser).toHaveBeenCalledWith(createUserData);
-      expect(result).toBeInstanceOf(User);
-      expect(result.id).toBe('user-1');
-      expect(result.name).toBe('John Doe');
-    });
-
-    it('should handle GraphQL client errors', async () => {
-      const error = new Error('GraphQL error');
-      mockGraphQLClient.createUser.mockRejectedValue(error);
-
-      await expect(userRepository.create(createUserData)).rejects.toThrow('GraphQL error');
-      expect(mockGraphQLClient.createUser).toHaveBeenCalledWith(createUserData);
-    });
   });
 
   describe('findById', () => {
@@ -248,11 +216,6 @@ describe('UserRepository', () => {
 
   describe('repository integration', () => {
     it('should handle all CRUD operations in sequence', async () => {
-      // Create
-      mockGraphQLClient.createUser.mockResolvedValue(validUserData);
-      const createdUser = await userRepository.create(createUserData);
-      expect(createdUser).toBeInstanceOf(User);
-
       // Read
       mockGraphQLClient.getUserWithRelations.mockResolvedValue(validUserData);
       const foundUser = await userRepository.findById('user-1');

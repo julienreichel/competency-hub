@@ -19,15 +19,21 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
   if (!id) {
     throw new Error('Missing required user attribute: sub (id)');
   }
-  await client.models.User.create({
-    email,
-    id,
-    name: `${userAttributes.given_name || ''} ${userAttributes.family_name || ''}`.trim() || email,
-    role: 'Unknown',
-    avatar: '',
-    picture: '',
-    contactInfo: '',
-    lastActive: new Date().toISOString(),
-  });
+  try {
+    await client.models.User.create({
+      email,
+      id,
+      name:
+        `${userAttributes.given_name || ''} ${userAttributes.family_name || ''}`.trim() || email,
+      role: 'Unknown',
+      avatar: '',
+      picture: '',
+      contactInfo: '',
+      owner: `${id}::${id}`,
+      lastActive: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.log(err);
+  }
   return event;
 };

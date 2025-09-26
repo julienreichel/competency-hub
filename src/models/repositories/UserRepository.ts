@@ -17,15 +17,10 @@ export class UserRepository
 
   /**
    * Create a new user
-   * @param data - User creation data
-   * @returns Promise with created User instance
    */
-  async create(data: CreateUserData): Promise<User> {
-    const rawUser = await graphQLClient.createUser(data);
-    if (!rawUser) {
-      throw new Error('Failed to create user');
-    }
-    return User.fromAmplify(rawUser);
+  async create(): Promise<User> {
+    await Promise.resolve();
+    throw new Error('Cannot create users, this must be done trough cognito registrations');
   }
 
   /**

@@ -227,12 +227,13 @@ async function handleAuthenticated(): Promise<void> {
       });
       return;
     }
-    // Update lastActive on login
-    await userRepository.update(user.id, { lastActive: new Date().toISOString() });
+
     // If user role is UNKNOWN, show role selection dialog
     if (user.role === UserRole.UNKNOWN) {
       showRoleSelection.value = true;
     } else {
+      // Update lastActive on login
+      await userRepository.update(user.id, { lastActive: new Date().toISOString() });
       redirectAfterLogin();
     }
   } catch {
@@ -251,23 +252,10 @@ async function handleRoleConfirm(): Promise<void> {
   if (!selectedRole.value) return;
   try {
     // Get user email and Cognito userId (sub) from auth composable
-    const email = userAttributes.value.email;
     const userId = String(userAttributes.value.sub);
-    if (!email || !userId) {
-      $q.notify({
-        type: 'negative',
-        message: 'No email or userId found in user attributes.',
-        position: 'top',
-      });
-      return;
-    }
-    // Fetch user by Cognito sub (id)
-    const user = await userRepository.findById(userId);
-    if (!user) {
-      throw new Error('User not found when assigning role.');
-    }
+
     // Update user role (use id as identifier)
-    await userRepository.update(user.id, {
+    await userRepository.update(userId, {
       role: selectedRole.value,
       lastActive: new Date().toISOString(),
     });

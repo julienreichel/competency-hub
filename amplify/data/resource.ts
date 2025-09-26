@@ -14,6 +14,7 @@ const schema = a
         picture: a.string(),
         contactInfo: a.string(),
         lastActive: a.string(),
+        owner: a.string().required(),
         educators: a.hasMany('TeachingAssignment', 'studentId'),
         students: a.hasMany('TeachingAssignment', 'educatorId'),
         parents: a.hasMany('ParentLink', 'studentId'),
