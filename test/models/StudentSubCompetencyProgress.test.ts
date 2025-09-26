@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   StudentSubCompetencyProgress,
-  type StudentSubCompetencyProgressInit,
   type AmplifyStudentSubCompetencyProgress,
+  type StudentSubCompetencyProgressInit,
 } from '../../src/models/StudentSubCompetencyProgress';
 import { User } from '../../src/models/User';
 
@@ -76,7 +76,7 @@ describe('StudentSubCompetencyProgress', () => {
           role: 'Student',
           email: 'alice@example.com',
         },
-      } as AmplifyStudentSubCompetencyProgress;
+      } as unknown as AmplifyStudentSubCompetencyProgress;
 
       const result = StudentSubCompetencyProgress.fromAmplify(raw);
 

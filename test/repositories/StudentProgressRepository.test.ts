@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { StudentProgressRepository } from '../../src/models/repositories/StudentProgressRepository';
 import { StudentSubCompetencyProgress } from '../../src/models/StudentSubCompetencyProgress';
-import { graphQLClient } from '../../src/models/base/GraphQLClient';
 
 type MockGraphQLClient = {
   createStudentProgress: ReturnType<typeof vi.fn>;
@@ -49,10 +49,10 @@ describe('StudentProgressRepository', () => {
         id: 'progress-1',
         studentId: mockProgress.studentId,
         subCompetencyId: mockProgress.subCompetencyId,
-        status: undefined,
-        percent: undefined,
-        lockOverride: undefined,
-        recommended: undefined,
+        status: 'NotStarted',
+        percent: 0,
+        lockOverride: 'Unlocked',
+        recommended: false,
         updatedAt: null,
       });
 
