@@ -71,6 +71,7 @@
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useUsers } from 'src/composables/useUsers';
 import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
@@ -87,6 +88,7 @@ const router = useRouter();
 const $q = useQuasar();
 const { t } = useI18n();
 const { hasRole } = useAuth();
+const { getCurrentUser } = useUsers();
 const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
 
 const domainId = route.params.domainId as string;
@@ -127,8 +129,14 @@ const filteredCompetencies = computed(() => {
 async function loadData(): Promise<void> {
   loading.value = true;
   try {
+    const user = await getCurrentUser();
+
     domain.value = await domainRepository.findById(domainId, true);
     competencies.value = domain.value?.competencies ?? [];
+    // Attach user progress to sub-competencies
+    if (user) {
+      competencies.value.forEach((c) => c.attachUserProgress(user));
+    }
 
     // Attach user progress to sub-competencies
   } catch (error) {

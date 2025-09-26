@@ -6,7 +6,7 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="row q-gutter-md q-mb-lg">
+    <div class="row q-col-gutter-md q-mb-lg">
       <div class="col-12 col-sm-6 col-lg-3">
         <q-card class="bg-blue-1">
           <q-card-section>
