@@ -74,14 +74,14 @@
           />
         </template>
 
-        <template v-if="hasAnyRole(['Student', 'Parent'])">
+        <!-- template v-if="hasAnyRole(['Student', 'Parent'])">
           <essential-link
             title="Assessments"
             caption="View and take assessments"
             icon="quiz"
             link="/assessments"
           />
-        </template>
+        </!-->
 
         <template v-if="hasRole('Student')">
           <essential-link
@@ -100,26 +100,26 @@
             link="/educator/students"
           />
 
-          <essential-link
+          <!--essential-link
             title="My Classes"
             caption="Manage your students"
             icon="school"
             link="/classes"
-          />
+          /-->
 
-          <essential-link
+          <!--essential-link
             title="Assessments"
             caption="Create and grade assessments"
             icon="assignment"
             link="/educator/assessments"
-          />
+          /-->
 
-          <essential-link
+          <!-- essential-link
             title="Reports"
             caption="Student progress reports"
             icon="assessment"
             link="/reports"
-          />
+          /-->
 
           <essential-link
             title="Domains"
@@ -184,7 +184,6 @@ const {
   handleSignOut: authSignOut,
   initAuth,
   hasRole,
-  hasAnyRole,
 } = useAuth();
 
 const leftDrawerOpen = ref(false);

@@ -234,24 +234,24 @@ function buildQuickActions(role: UserRole | undefined): QuickAction[] {
           icon: 'psychology',
           to: '/me/competencies',
         },
-        { label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/assessments' },
-        { label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
+        //{ label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/assessments' },
+        //{ label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
       ];
     case UserRole.PARENT:
       return [
         { label: t('dashboard.actions.viewChildren'), icon: 'family_restroom', to: '/children' },
-        { label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/assessments' },
-        { label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
+        //{ label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/assessments' },
+        //{ label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
       ];
     case UserRole.EDUCATOR:
       return [
         { label: t('dashboard.actions.manageStudents'), icon: 'groups', to: '/educator/students' },
-        {
+        /*{
           label: t('dashboard.actions.viewAssessments'),
           icon: 'assignment',
           to: '/educator/assessments',
         },
-        { label: t('dashboard.actions.viewReports'), icon: 'insights', to: '/reports' },
+        { label: t('dashboard.actions.viewReports'), icon: 'insights', to: '/reports' },*/
       ];
     case UserRole.ADMIN:
       return [
@@ -261,7 +261,7 @@ function buildQuickActions(role: UserRole | undefined): QuickAction[] {
           to: '/admin/users',
         },
         { label: t('dashboard.actions.manageDomains'), icon: 'category', to: '/domains' },
-        { label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
+        //{ label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
       ];
     default:
       return [];
