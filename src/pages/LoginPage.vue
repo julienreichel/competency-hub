@@ -115,6 +115,7 @@ let hubUnsubscribe: (() => void) | null = null;
 
 // Constants
 const REDIRECT_DELAY_MS = 500; // Small delay to prevent race conditions with router guards
+const USER_RETRY_DELAY_MS = 1000; // Wait time before retrying user fetch
 
 // Role selection state
 const showRoleSelection = ref(false);
@@ -208,8 +209,12 @@ async function handleAuthenticated(): Promise<void> {
   try {
     await initAuth();
 
-    // Fetch user from backend by Cognito sub (id)
-    const user = await getCurrentUser();
+    // Fetch user from backend by Cognito sub (id), retry once after 1s if not found
+    let user = await getCurrentUser();
+    if (!user) {
+      await new Promise((resolve) => setTimeout(resolve, USER_RETRY_DELAY_MS));
+      user = await getCurrentUser();
+    }
     if (!user) {
       $q.notify({
         type: 'negative',
@@ -246,6 +251,8 @@ async function handleRoleConfirm(): Promise<void> {
     await userRepository.addUserToGroup(userId, selectedRole.value);
     await userRepository.update(userId, { lastActive: new Date().toISOString() });
     await initAuth();
+    // make sure to reload the user now that the role has been updated
+    await getCurrentUser(false);
     showRoleSelection.value = false;
     redirectAfterLogin();
     $q.notify({

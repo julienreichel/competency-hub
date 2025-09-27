@@ -43,7 +43,10 @@ interface UseAuthReturn {
  */
 async function fetchUserAttributesWithGroups(): Promise<UserAttributes> {
   // Fetch user attributes and auth session for groups
-  const [attributes, authSession] = await Promise.all([fetchUserAttributes(), fetchAuthSession()]);
+  const [attributes, authSession] = await Promise.all([
+    fetchUserAttributes(),
+    fetchAuthSession({ forceRefresh: true }),
+  ]);
 
   // Extract groups from access token payload
   const groups = authSession.tokens?.accessToken?.payload['cognito:groups'] || [];

@@ -20,7 +20,7 @@ export function useUsers(): {
   error: typeof error;
   fetchUsers: () => Promise<User[]>;
   getUserById: (id: string) => Promise<User | null>;
-  getCurrentUser: () => Promise<User | null>;
+  getCurrentUser: (useCache?: boolean) => Promise<User | null>;
   addUserToGroup: (userId: string, groupName: string) => Promise<User | null>;
   updateUser: (id: string, data: UpdatableUserFields) => Promise<User | null>;
   assignEducatorToStudent: (
@@ -71,11 +71,11 @@ export function useUsers(): {
     }
   };
 
-  const getCurrentUser = async (): Promise<User | null> => {
+  const getCurrentUser = async (useCache = true): Promise<User | null> => {
     const { userAttributes } = useAuth();
     const userId = userAttributes.value.sub;
     if (!userId) return null;
-    if (currentUser && currentUser.id === userId) {
+    if (useCache && currentUser && currentUser.id === userId) {
       return currentUser;
     }
     currentUser = await userRepository.findById(userId);
