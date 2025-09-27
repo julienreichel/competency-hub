@@ -76,16 +76,6 @@
               </q-btn>
             </div>
           </q-card-section>
-
-          <q-card-actions align="right">
-            <q-btn flat label="Cancel" color="grey" @click="handleRoleCancel" />
-            <q-btn
-              label="Continue"
-              color="primary"
-              :disable="!selectedRole"
-              @click="handleRoleConfirm"
-            />
-          </q-card-actions>
         </q-card>
       </q-dialog>
     </div>
@@ -130,8 +120,9 @@ const REDIRECT_DELAY_MS = 500; // Small delay to prevent race conditions with ro
 const showRoleSelection = ref(false);
 
 const selectedRole = ref<UserRole | ''>('');
-function setSelectedRole(role: string): void {
+async function setSelectedRole(role: string): Promise<void> {
   selectedRole.value = role as UserRole;
+  await handleRoleConfirm();
 }
 
 // Available roles for new users
@@ -251,14 +242,10 @@ async function handleAuthenticated(): Promise<void> {
 async function handleRoleConfirm(): Promise<void> {
   if (!selectedRole.value) return;
   try {
-    // Get user email and Cognito userId (sub) from auth composable
     const userId = String(userAttributes.value.sub);
-
-    // Update user role (use id as identifier)
-    await userRepository.update(userId, {
-      role: selectedRole.value,
-      lastActive: new Date().toISOString(),
-    });
+    await userRepository.addUserToGroup(userId, selectedRole.value);
+    await userRepository.update(userId, { lastActive: new Date().toISOString() });
+    await initAuth();
     showRoleSelection.value = false;
     redirectAfterLogin();
     $q.notify({
@@ -274,17 +261,6 @@ async function handleRoleConfirm(): Promise<void> {
     });
   }
 }
-
-/**
- * Handle role selection cancellation
- */
-function handleRoleCancel(): void {
-  showRoleSelection.value = false;
-  // For now, assign default Student role
-  selectedRole.value = UserRole.STUDENT;
-  redirectAfterLogin();
-}
-
 /**
  * Initialize component
  */

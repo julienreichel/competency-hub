@@ -130,7 +130,7 @@ const schema = a
         groupName: a.string().required(),
       })
       .returns(a.json())
-      .authorization((allow) => [allow.group('Admin')])
+      .authorization((allow) => [allow.group('Admin'), allow.authenticated()])
       .handler(a.handler.function(addUserToGroupFn)),
   })
   .authorization((allow) => [allow.resource(postConfirmation), allow.resource(addUserToGroupFn)]);
