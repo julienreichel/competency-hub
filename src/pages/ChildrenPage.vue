@@ -11,7 +11,7 @@
     </div>
 
     <!-- Children Cards -->
-    <div class="row q-gutter-lg">
+    <div v-if="!isLoadingChildren" class="row q-gutter-lg">
       <div v-for="child in children" :key="child.id" class="col-12 col-md-6 col-lg-4">
         <child-card
           :child="child"
@@ -24,9 +24,13 @@
         />
       </div>
     </div>
+    <div v-else class="q-mt-xl text-center">
+      <q-spinner size="3em" color="primary" />
+      <div class="text-h6 q-mt-md text-grey-6">Loading children...</div>
+    </div>
 
     <!-- Empty State -->
-    <div v-if="children.length === 0" class="text-center q-mt-xl">
+    <div v-if="!isLoadingChildren && children.length === 0" class="text-center q-mt-xl">
       <q-icon name="family_restroom" size="4em" color="grey-5" />
       <div class="text-h6 q-mt-md text-grey-6">No children added yet</div>
       <div class="text-body2 text-grey-5">
@@ -209,22 +213,22 @@ function cloneChild(child: Child): Child {
   };
 }
 
-function cloneMockChildren(): Child[] {
-  return mockChildrenTemplate.map((child) => cloneChild(child));
-}
-
-const children = ref<Child[]>(cloneMockChildren());
+const children = ref<Child[]>([]);
+const isLoadingChildren = ref(true);
 
 async function loadChildren(): Promise<void> {
+  isLoadingChildren.value = true;
   const current = await getCurrentUser();
   if (!current) {
-    children.value = cloneMockChildren();
+    children.value = [];
+    isLoadingChildren.value = false;
     return;
   }
 
   const childUsers = Array.isArray(current.children) ? current.children : [];
   if (!childUsers.length) {
-    children.value = cloneMockChildren();
+    children.value = [];
+    isLoadingChildren.value = false;
     return;
   }
 
@@ -239,6 +243,7 @@ async function loadChildren(): Promise<void> {
       user: childUser,
     };
   });
+  isLoadingChildren.value = false;
 }
 
 onMounted(() => {
