@@ -55,8 +55,10 @@
     />
 
     <sub-competency-evaluation-manager
+      v-if="!isStudent || canShowStudentEvaluations"
       :sub-competency-id="subId"
       :initial-evaluations="sub?.evaluations ?? []"
+      :student-id="isStudent ? currentStudentId : undefined"
     />
   </q-page>
 </template>
@@ -110,6 +112,10 @@ const APPLY_PROGRESS_PERCENT = 75;
 const FINAL_PROGRESS_PERCENT = 100;
 
 const isStudent = computed(() => currentUser.value?.role === UserRole.STUDENT);
+const currentStudentId = computed(() => currentUser.value?.id ?? '');
+const canShowStudentEvaluations = computed(
+  () => isStudent.value && studentProgress.value?.status === 'PendingValidation',
+);
 const studentProgress = computed<StudentSubCompetencyProgress | null>(() => {
   if (!isStudent.value || !currentUser.value?.studentProgress) return null;
   return (

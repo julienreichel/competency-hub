@@ -225,6 +225,7 @@ export default {
     emptyState: 'No evaluations yet.',
     minutesShort: 'min',
     noDuration: 'No duration specified',
+    noDescription: 'No description provided.',
     createSuccess: 'Evaluation added.',
     createError: 'Could not add the evaluation. Please try again.',
     updateSuccess: 'Evaluation updated.',
@@ -233,6 +234,14 @@ export default {
     deleteError: 'Could not delete the evaluation. Please try again.',
     openError: 'Unable to open the evaluation file. Please try again.',
     deliveryRequired: 'Provide a URL or upload a file before saving.',
+    actions: {
+      start: 'Start',
+      complete: 'Completed',
+      startSuccess: 'Evaluation started.',
+      startError: 'Could not start the evaluation. Please try again.',
+      completeSuccess: 'Evaluation marked as completed.',
+      completeError: 'Could not mark the evaluation as completed. Please try again.',
+    },
     fields: {
       name: 'Name',
       description: 'Description',

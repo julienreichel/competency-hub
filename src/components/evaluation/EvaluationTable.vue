@@ -5,10 +5,16 @@
         v-for="evaluation in evaluations"
         :key="evaluation.id"
         :evaluation="evaluation"
-        :show-actions="showActions"
+        :variant="variant"
+        :attempt="attemptFor(evaluation)"
+        :busy="busyState(evaluation.id).busy"
+        :pending-action="busyState(evaluation.id).pending"
+        :show-actions="variant === 'manager' && showActions"
         @open="emit('open', evaluation)"
         @edit="emit('edit', evaluation)"
         @delete="emit('delete', evaluation.id)"
+        @start="emit('start', evaluation)"
+        @complete="emit('complete', evaluation)"
       />
     </div>
     <q-inner-loading :showing="loading">
@@ -21,21 +27,40 @@
 import { computed } from 'vue';
 import EvaluationCard from './EvaluationCard.vue';
 import type { Evaluation } from 'src/models/Evaluation';
+import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
 
 const props = defineProps<{
   evaluations: Evaluation[];
   showActions?: boolean;
   loading?: boolean;
+  variant?: 'manager' | 'student';
+  studentId?: string;
+  busyMap?: Record<string, { busy: boolean; pending: 'start' | 'open' | 'complete' | null }>;
 }>();
 
 const emit = defineEmits<{
   (e: 'open', evaluation: Evaluation): void;
   (e: 'edit', evaluation: Evaluation): void;
   (e: 'delete', id: string): void;
+  (e: 'start', evaluation: Evaluation): void;
+  (e: 'complete', evaluation: Evaluation): void;
 }>();
 
-const showActions = computed(() => props.showActions === true);
+const variant = computed(() => props.variant ?? 'manager');
+const showActions = computed(() => props.showActions !== false);
 const loading = computed(() => props.loading === true);
+
+function attemptFor(evaluation: Evaluation): EvaluationAttempt | null {
+  if (variant.value !== 'student' || !props.studentId) return null;
+  const attempts = Array.isArray(evaluation.attempts) ? evaluation.attempts : [];
+  const match = attempts.find((attempt) => attempt.studentId === props.studentId);
+  return match ?? null;
+}
+
+function busyState(id: string): { busy: boolean; pending: 'start' | 'open' | 'complete' | null } {
+  if (!props.busyMap) return { busy: false, pending: null };
+  return props.busyMap[id] ?? { busy: false, pending: null };
+}
 </script>
 
 <script lang="ts">
