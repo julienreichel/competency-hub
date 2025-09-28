@@ -595,8 +595,8 @@ export class GraphQLClient {
             'studentProgress.*',
             'studentProgress.student.*',
             'evaluations.*',
-            'evaluation.evaluationAttempts.*',
-            'evaluation.evaluationAttempts.student.*',
+            'evaluations.attempts.*',
+            'evaluations.attempts.student.*',
           ],
         },
       );
