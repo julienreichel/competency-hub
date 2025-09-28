@@ -17,7 +17,7 @@
         </q-chip>
       </template>
       <template v-else-if="studentProgress.recommended">
-        <q-chip color="yellow" text-color="black" icon="star">
+        <q-chip color="warning" text-color="black" icon="star">
           {{ t('subCompetencies.recommended') }}
         </q-chip>
       </template>
@@ -56,9 +56,9 @@ const { t } = useI18n();
 function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     NotStarted: 'grey',
-    InProgress: 'orange',
-    PendingValidation: 'orange',
-    Validated: 'green',
+    InProgress: 'info',
+    PendingValidation: 'accent',
+    Validated: 'positive',
   };
   return colors[status] || 'grey';
 }
