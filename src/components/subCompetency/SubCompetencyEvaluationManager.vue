@@ -26,7 +26,8 @@
         :loading="mutating"
         :student-id="studentId"
         :busy-map="studentActionBusy"
-        @open="handleOpenEvaluation"
+        :student-actions-allowed="studentActionsAllowed"
+        @open="handleOpen"
         @edit="openEditDialog"
         @delete="handleDeleteEvaluation"
         @start="handleStudentStart"
@@ -90,6 +91,7 @@ const tableVariant = computed<'manager' | 'student'>(() =>
 );
 const studentId = computed(() => (props.studentId ? String(props.studentId) : ''));
 const isStudentView = computed(() => tableVariant.value === 'student' && Boolean(studentId.value));
+const studentActionsAllowed = computed(() => isStudentView.value);
 
 watch(
   () => props.initialEvaluations,
@@ -107,14 +109,14 @@ function syncEvaluations(list: Evaluation[]): void {
   evaluations.value = list.map((item) =>
     item instanceof Evaluation ? item : new Evaluation(item),
   );
-  if (isStudentView.value) {
-    evaluations.value.forEach((evaluation) => {
+  evaluations.value.forEach((evaluation) => {
+    if (isStudentView.value) {
       attemptsByEvaluation[evaluation.id] = findStudentAttempt(evaluation);
       if (!studentActionBusy[evaluation.id]) {
         studentActionBusy[evaluation.id] = { busy: false, pending: null };
       }
-    });
-  }
+    }
+  });
 }
 
 function openCreateDialog(): void {
@@ -225,8 +227,19 @@ function setBusy(
   };
 }
 
+async function handleStudentOpen(evaluation: Evaluation): Promise<void> {
+  const state = studentActionBusy[evaluation.id];
+  if (state?.busy) return;
+  setBusy(evaluation.id, 'open', true);
+  try {
+    await handleOpenEvaluation(evaluation);
+  } finally {
+    setBusy(evaluation.id, null, false);
+  }
+}
+
 async function handleStudentStart(evaluation: Evaluation): Promise<void> {
-  if (!isStudentView.value || !studentId.value) return;
+  if (!studentActionsAllowed.value || !studentId.value) return;
   const currentAttempt = attemptsByEvaluation[evaluation.id];
   setBusy(evaluation.id, 'start', true);
   try {
@@ -258,7 +271,7 @@ async function handleStudentStart(evaluation: Evaluation): Promise<void> {
 }
 
 async function handleStudentComplete(evaluation: Evaluation): Promise<void> {
-  if (!isStudentView.value || !studentId.value) return;
+  if (!studentActionsAllowed.value || !studentId.value) return;
   const attempt = attemptsByEvaluation[evaluation.id];
   if (!attempt || attempt.status !== 'InProgress') return;
   setBusy(evaluation.id, 'complete', true);
@@ -295,6 +308,14 @@ function ensureEvaluationAttempt(evaluation: Evaluation, attempt: EvaluationAtte
 
 function refreshEvaluations(): void {
   evaluations.value = [...evaluations.value];
+}
+
+async function handleOpen(evaluation: Evaluation): Promise<void> {
+  if (canManage.value) {
+    await handleOpenEvaluation(evaluation);
+  } else {
+    await handleStudentOpen(evaluation);
+  }
 }
 </script>
 

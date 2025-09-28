@@ -74,14 +74,14 @@
           />
         </template>
 
-        <!-- template v-if="hasAnyRole(['Student', 'Parent'])">
+        <template v-if="hasRole('Student')">
           <essential-link
-            title="Assessments"
+            title="My Assessments"
             caption="View and take assessments"
             icon="quiz"
-            link="/assessments"
+            link="/me/assessments"
           />
-        </!-->
+        </template>
 
         <template v-if="hasRole('Student')">
           <essential-link

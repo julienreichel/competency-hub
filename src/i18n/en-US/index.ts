@@ -259,6 +259,34 @@ export default {
     },
   },
 
+  assessments: {
+    title: 'Assessments',
+    viewingFor: 'Viewing assessments for {name}',
+    filters: {
+      searchPlaceholder: 'Search evaluations...',
+      status: 'Status',
+      domain: 'Domain',
+    },
+    summary: {
+      total: 'Total evaluations',
+      notStarted: 'Not started',
+      inProgress: 'In progress',
+      completed: 'Completed',
+    },
+    status: {
+      NotStarted: 'Not started',
+      InProgress: 'In progress',
+      Completed: 'Completed',
+    },
+    empty: 'No evaluations match the current filters.',
+    errors: {
+      noUser: 'Unable to determine which user to load.',
+      userNotFound: 'The selected user could not be found.',
+      notStudent: '{name} is not a student.',
+      generic: 'Unable to load assessments. Please try again.',
+    },
+  },
+
   competencies: {
     title: 'Competencies',
 

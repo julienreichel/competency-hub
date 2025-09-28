@@ -1,333 +1,508 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg">
-      <q-icon name="quiz" class="q-mr-sm" />
-      Assessments
+    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
+      <q-icon name="quiz" />
+      <span>{{ t('assessments.title') }}</span>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-blue-1">
-          <q-card-section>
-            <div class="text-h6 text-blue-8">Available</div>
-            <div class="text-h4 text-blue-10">5</div>
-            <div class="text-caption text-blue-7">New assessments</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-orange-1">
-          <q-card-section>
-            <div class="text-h6 text-orange-8">In Progress</div>
-            <div class="text-h4 text-orange-10">2</div>
-            <div class="text-caption text-orange-7">Started assessments</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-green-1">
-          <q-card-section>
-            <div class="text-h6 text-green-8">Completed</div>
-            <div class="text-h4 text-green-10">12</div>
-            <div class="text-caption text-green-7">Finished assessments</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-lg-3">
-        <q-card class="bg-purple-1">
-          <q-card-section>
-            <div class="text-h6 text-purple-8">Average</div>
-            <div class="text-h4 text-purple-10">87%</div>
-            <div class="text-caption text-purple-7">Overall score</div>
-          </q-card-section>
-        </q-card>
+    <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
+      {{ errorMessage }}
+    </q-banner>
+
+    <div v-else-if="targetUser && viewer && targetUser.id !== viewer.id" class="text-body2 q-mb-md">
+      {{ t('assessments.viewingFor', { name: targetUser.name }) }}
+    </div>
+
+    <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
+      <div v-for="card in summaryCards" :key="card.key" class="col-12 col-sm-6 col-lg-3">
+        <dashboard-stat-card
+          :title="card.caption"
+          :value="card.value"
+          :icon="card.icon"
+          :icon-color="card.color"
+        />
       </div>
     </div>
 
-    <!-- Filter Tabs -->
-    <q-tabs
-      v-model="activeTab"
-      class="text-grey"
-      active-color="primary"
-      indicator-color="primary"
-      align="justify"
-      narrow-indicator
-    >
-      <q-tab name="available" label="Available" />
-      <q-tab name="in-progress" label="In Progress" />
-      <q-tab name="completed" label="Completed" />
-    </q-tabs>
+    <div class="row q-gutter-md q-mb-lg">
+      <div class="col-12 col-md-4">
+        <q-input
+          v-model="searchQuery"
+          outlined
+          dense
+          :placeholder="t('assessments.filters.searchPlaceholder')"
+          clearable
+        >
+          <template #prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
+      <div class="col-12 col-md-3">
+        <q-select
+          v-model="statusFilter"
+          :options="statusOptions"
+          outlined
+          dense
+          emit-value
+          map-options
+          clearable
+          :label="t('assessments.filters.status')"
+        />
+      </div>
+      <div class="col-12 col-md-3">
+        <q-select
+          v-model="domainFilter"
+          :options="domainOptions"
+          outlined
+          dense
+          emit-value
+          map-options
+          clearable
+          :label="t('assessments.filters.domain')"
+        />
+      </div>
+    </div>
 
-    <q-separator />
+    <div v-if="!loading && filteredEvaluations.length === 0" class="text-center q-mt-xl">
+      <q-icon name="quiz" size="80px" color="grey-5" />
+      <div class="text-h6 text-grey-7 q-mt-md">{{ t('assessments.empty') }}</div>
+    </div>
 
-    <!-- Assessment Lists -->
-    <q-tab-panels v-model="activeTab" animated>
-      <!-- Available Assessments -->
-      <q-tab-panel name="available">
-        <div class="row q-gutter-md">
-          <div
-            v-for="assessment in availableAssessments"
-            :key="assessment.id"
-            class="col-12 col-md-6"
-          >
-            <q-card>
-              <q-card-section>
-                <div class="row items-center">
-                  <div class="col">
-                    <div class="text-h6">{{ assessment.title }}</div>
-                    <div class="text-subtitle2 text-grey-7">{{ assessment.competency }}</div>
-                  </div>
-                  <div class="col-auto">
-                    <q-chip color="blue" text-color="white" icon="schedule">
-                      {{ assessment.duration }} min
-                    </q-chip>
-                  </div>
-                </div>
+    <evaluation-table
+      v-if="filteredEvaluations.length"
+      :evaluations="filteredEvaluations"
+      :variant="cardVariant"
+      :student-id="cardVariant === 'student' ? currentStudentId : undefined"
+      :busy-map="busyMap"
+      :student-actions-allowed="studentActionsAllowed"
+      :sub-competency-map="subCompetenciesByEvaluation"
+      @open="handleOpen"
+      @start="handleStudentStart"
+      @complete="handleStudentComplete"
+    />
 
-                <p class="text-body2 q-mt-md">{{ assessment.description }}</p>
-
-                <div class="row items-center q-mt-md">
-                  <div class="col">
-                    <div class="text-caption text-grey-6">
-                      {{ assessment.questions }} questions • Due {{ assessment.dueDate }}
-                    </div>
-                  </div>
-                </div>
-              </q-card-section>
-
-              <q-card-actions align="right">
-                <q-btn
-                  color="primary"
-                  label="Start Assessment"
-                  @click="startAssessment(assessment)"
-                />
-              </q-card-actions>
-            </q-card>
-          </div>
-        </div>
-      </q-tab-panel>
-
-      <!-- In Progress Assessments -->
-      <q-tab-panel name="in-progress">
-        <div class="row q-gutter-md">
-          <div
-            v-for="assessment in inProgressAssessments"
-            :key="assessment.id"
-            class="col-12 col-md-6"
-          >
-            <q-card>
-              <q-card-section>
-                <div class="row items-center">
-                  <div class="col">
-                    <div class="text-h6">{{ assessment.title }}</div>
-                    <div class="text-subtitle2 text-grey-7">{{ assessment.competency }}</div>
-                  </div>
-                  <div class="col-auto">
-                    <q-chip color="orange" text-color="white" icon="schedule">
-                      {{ assessment.timeRemaining }}
-                    </q-chip>
-                  </div>
-                </div>
-
-                <div class="q-mt-md">
-                  <div class="text-caption text-grey-6 q-mb-xs">Progress</div>
-                  <q-linear-progress
-                    :value="(assessment.progress || 0) / 100"
-                    color="orange"
-                    size="8px"
-                    rounded
-                  />
-                  <div class="text-caption text-right q-mt-xs">
-                    {{ assessment.currentQuestion }}/{{ assessment.totalQuestions }} questions
-                  </div>
-                </div>
-              </q-card-section>
-
-              <q-card-actions align="right">
-                <q-btn color="orange" label="Continue" @click="continueAssessment(assessment)" />
-              </q-card-actions>
-            </q-card>
-          </div>
-        </div>
-      </q-tab-panel>
-
-      <!-- Completed Assessments -->
-      <q-tab-panel name="completed">
-        <div class="row q-gutter-md">
-          <div
-            v-for="assessment in completedAssessments"
-            :key="assessment.id"
-            class="col-12 col-md-6"
-          >
-            <q-card>
-              <q-card-section>
-                <div class="row items-center">
-                  <div class="col">
-                    <div class="text-h6">{{ assessment.title }}</div>
-                    <div class="text-subtitle2 text-grey-7">{{ assessment.competency }}</div>
-                  </div>
-                  <div class="col-auto">
-                    <q-chip
-                      :color="getScoreColor(assessment.score || 0)"
-                      text-color="white"
-                      icon="grade"
-                    >
-                      {{ assessment.score }}%
-                    </q-chip>
-                  </div>
-                </div>
-
-                <div class="q-mt-md">
-                  <div class="text-caption text-grey-6">
-                    Completed on {{ assessment.completedDate }}
-                  </div>
-                  <div class="text-caption text-grey-6">
-                    {{ assessment.feedback }}
-                  </div>
-                </div>
-              </q-card-section>
-
-              <q-card-actions align="right">
-                <q-btn flat color="primary" label="View Results" @click="viewResults(assessment)" />
-                <q-btn color="primary" label="Retake" @click="retakeAssessment(assessment)" />
-              </q-card-actions>
-            </q-card>
-          </div>
-        </div>
-      </q-tab-panel>
-    </q-tab-panels>
+    <q-inner-loading :showing="loading">
+      <q-spinner-tail color="primary" size="64px" />
+    </q-inner-loading>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import { ref } from 'vue';
+import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
+import EvaluationTable from 'src/components/evaluation/EvaluationTable.vue';
+import { useUsers } from 'src/composables/useUsers';
+import { Evaluation } from 'src/models/Evaluation';
+import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
+import {
+  evaluationAttemptRepository,
+  type CreateEvaluationAttemptInput,
+  type UpdateEvaluationAttemptInput,
+} from 'src/models/repositories/EvaluationAttemptRepository';
+import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
+import type { SubCompetency } from 'src/models/SubCompetency';
+import type { User } from 'src/models/User';
+import { UserRole } from 'src/models/User';
+import { computed, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 
-interface Assessment {
-  id: string;
-  title: string;
-  competency: string;
-  description: string;
-  duration?: number;
-  questions?: number;
-  dueDate?: string;
-  score?: number;
-  completedDate?: string;
-  feedback?: string;
-  progress?: number;
-  currentQuestion?: number;
-  totalQuestions?: number;
-  timeRemaining?: string;
+interface BusyEntry {
+  busy: boolean;
+  pending: 'start' | 'open' | 'complete' | null;
 }
 
+const { t } = useI18n();
 const $q = useQuasar();
+const route = useRoute();
+const { getCurrentUser, getUserById } = useUsers();
 
-const activeTab = ref('available');
+const loading = ref(false);
+const errorMessage = ref<string | null>(null);
+const viewer = ref<User | null>(null);
+const targetUser = ref<User | null>(null);
+const evaluations = ref<Evaluation[]>([]);
+const busyMap = reactive<Record<string, BusyEntry>>({});
+const subCompetenciesByEvaluation = reactive<Record<string, SubCompetency | null | undefined>>({});
 
-// Mock data - replace with actual API calls
-const availableAssessments = ref<Assessment[]>([
-  {
-    id: '1',
-    title: 'Algebra Fundamentals',
-    competency: 'Mathematics - Algebra',
-    description: 'Test your understanding of basic algebraic concepts and equation solving.',
-    duration: 45,
-    questions: 20,
-    dueDate: 'Sep 15, 2025',
-  },
-  {
-    id: '2',
-    title: 'Essay Writing Skills',
-    competency: 'Language Arts - Writing',
-    description: 'Demonstrate your ability to write clear, persuasive essays.',
-    duration: 60,
-    questions: 5,
-    dueDate: 'Sep 20, 2025',
-  },
-]);
+const searchQuery = ref('');
+const statusFilter = ref<string | null>(null);
+const domainFilter = ref<string | null>(null);
 
-const inProgressAssessments = ref<Assessment[]>([
-  {
-    id: '3',
-    title: 'Physics Motion Laws',
-    competency: 'Science - Physics',
-    description: "Understanding Newton's laws of motion",
-    duration: 30,
-    progress: 65,
-    currentQuestion: 13,
-    totalQuestions: 20,
-    timeRemaining: '12 min left',
-  },
-]);
+const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase());
 
-const completedAssessments = ref<Assessment[]>([
-  {
-    id: '4',
-    title: 'Basic Geometry',
-    competency: 'Mathematics - Geometry',
-    description: 'Shapes, angles, and area calculations',
-    score: 92,
-    completedDate: 'Sep 5, 2025',
-    feedback: 'Excellent work! Strong understanding demonstrated.',
-  },
-  {
-    id: '5',
-    title: 'Reading Comprehension',
-    competency: 'Language Arts - Reading',
-    description: 'Analyze and interpret written texts',
-    score: 78,
-    completedDate: 'Sep 3, 2025',
-    feedback: 'Good performance. Focus on inference questions.',
-  },
-]);
+const studentTarget = computed(() => targetUser.value?.role === UserRole.STUDENT);
+const cardVariant = computed<'manager' | 'student'>(() =>
+  studentTarget.value ? 'student' : 'manager',
+);
+const currentStudentId = computed(() => (studentTarget.value ? (targetUser.value?.id ?? '') : ''));
+const studentActionsAllowed = computed(
+  () => studentTarget.value && targetUser.value?.id === viewer.value?.id,
+);
 
-// Constants
-const SCORE_THRESHOLDS = {
-  EXCELLENT: 90,
-  GOOD: 80,
-  FAIR: 70,
-} as const;
+const statusForEvaluation = (evaluation: Evaluation): 'NotStarted' | 'InProgress' | 'Completed' => {
+  const attempt = findAttempt(evaluation);
+  return attempt?.status ?? 'NotStarted';
+};
 
-// Methods
-function getScoreColor(score: number): string {
-  if (score >= SCORE_THRESHOLDS.EXCELLENT) return 'green';
-  if (score >= SCORE_THRESHOLDS.GOOD) return 'light-green';
-  if (score >= SCORE_THRESHOLDS.FAIR) return 'orange';
-  return 'red';
-}
+const summaryCards = computed(() => {
+  const counts = {
+    total: evaluations.value.length,
+    notStarted: 0,
+    inProgress: 0,
+    completed: 0,
+  };
 
-function startAssessment(assessment: Assessment): void {
-  $q.dialog({
-    title: 'Start Assessment',
-    message: `Are you ready to start "${assessment.title}"? This assessment will take approximately ${assessment.duration} minutes to complete.`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    console.log('Starting assessment:', assessment.id);
-    // Navigate to assessment interface
+  evaluations.value.forEach((evaluation) => {
+    switch (statusForEvaluation(evaluation)) {
+      case 'Completed':
+        counts.completed += 1;
+        break;
+      case 'InProgress':
+        counts.inProgress += 1;
+        break;
+      default:
+        counts.notStarted += 1;
+        break;
+    }
   });
-}
 
-function continueAssessment(assessment: Assessment): void {
-  console.log('Continuing assessment:', assessment.id);
-  // Navigate to assessment interface at current question
-}
+  return [
+    {
+      key: 'total',
+      caption: t('assessments.summary.total'),
+      value: counts.total,
+      icon: 'quiz',
+      color: 'primary',
+    },
+    {
+      key: 'notStarted',
+      caption: t('assessments.summary.notStarted'),
+      value: counts.notStarted,
+      icon: 'pending',
+      color: 'grey',
+    },
+    {
+      key: 'inProgress',
+      caption: t('assessments.summary.inProgress'),
+      value: counts.inProgress,
+      icon: 'schedule',
+      color: 'orange',
+    },
+    {
+      key: 'completed',
+      caption: t('assessments.summary.completed'),
+      value: counts.completed,
+      icon: 'check_circle',
+      color: 'positive',
+    },
+  ];
+});
 
-function viewResults(assessment: Assessment): void {
-  console.log('Viewing results for:', assessment.id);
-  // Navigate to results page
-}
+const statusOptions = computed(() => [
+  {
+    label: t('assessments.status.NotStarted'),
+    value: 'NotStarted',
+  },
+  {
+    label: t('assessments.status.InProgress'),
+    value: 'InProgress',
+  },
+  {
+    label: t('assessments.status.Completed'),
+    value: 'Completed',
+  },
+]);
 
-function retakeAssessment(assessment: Assessment): void {
-  $q.dialog({
-    title: 'Retake Assessment',
-    message: `Do you want to retake "${assessment.title}"? Your previous score was ${assessment.score}%.`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    console.log('Retaking assessment:', assessment.id);
-    // Start assessment again
+const domainOptions = computed(() => {
+  const set = new Set<string>();
+  Object.values(subCompetenciesByEvaluation).forEach((sub) => {
+    const domainName = sub?.competency?.domain?.name;
+    if (domainName) set.add(domainName);
   });
+  return Array.from(set).map((domain) => ({ label: domain, value: domain }));
+});
+
+function matchesFilters(evaluation: Evaluation): boolean {
+  const status = statusForEvaluation(evaluation);
+  if (statusFilter.value && status !== statusFilter.value) {
+    return false;
+  }
+  const sub = subCompetenciesByEvaluation[evaluation.id];
+  const domainName = sub?.competency?.domain?.name ?? '';
+  if (domainFilter.value && domainName !== domainFilter.value) {
+    return false;
+  }
+  if (normalizedSearch.value) {
+    const haystack = [
+      evaluation.name,
+      evaluation.description ?? '',
+      sub?.name ?? '',
+      sub?.competency?.name ?? '',
+      domainName,
+    ]
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(normalizedSearch.value);
+  }
+  return true;
 }
+
+const filteredEvaluations = computed(() =>
+  evaluations.value.filter((evaluation) => matchesFilters(evaluation)),
+);
+
+watch(
+  () => route.params.userId,
+  () => {
+    void loadData();
+  },
+);
+
+void loadData();
+
+async function loadData(): Promise<void> {
+  loading.value = true;
+  errorMessage.value = null;
+  try {
+    const viewerUser = await getCurrentUser();
+    viewer.value = viewerUser;
+
+    const targetId = (route.params.userId as string | undefined) ?? viewerUser?.id;
+    if (!targetId) {
+      errorMessage.value = t('assessments.errors.noUser');
+      evaluations.value = [];
+      return;
+    }
+
+    const user = await getUserById(targetId);
+    if (!user) {
+      errorMessage.value = t('assessments.errors.userNotFound');
+      evaluations.value = [];
+      return;
+    }
+    targetUser.value = user;
+
+    if (user.role !== UserRole.STUDENT) {
+      errorMessage.value = t('assessments.errors.notStudent', { name: user.name });
+      evaluations.value = [];
+      return;
+    }
+
+    await buildEvaluationData(user);
+  } catch (error) {
+    console.error('Failed to load assessments', error);
+    errorMessage.value = error instanceof Error ? error.message : t('assessments.errors.generic');
+    evaluations.value = [];
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function buildEvaluationData(user: User): Promise<void> {
+  const progress = Array.isArray(user.studentProgress) ? user.studentProgress : [];
+  const unlockedSubIds = progress
+    .filter((entry) => entry.lockOverride !== 'Locked' && entry.status === 'PendingValidation')
+    .map((entry) => entry.subCompetencyId);
+
+  const attemptSubIds = (user.evaluationAttempts ?? [])
+    .map((attempt) => attempt.evaluation?.subCompetencyId)
+    .filter((id): id is string => Boolean(id));
+
+  const subIds = Array.from(new Set([...unlockedSubIds, ...attemptSubIds]));
+
+  const subCompetencies = await Promise.all(
+    subIds.map(async (id) => ({ id, data: await subCompetencyRepository.findById(id, false) })),
+  );
+
+  const subMap = new Map<string, SubCompetency>();
+  subCompetencies.forEach(({ id, data }) => {
+    if (data) {
+      subMap.set(id, data);
+    } else {
+      console.warn('Missing sub-competency for id', id);
+    }
+  });
+
+  // Reset state collections
+  Object.keys(busyMap).forEach((key) => delete busyMap[key]);
+  Object.keys(subCompetenciesByEvaluation).forEach(
+    (key) => delete subCompetenciesByEvaluation[key],
+  );
+
+  const evaluationMap = new Map<string, Evaluation>();
+
+  subMap.forEach((sub) => {
+    sub.evaluations.forEach((evaluation) => {
+      evaluationMap.set(evaluation.id, evaluation);
+      if (!busyMap[evaluation.id]) busyMap[evaluation.id] = { busy: false, pending: null };
+      subCompetenciesByEvaluation[evaluation.id] = sub;
+    });
+  });
+
+  (user.evaluationAttempts ?? []).forEach((attempt) => {
+    if (!attempt.evaluation) return;
+    const evaluationId = attempt.evaluation.id;
+    let evaluation = evaluationMap.get(evaluationId);
+    if (!evaluation) {
+      evaluation =
+        attempt.evaluation instanceof Evaluation
+          ? attempt.evaluation
+          : new Evaluation(attempt.evaluation);
+      evaluationMap.set(evaluation.id, evaluation);
+      if (!busyMap[evaluation.id]) busyMap[evaluation.id] = { busy: false, pending: null };
+    }
+
+    if (!subCompetenciesByEvaluation[evaluationId]) {
+      const sub = subMap.get(evaluation.subCompetencyId ?? '');
+      subCompetenciesByEvaluation[evaluationId] = sub;
+    }
+
+    ensureEvaluationAttempt(evaluation, attempt);
+  });
+
+  evaluations.value = Array.from(evaluationMap.values());
+}
+
+function ensureEvaluationAttempt(evaluation: Evaluation, attempt: EvaluationAttempt): void {
+  if (!Array.isArray(evaluation.attempts)) {
+    evaluation.attempts = [attempt];
+    return;
+  }
+  const index = evaluation.attempts.findIndex((entry) => entry.id === attempt.id);
+  if (index === -1) {
+    evaluation.attempts.push(attempt);
+  } else {
+    evaluation.attempts.splice(index, 1, attempt);
+  }
+}
+
+function findAttempt(evaluation: Evaluation): EvaluationAttempt | null {
+  if (evaluation.attempts && currentStudentId.value) {
+    const match = evaluation.attempts.find(
+      (attempt) => attempt.studentId === currentStudentId.value,
+    );
+    return match ?? null;
+  }
+  return null;
+}
+
+function setBusy(evaluationId: string, pending: BusyEntry['pending'], value: boolean): void {
+  busyMap[evaluationId] = {
+    busy: value,
+    pending: value ? pending : null,
+  };
+}
+
+async function handleOpen(evaluation: Evaluation): Promise<void> {
+  if (cardVariant.value === 'student' && !studentActionsAllowed.value) {
+    return;
+  }
+  await openEvaluationResource(evaluation);
+}
+
+async function handleStudentStart(evaluation: Evaluation): Promise<void> {
+  if (!studentActionsAllowed.value || !currentStudentId.value) return;
+  setBusy(evaluation.id, 'start', true);
+  try {
+    const timestamp = new Date().toISOString();
+    let attempt = findAttempt(evaluation);
+
+    if (!attempt) {
+      const payload: CreateEvaluationAttemptInput = {
+        studentId: currentStudentId.value,
+        evaluationId: evaluation.id,
+        status: 'InProgress',
+        startedAt: timestamp,
+      };
+      attempt = await evaluationAttemptRepository.create(payload);
+    } else {
+      const updates: UpdateEvaluationAttemptInput = {
+        status: 'InProgress',
+        startedAt: timestamp,
+      };
+      attempt = await evaluationAttemptRepository.update(attempt.id, updates);
+    }
+
+    ensureEvaluationAttempt(evaluation, attempt);
+    updateTargetUserAttempt(attempt);
+    refreshEvaluations();
+    await evaluation.resolveFileUrl();
+    $q.notify({ type: 'positive', message: t('evaluations.actions.startSuccess') });
+  } catch (error) {
+    console.error('Failed to start evaluation', error);
+    $q.notify({ type: 'negative', message: t('evaluations.actions.startError') });
+  } finally {
+    setBusy(evaluation.id, null, false);
+  }
+}
+
+async function handleStudentComplete(evaluation: Evaluation): Promise<void> {
+  if (!studentActionsAllowed.value || !currentStudentId.value) return;
+  const attempt = findAttempt(evaluation);
+  if (!attempt || attempt.status !== 'InProgress') return;
+
+  setBusy(evaluation.id, 'complete', true);
+  try {
+    const timestamp = new Date().toISOString();
+    const updated = await evaluationAttemptRepository.update(attempt.id, {
+      status: 'Completed',
+      completedAt: timestamp,
+    });
+    ensureEvaluationAttempt(evaluation, updated);
+    updateTargetUserAttempt(updated);
+    refreshEvaluations();
+    $q.notify({ type: 'positive', message: t('evaluations.actions.completeSuccess') });
+  } catch (error) {
+    console.error('Failed to complete evaluation', error);
+    $q.notify({ type: 'negative', message: t('evaluations.actions.completeError') });
+  } finally {
+    setBusy(evaluation.id, null, false);
+  }
+}
+
+async function openEvaluationResource(evaluation: Evaluation): Promise<void> {
+  if (evaluation.url) {
+    window.open(evaluation.url, '_blank', 'noopener');
+    return;
+  }
+  if (!evaluation.fileKey) return;
+  try {
+    const resolved = await evaluation.resolveFileUrl();
+    if (!resolved) {
+      throw new Error('Failed to resolve evaluation file URL');
+    }
+    window.open(resolved, '_blank', 'noopener');
+  } catch (error) {
+    console.error('Failed to open evaluation', error);
+    $q.notify({ type: 'negative', message: t('evaluations.openError') });
+  }
+}
+
+function refreshEvaluations(): void {
+  evaluations.value = [...evaluations.value];
+}
+
+function updateTargetUserAttempt(attempt: EvaluationAttempt): void {
+  if (!targetUser.value) return;
+  if (!Array.isArray(targetUser.value.evaluationAttempts)) {
+    targetUser.value.evaluationAttempts = [attempt];
+    return;
+  }
+  const index = targetUser.value.evaluationAttempts.findIndex((entry) => entry.id === attempt.id);
+  if (index === -1) {
+    targetUser.value.evaluationAttempts.push(attempt);
+  } else {
+    targetUser.value.evaluationAttempts.splice(index, 1, attempt);
+  }
+}
+</script>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+  name: 'AssessmentsPage',
+});
 </script>

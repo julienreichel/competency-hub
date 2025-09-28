@@ -11,6 +11,26 @@
           </div>
         </div>
         <div class="text-subtitle1">{{ evaluation.name }}</div>
+        <div v-if="subCompetency" class="text-caption text-grey-6">
+          <span v-if="subCompetency?.competency?.domain?.name">
+            {{ subCompetency?.competency?.domain?.name }}
+          </span>
+          <span v-if="subCompetency?.competency?.domain?.name && subCompetency?.competency?.name">
+            •
+          </span>
+          <span v-if="subCompetency?.competency?.name">
+            {{ subCompetency?.competency?.name }}
+          </span>
+          <span
+            v-if="
+              (subCompetency?.competency?.name || subCompetency?.competency?.domain?.name) &&
+              subCompetency?.name
+            "
+          >
+            •
+          </span>
+          <span v-if="subCompetency?.name">{{ subCompetency?.name }}</span>
+        </div>
         <div v-if="evaluation.description" class="text-caption text-grey-7">
           {{ evaluation.description }}
         </div>
@@ -24,7 +44,7 @@
       <div class="row q-gutter-xs">
         <template v-if="isStudentVariant">
           <q-btn
-            v-if="status === 'NotStarted'"
+            v-if="status === 'NotStarted' && studentActionsAllowed"
             color="primary"
             dense
             class="q-px-sm"
@@ -89,6 +109,7 @@
 <script setup lang="ts">
 import type { Evaluation } from 'src/models/Evaluation';
 import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
+import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -98,6 +119,8 @@ const props = defineProps<{
   attempt?: EvaluationAttempt | null;
   busy?: boolean;
   pendingAction?: 'start' | 'open' | 'complete' | null;
+  studentActionsAllowed?: boolean | undefined;
+  subCompetency?: SubCompetency | null | undefined;
 }>();
 
 const emit = defineEmits<{
@@ -119,6 +142,10 @@ const canStudentOpen = computed(() => status.value !== 'NotStarted' && canOpen.v
 
 const busy = computed(() => props.busy === true);
 const pendingAction = computed(() => props.pendingAction ?? null);
+const studentActionsAllowed = computed(() =>
+  isStudentVariant.value ? props.studentActionsAllowed !== false : false,
+);
+const subCompetency = computed(() => props.subCompetency ?? null);
 
 const statusIcon = computed(() => {
   switch (status.value) {
@@ -143,21 +170,20 @@ const statusColor = computed(() => {
 });
 
 function handleOpen(): void {
-  if (isStudentVariant.value) {
-    if (!canStudentOpen.value || busy.value) return;
-  } else if (!canOpen.value) {
+  if (isStudentVariant.value && (!studentActionsAllowed.value || !canStudentOpen.value)) {
     return;
   }
+  if (!isStudentVariant.value && !canOpen.value) return;
   emit('open', props.evaluation);
 }
 
 function emitStart(): void {
-  if (busy.value) return;
+  if (busy.value || !studentActionsAllowed.value) return;
   emit('start', props.evaluation);
 }
 
 function emitComplete(): void {
-  if (busy.value) return;
+  if (busy.value || !studentActionsAllowed.value) return;
   emit('complete', props.evaluation);
 }
 </script>

@@ -10,6 +10,8 @@
         :busy="busyState(evaluation.id).busy"
         :pending-action="busyState(evaluation.id).pending"
         :show-actions="variant === 'manager' && showActions"
+        :sub-competency="subCompetencyFor(evaluation)"
+        :student-actions-allowed="studentActionsAllowed"
         @open="emit('open', evaluation)"
         @edit="emit('edit', evaluation)"
         @delete="emit('delete', evaluation.id)"
@@ -24,18 +26,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import EvaluationCard from './EvaluationCard.vue';
 import type { Evaluation } from 'src/models/Evaluation';
 import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
+import type { SubCompetency } from 'src/models/SubCompetency';
+import { computed } from 'vue';
+import EvaluationCard from './EvaluationCard.vue';
 
 const props = defineProps<{
   evaluations: Evaluation[];
   showActions?: boolean;
   loading?: boolean;
   variant?: 'manager' | 'student';
-  studentId?: string;
+  studentId?: string | undefined;
   busyMap?: Record<string, { busy: boolean; pending: 'start' | 'open' | 'complete' | null }>;
+  subCompetencyMap?: Record<string, SubCompetency | null | undefined>;
+  studentActionsAllowed?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -49,6 +54,7 @@ const emit = defineEmits<{
 const variant = computed(() => props.variant ?? 'manager');
 const showActions = computed(() => props.showActions !== false);
 const loading = computed(() => props.loading === true);
+const subCompetencyMap = computed(() => props.subCompetencyMap ?? {});
 
 function attemptFor(evaluation: Evaluation): EvaluationAttempt | null {
   if (variant.value !== 'student' || !props.studentId) return null;
@@ -60,6 +66,10 @@ function attemptFor(evaluation: Evaluation): EvaluationAttempt | null {
 function busyState(id: string): { busy: boolean; pending: 'start' | 'open' | 'complete' | null } {
   if (!props.busyMap) return { busy: false, pending: null };
   return props.busyMap[id] ?? { busy: false, pending: null };
+}
+
+function subCompetencyFor(evaluation: Evaluation): SubCompetency | null | undefined {
+  return subCompetencyMap.value[evaluation.id];
 }
 </script>
 
