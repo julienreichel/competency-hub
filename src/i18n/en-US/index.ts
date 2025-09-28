@@ -211,6 +211,39 @@ export default {
     },
   },
 
+  evaluations: {
+    title: 'Evaluations',
+    addEvaluation: 'Add Evaluation',
+    addTitle: 'Add Evaluation',
+    editTitle: 'Edit Evaluation',
+    emptyState: 'No evaluations yet.',
+    minutesShort: 'min',
+    noDuration: 'No duration specified',
+    createSuccess: 'Evaluation added.',
+    createError: 'Could not add the evaluation. Please try again.',
+    updateSuccess: 'Evaluation updated.',
+    updateError: 'Could not update the evaluation. Please try again.',
+    deleteSuccess: 'Evaluation deleted.',
+    deleteError: 'Could not delete the evaluation. Please try again.',
+    openError: 'Unable to open the evaluation file. Please try again.',
+    deliveryRequired: 'Provide a URL or upload a file before saving.',
+    fields: {
+      name: 'Name',
+      description: 'Description',
+      mode: 'Mode',
+      format: 'Format',
+      duration: 'Duration (minutes)',
+      durationShort: 'Duration',
+      delivery: 'Delivery',
+      url: 'URL',
+      upload: 'Upload file',
+    },
+    delivery: {
+      url: 'URL',
+      file: 'Upload',
+    },
+  },
+
   competencies: {
     title: 'Competencies',
 

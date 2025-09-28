@@ -1,3 +1,4 @@
+import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { EvaluationAttempt } from './EvaluationAttempt';
@@ -132,5 +133,19 @@ export class Evaluation extends BaseModel {
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
     });
+  }
+
+  async resolveFileUrl(): Promise<string | null> {
+    if (!this.fileKey) return null;
+    if (/^https?:\/\//i.test(this.fileKey)) {
+      return this.fileKey;
+    }
+    try {
+      const { url } = await getUrl({ path: this.fileKey });
+      return url.toString();
+    } catch (error) {
+      console.error('Failed to resolve evaluation file URL', error);
+      return null;
+    }
   }
 }

@@ -79,6 +79,44 @@
       @edit="updateResource"
       @delete="deleteResource"
     />
+
+    <q-separator class="q-my-lg" />
+
+    <div class="row items-center q-gutter-sm">
+      <div class="text-h6">{{ t('evaluations.title') }}</div>
+      <q-space />
+      <q-btn
+        v-if="canManageEvaluations"
+        color="primary"
+        icon="add"
+        :label="t('evaluations.addEvaluation')"
+        @click="openCreateEvaluationDialog"
+      />
+    </div>
+
+    <div class="q-mt-md">
+      <div v-if="!loading && !hasEvaluations" class="text-grey-6 text-center">
+        {{ t('evaluations.emptyState') }}
+      </div>
+      <evaluation-table
+        v-else
+        :evaluations="evaluations"
+        :show-actions="canManageEvaluations"
+        :loading="evaluationMutating"
+        @open="handleOpenEvaluation"
+        @edit="openEditEvaluationDialog"
+        @delete="handleDeleteEvaluation"
+      />
+    </div>
+
+    <evaluation-form-dialog
+      v-if="canManageEvaluations"
+      v-model="evaluationDialogOpen"
+      :sub-competency-id="subId"
+      :initial="evaluationFormInitial"
+      @create="handleCreateEvaluation"
+      @update="handleUpdateEvaluation"
+    />
   </q-page>
 </template>
 
@@ -91,6 +129,7 @@ import {
   type CreateResourceInput,
   type UpdateResourceInput,
 } from 'src/models/CompetencyResource';
+import type { Evaluation } from 'src/models/Evaluation';
 import {
   type StudentSubCompetencyProgress,
   type StudentSubCompetencyProgressUpdate,
@@ -102,6 +141,11 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
+import {
+  evaluationRepository,
+  type CreateEvaluationInput,
+  type UpdateEvaluationInput,
+} from 'src/models/repositories/EvaluationRepository';
 import { resourceRepository } from 'src/models/repositories/ResourceRepository';
 import { StudentProgressRepository } from 'src/models/repositories/StudentProgressRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
@@ -111,6 +155,8 @@ import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
 import SubCompetencyStudentTable, {
   type SubCompetencyStudentRow,
 } from 'src/components/competency/SubCompetencyStudentTable.vue';
+import EvaluationFormDialog from 'src/components/evaluation/EvaluationFormDialog.vue';
+import EvaluationTable from 'src/components/evaluation/EvaluationTable.vue';
 import ResourceFormDialog from 'src/components/resource/ResourceFormDialog.vue';
 import ResourceTable from 'src/components/resource/ResourceTable.vue';
 import { useAuth } from 'src/composables/useAuth';
@@ -135,6 +181,10 @@ const students = ref<User[]>([]);
 const studentActionsLoading = ref(false);
 const studentProgressUpdating = ref(false);
 const resources = ref<CompetencyResource[]>([]);
+const evaluations = ref<Evaluation[]>([]);
+const evaluationDialogOpen = ref(false);
+const evaluationFormInitial = ref<Evaluation | null>(null);
+const evaluationMutating = ref(false);
 const pendingPercent = ref<number | null>(null);
 const REMEMBER_PROGRESS_PERCENT = 25;
 const EXPLAIN_PROGRESS_PERCENT = 50;
@@ -143,6 +193,8 @@ const FINAL_PROGRESS_PERCENT = 100;
 
 const studentsLoading = computed(() => loading.value || studentActionsLoading.value);
 const isStudent = computed(() => currentUser.value?.role === UserRole.STUDENT);
+const canManageEvaluations = computed(() => hasRole('Admin') || hasRole('Educator'));
+const hasEvaluations = computed(() => evaluations.value.length > 0);
 const studentProgress = computed<StudentSubCompetencyProgress | null>(() => {
   if (!isStudent.value || !currentUser.value?.studentProgress) return null;
   return (
@@ -196,6 +248,15 @@ const visibleProgressSteps = computed<ProgressButton[]>(() => {
   return [{ ...nextStep, enabled: true }] as ProgressButton[];
 });
 
+function syncEvaluations(list: Evaluation[]): void {
+  const next = [...list];
+  evaluations.value = next;
+  if (sub.value) {
+    const target = sub.value.evaluations;
+    target.splice(0, target.length, ...next);
+  }
+}
+
 onMounted(async () => {
   await load();
   await loadCurrentUser();
@@ -209,7 +270,9 @@ async function load(): Promise<void> {
   try {
     const fetched = await subCompetencyRepository.findById(subId, true);
     sub.value = fetched;
+    const fetchedEvaluations = fetched?.evaluations ?? [];
     resources.value = fetched?.resources ?? [];
+    syncEvaluations(fetchedEvaluations);
     if (fetched?.competency?.name) {
       competencyName.value = fetched.competency.name;
     }
@@ -219,6 +282,104 @@ async function load(): Promise<void> {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+function openCreateEvaluationDialog(): void {
+  evaluationFormInitial.value = null;
+  evaluationDialogOpen.value = true;
+}
+
+function openEditEvaluationDialog(evaluation: Evaluation): void {
+  evaluationFormInitial.value = evaluation;
+  evaluationDialogOpen.value = true;
+}
+
+async function handleCreateEvaluation(payload: CreateEvaluationInput): Promise<void> {
+  const request: CreateEvaluationInput = {
+    ...payload,
+    subCompetencyId: subId,
+  };
+  evaluationMutating.value = true;
+  try {
+    const created = await evaluationRepository.create(request);
+    syncEvaluations([...evaluations.value, created]);
+    $q.notify({ type: 'positive', message: t('evaluations.createSuccess') });
+  } catch (error) {
+    console.error('Failed to create evaluation', error);
+    $q.notify({ type: 'negative', message: t('evaluations.createError') });
+  } finally {
+    evaluationMutating.value = false;
+  }
+}
+
+async function handleUpdateEvaluation({
+  id,
+  data,
+}: {
+  id: string;
+  data: UpdateEvaluationInput;
+}): Promise<void> {
+  const index = evaluations.value.findIndex((evaluation) => evaluation.id === id);
+  if (index === -1) {
+    return;
+  }
+
+  try {
+    const updated = await evaluationRepository.update(id, data);
+    const finalList = [...evaluations.value];
+    const replaceIndex = finalList.findIndex((entry) => entry.id === id);
+    if (replaceIndex !== -1) {
+      finalList.splice(replaceIndex, 1, updated);
+      syncEvaluations(finalList);
+    }
+    $q.notify({ type: 'positive', message: t('evaluations.updateSuccess') });
+  } catch (error) {
+    console.error(`Failed to update evaluation ${id}`, error);
+    $q.notify({ type: 'negative', message: t('evaluations.updateError') });
+  } finally {
+    evaluationMutating.value = false;
+  }
+}
+
+async function handleDeleteEvaluation(id: string): Promise<void> {
+  const index = evaluations.value.findIndex((evaluation) => evaluation.id === id);
+  if (index === -1) {
+    return;
+  }
+  const previous = [...evaluations.value];
+  const filtered = previous.filter((evaluation) => evaluation.id !== id);
+  evaluationMutating.value = true;
+  syncEvaluations(filtered);
+  try {
+    await evaluationRepository.delete(id);
+    $q.notify({ type: 'positive', message: t('evaluations.deleteSuccess') });
+  } catch (error) {
+    console.error(`Failed to delete evaluation ${id}`, error);
+    syncEvaluations(previous);
+    $q.notify({ type: 'negative', message: t('evaluations.deleteError') });
+  } finally {
+    evaluationMutating.value = false;
+  }
+}
+
+async function handleOpenEvaluation(evaluation: Evaluation): Promise<void> {
+  if (evaluation.url) {
+    window.open(evaluation.url, '_blank', 'noopener');
+    return;
+  }
+  if (!evaluation.fileKey) {
+    return;
+  }
+  try {
+    const resolved = await evaluation.resolveFileUrl();
+    if (!resolved) {
+      throw new Error('Failed to resolve evaluation file URL');
+    }
+    window.open(resolved, '_blank', 'noopener');
+  } catch (error) {
+    console.error('Failed to open evaluation', error);
+    $q.notify({ type: 'negative', message: t('evaluations.openError') });
   }
 }
 
