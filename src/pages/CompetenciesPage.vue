@@ -313,7 +313,7 @@ async function handleOpen(subId: string): Promise<void> {
     return;
   }
   await router.push({
-    name: 'sub-competency-resource',
+    name: 'sub-competency',
     params: { competencyId: target.competencyId, subId },
   });
 }

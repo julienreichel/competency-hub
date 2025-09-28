@@ -2,12 +2,12 @@
   <q-page padding>
     <breadcrumb-header
       :breadcrumbs="[
-        { label: domainName, to: { name: 'domain-competencies', params: { domainId } } },
+        { label: domainName, to: { name: 'domain', params: { domainId } } },
         { label: competency?.name ?? t('competencies.loading') },
       ]"
       :title="competency?.name ?? t('competencies.loading')"
       :loading="loading"
-      :back-target="{ name: 'domain-competencies', params: { domainId } }"
+      :back-target="{ name: 'domain', params: { domainId } }"
     >
       <template #default>
         <div class="row q-gutter-sm">
@@ -160,7 +160,7 @@ async function deleteSubCompetency(id: string): Promise<void> {
 }
 
 async function openSubCompetency(id: string): Promise<void> {
-  await router.push({ name: 'sub-competency-resource', params: { competencyId, subId: id } });
+  await router.push({ name: 'sub-competency', params: { competencyId, subId: id } });
 }
 
 function openDialog(): void {
@@ -190,7 +190,7 @@ async function deleteCompetency(): Promise<void> {
   try {
     await competencyRepository.delete(competency.value.id);
     $q.notify({ type: 'positive', message: t('competencies.messages.deleted') });
-    await router.push({ name: 'domain-competencies', params: { domainId } });
+    await router.push({ name: 'domain', params: { domainId } });
   } catch (error) {
     console.error(error);
     $q.notify({ type: 'negative', message: t('competencies.messages.error') });

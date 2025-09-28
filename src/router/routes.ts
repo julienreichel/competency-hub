@@ -63,20 +63,20 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'domains/:domainId',
-        name: 'domain-competencies',
-        component: () => import('pages/DomainCompetenciesPage.vue'),
+        name: 'domain',
+        component: () => import('src/pages/DomainPage.vue'),
         meta: { roles: ['Student', 'Admin', 'Educator'] },
       },
       {
         path: 'competencies/:competencyId',
-        name: 'competency-sub-competency',
-        component: () => import('src/pages/CompetencySubCompetencyPage.vue'),
+        name: 'competency',
+        component: () => import('src/pages/CompetencyPage.vue'),
         meta: { roles: ['Student', 'Admin', 'Educator'] },
       },
       {
         path: 'competencies/:competencyId/sub/:subId',
-        name: 'sub-competency-resource',
-        component: () => import('src/pages/SubCompetencyResourcePage.vue'),
+        name: 'sub-competency',
+        component: () => import('src/pages/SubCompetencyPage.vue'),
         meta: { roles: ['Student', 'Admin', 'Educator'] },
       },
       {

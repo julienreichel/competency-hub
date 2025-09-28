@@ -2,16 +2,16 @@
   <q-page padding>
     <breadcrumb-header
       :breadcrumbs="[
-        { label: domainName, to: { name: 'domain-competencies', params: { domainId } } },
+        { label: domainName, to: { name: 'domain', params: { domainId } } },
         {
           label: competencyName,
-          to: { name: 'competency-sub-competency', params: { competencyId } },
+          to: { name: 'competency', params: { competencyId } },
         },
         { label: sub && sub.name ? sub.name : t('subCompetencies.loading') },
       ]"
       :title="sub && sub.name ? sub.name : t('subCompetencies.loading')"
       :loading="loading"
-      :back-target="{ name: 'competency-sub-competency', params: { competencyId } }"
+      :back-target="{ name: 'competency', params: { competencyId } }"
     />
 
     <template v-if="sub">

@@ -129,7 +129,7 @@ async function submitDialog(form: { name: string; colorCode: string | null }): P
 }
 
 function goToDomain(domainId: string): void {
-  void router.push({ name: 'domain-competencies', params: { domainId } });
+  void router.push({ name: 'domain', params: { domainId } });
 }
 
 onMounted(() => {
