@@ -1,5 +1,7 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
+import { EvaluationAttempt } from './EvaluationAttempt';
+import { User } from './User';
 
 export enum EvaluationMode {
   SOLO = 'Solo',
@@ -28,6 +30,7 @@ export interface EvaluationInit extends Record<string, unknown> {
   fileKey?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  attempts?: EvaluationAttempt[];
 }
 
 const normaliseMode = (value: string | EvaluationMode): EvaluationMode => {
@@ -53,6 +56,7 @@ export class Evaluation extends BaseModel {
   public durationMin: number | null;
   public url: string | null;
   public fileKey: string | null;
+  public attempts: EvaluationAttempt[];
 
   constructor(data: EvaluationInit) {
     super(data);
@@ -64,6 +68,11 @@ export class Evaluation extends BaseModel {
     this.durationMin = typeof data.durationMin === 'number' ? data.durationMin : null;
     this.url = data.url ?? null;
     this.fileKey = data.fileKey ?? null;
+    this.attempts = Array.isArray(data.attempts)
+      ? data.attempts.map((attempt) =>
+          attempt instanceof EvaluationAttempt ? attempt : EvaluationAttempt.fromAmplify(attempt),
+        )
+      : [];
 
     this.validate();
   }
@@ -81,6 +90,7 @@ export class Evaluation extends BaseModel {
       fileKey: raw.fileKey ?? null,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
+      attempts: User.normaliseEvaluationAttempts(raw.attempts),
     });
   }
 
@@ -103,6 +113,7 @@ export class Evaluation extends BaseModel {
       fileKey: this.fileKey,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
+      attempts: this.attempts ? this.attempts.map((attempt) => attempt.toJSON()) : null,
     };
   }
 
@@ -117,6 +128,7 @@ export class Evaluation extends BaseModel {
       durationMin: this.durationMin,
       url: this.url,
       fileKey: this.fileKey,
+      attempts: this.attempts ? this.attempts.map((attempt) => attempt.clone()) : [],
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
     });

@@ -49,7 +49,7 @@ describe('Evaluation model', () => {
       ...baseInit,
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-02T00:00:00.000Z',
-    } as AmplifyEvaluation;
+    } as unknown as AmplifyEvaluation;
 
     const evaluation = Evaluation.fromAmplify(raw);
     expect(evaluation).toBeInstanceOf(Evaluation);

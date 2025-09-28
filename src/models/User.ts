@@ -1,8 +1,8 @@
 import type { Schema } from '../../amplify/data/resource';
-import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
-import type { SubCompetency } from './SubCompetency';
 import { BaseModel } from './base/BaseModel';
 import { EvaluationAttempt } from './EvaluationAttempt';
+import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
+import type { SubCompetency } from './SubCompetency';
 
 // Constants
 const MAX_INITIALS = 2;
@@ -153,7 +153,7 @@ export class User extends BaseModel {
       .filter((item): item is StudentSubCompetencyProgress => item !== null);
   }
 
-  private static normaliseEvaluationAttempts(
+  static normaliseEvaluationAttempts(
     entries: AmplifyUser['evaluationAttempts'],
   ): EvaluationAttempt[] {
     if (!entries) return [];
