@@ -209,6 +209,12 @@ export default {
       upload: 'Upload file',
       helperUser: 'Helper User',
     },
+    messages: {
+      created: 'Resource created.',
+      updated: 'Resource updated.',
+      deleted: 'Resource deleted.',
+      error: 'Could not update the resource. Please try again.',
+    },
   },
 
   evaluations: {
