@@ -13,43 +13,6 @@
       {{ t('competencies.viewingFor', { name: targetUser.name }) }}
     </div>
 
-    <div class="row q-gutter-md q-mb-lg">
-      <div class="col-12 col-md-4">
-        <q-input
-          v-model="searchQuery"
-          outlined
-          :placeholder="t('competencies.searchPlaceholder')"
-          clearable
-        >
-          <template #prepend>
-            <q-icon name="search" />
-          </template>
-        </q-input>
-      </div>
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="statusFilter"
-          :options="statusOptions"
-          outlined
-          :label="t('common.status')"
-          emit-value
-          map-options
-          clearable
-        />
-      </div>
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="domainFilter"
-          :options="domainOptions"
-          outlined
-          :label="t('domains.title')"
-          emit-value
-          map-options
-          clearable
-        />
-      </div>
-    </div>
-
     <div v-if="summaryCardsToShow.length" class="row q-col-gutter-md q-mb-lg">
       <div v-for="card in summaryCardsToShow" :key="card.key" class="col-6 col-md-3">
         <dashboard-stat-card
@@ -60,6 +23,17 @@
         />
       </div>
     </div>
+
+    <search-status-domain-filters
+      v-model:search="searchQuery"
+      v-model:status="statusFilter"
+      v-model:domain="domainFilter"
+      :status-options="statusOptions"
+      :domain-options="domainOptions"
+      :search-placeholder="t('competencies.searchPlaceholder')"
+      :status-label="t('common.status')"
+      :domain-label="t('domains.title')"
+    />
 
     <div class="row q-col-gutter-md">
       <div v-for="sub in filteredSubCompetencies" :key="sub.id" class="col-12 col-md-6 col-lg-4">
@@ -90,6 +64,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import { useUsers } from 'src/composables/useUsers';

@@ -13,43 +13,6 @@
       {{ t('assessments.viewingFor', { name: targetUser.name }) }}
     </div>
 
-    <div class="row q-gutter-md q-mb-lg">
-      <div class="col-12 col-md-4">
-        <q-input
-          v-model="searchQuery"
-          outlined
-          :placeholder="t('assessments.filters.searchPlaceholder')"
-          clearable
-        >
-          <template #prepend>
-            <q-icon name="search" />
-          </template>
-        </q-input>
-      </div>
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="statusFilter"
-          :options="statusOptions"
-          outlined
-          emit-value
-          map-options
-          clearable
-          :label="t('assessments.filters.status')"
-        />
-      </div>
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="domainFilter"
-          :options="domainOptions"
-          outlined
-          emit-value
-          map-options
-          clearable
-          :label="t('assessments.filters.domain')"
-        />
-      </div>
-    </div>
-
     <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
       <div v-for="card in summaryCards" :key="card.key" class="col-6 col-md-3">
         <dashboard-stat-card
@@ -60,6 +23,17 @@
         />
       </div>
     </div>
+
+    <search-status-domain-filters
+      v-model:search="searchQuery"
+      v-model:status="statusFilter"
+      v-model:domain="domainFilter"
+      :status-options="statusOptions"
+      :domain-options="domainOptions"
+      :search-placeholder="t('assessments.filters.searchPlaceholder')"
+      :status-label="t('assessments.filters.status')"
+      :domain-label="t('assessments.filters.domain')"
+    />
 
     <div v-if="!loading && filteredEvaluations.length === 0" class="text-center q-mt-xl">
       <q-icon name="quiz" size="80px" color="grey-5" />
@@ -87,6 +61,7 @@
 </template>
 
 <script setup lang="ts">
+import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import EvaluationTable from 'src/components/evaluation/EvaluationTable.vue';
 import { useEvaluationStudentActions } from 'src/composables/useEvaluationStudentActions';
