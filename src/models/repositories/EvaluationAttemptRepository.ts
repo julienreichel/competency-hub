@@ -13,7 +13,7 @@ export interface CreateEvaluationAttemptInput {
 export type UpdateEvaluationAttemptInput = Partial<CreateEvaluationAttemptInput>;
 
 export class EvaluationAttemptRepository {
-  async create(data: CreateEvaluationAttemptInput): Promise<EvaluationAttempt> {
+  async create(this: void, data: CreateEvaluationAttemptInput): Promise<EvaluationAttempt> {
     const raw = await graphQLClient.createEvaluationAttempt(data);
     if (!raw) {
       throw new Error('Failed to create evaluation attempt');
@@ -21,7 +21,11 @@ export class EvaluationAttemptRepository {
     return EvaluationAttempt.fromAmplify(raw);
   }
 
-  async update(id: string, data: UpdateEvaluationAttemptInput): Promise<EvaluationAttempt> {
+  async update(
+    this: void,
+    id: string,
+    data: UpdateEvaluationAttemptInput,
+  ): Promise<EvaluationAttempt> {
     const raw = await graphQLClient.updateEvaluationAttempt({ id, ...data });
     if (!raw) {
       throw new Error(`Failed to update evaluation attempt ${id}`);

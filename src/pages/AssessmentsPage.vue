@@ -89,17 +89,12 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import EvaluationTable from 'src/components/evaluation/EvaluationTable.vue';
+import { useEvaluationStudentActions } from 'src/composables/useEvaluationStudentActions';
 import { useUsers } from 'src/composables/useUsers';
 import { Evaluation } from 'src/models/Evaluation';
 import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
-import {
-  evaluationAttemptRepository,
-  type CreateEvaluationAttemptInput,
-  type UpdateEvaluationAttemptInput,
-} from 'src/models/repositories/EvaluationAttemptRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import type { User } from 'src/models/User';
@@ -108,13 +103,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
-interface BusyEntry {
-  busy: boolean;
-  pending: 'start' | 'open' | 'complete' | null;
-}
-
 const { t } = useI18n();
-const $q = useQuasar();
 const route = useRoute();
 const { getCurrentUser, getUserById } = useUsers();
 
@@ -123,7 +112,6 @@ const errorMessage = ref<string | null>(null);
 const viewer = ref<User | null>(null);
 const targetUser = ref<User | null>(null);
 const evaluations = ref<Evaluation[]>([]);
-const busyMap = reactive<Record<string, BusyEntry>>({});
 const subCompetenciesByEvaluation = reactive<Record<string, SubCompetency | null | undefined>>({});
 
 const searchQuery = ref('');
@@ -140,6 +128,20 @@ const currentStudentId = computed(() => (studentTarget.value ? (targetUser.value
 const studentActionsAllowed = computed(
   () => studentTarget.value && targetUser.value?.id === viewer.value?.id,
 );
+
+const {
+  busyMap,
+  openEvaluation: openEvaluationAction,
+  startEvaluation: startEvaluationAction,
+  completeEvaluation: completeEvaluationAction,
+  syncEvaluations: syncStudentEvaluations,
+  ensureEvaluationAttempt: attachAttemptToEvaluation,
+} = useEvaluationStudentActions({
+  evaluations,
+  studentId: currentStudentId,
+  actionsAllowed: studentActionsAllowed,
+  onAttemptUpdated: (attempt) => updateTargetUserAttempt(attempt),
+});
 
 const statusForEvaluation = (evaluation: Evaluation): 'NotStarted' | 'InProgress' | 'Completed' => {
   const attempt = findAttempt(evaluation);
@@ -303,7 +305,7 @@ async function loadData(): Promise<void> {
 async function buildEvaluationData(user: User): Promise<void> {
   const progress = Array.isArray(user.studentProgress) ? user.studentProgress : [];
   const unlockedSubIds = progress
-    .filter((entry) => entry.lockOverride !== 'Locked' && entry.status === 'PendingValidation')
+    .filter((entry) => entry.lockOverride !== 'Locked')
     .map((entry) => entry.subCompetencyId);
 
   const attemptSubIds = (user.evaluationAttempts ?? [])
@@ -325,7 +327,6 @@ async function buildEvaluationData(user: User): Promise<void> {
     }
   });
 
-  // Reset state collections
   Object.keys(busyMap).forEach((key) => delete busyMap[key]);
   Object.keys(subCompetenciesByEvaluation).forEach(
     (key) => delete subCompetenciesByEvaluation[key],
@@ -336,7 +337,6 @@ async function buildEvaluationData(user: User): Promise<void> {
   subMap.forEach((sub) => {
     sub.evaluations.forEach((evaluation) => {
       evaluationMap.set(evaluation.id, evaluation);
-      if (!busyMap[evaluation.id]) busyMap[evaluation.id] = { busy: false, pending: null };
       subCompetenciesByEvaluation[evaluation.id] = sub;
     });
   });
@@ -351,31 +351,16 @@ async function buildEvaluationData(user: User): Promise<void> {
           ? attempt.evaluation
           : new Evaluation(attempt.evaluation);
       evaluationMap.set(evaluation.id, evaluation);
-      if (!busyMap[evaluation.id]) busyMap[evaluation.id] = { busy: false, pending: null };
+      if (!subCompetenciesByEvaluation[evaluation.id]) {
+        subCompetenciesByEvaluation[evaluation.id] = subMap.get(evaluation.subCompetencyId ?? '');
+      }
     }
 
-    if (!subCompetenciesByEvaluation[evaluationId]) {
-      const sub = subMap.get(evaluation.subCompetencyId ?? '');
-      subCompetenciesByEvaluation[evaluationId] = sub;
-    }
-
-    ensureEvaluationAttempt(evaluation, attempt);
+    attachAttemptToEvaluation(evaluation, attempt);
   });
 
   evaluations.value = Array.from(evaluationMap.values());
-}
-
-function ensureEvaluationAttempt(evaluation: Evaluation, attempt: EvaluationAttempt): void {
-  if (!Array.isArray(evaluation.attempts)) {
-    evaluation.attempts = [attempt];
-    return;
-  }
-  const index = evaluation.attempts.findIndex((entry) => entry.id === attempt.id);
-  if (index === -1) {
-    evaluation.attempts.push(attempt);
-  } else {
-    evaluation.attempts.splice(index, 1, attempt);
-  }
+  syncStudentEvaluations();
 }
 
 function findAttempt(evaluation: Evaluation): EvaluationAttempt | null {
@@ -388,100 +373,16 @@ function findAttempt(evaluation: Evaluation): EvaluationAttempt | null {
   return null;
 }
 
-function setBusy(evaluationId: string, pending: BusyEntry['pending'], value: boolean): void {
-  busyMap[evaluationId] = {
-    busy: value,
-    pending: value ? pending : null,
-  };
-}
-
 async function handleOpen(evaluation: Evaluation): Promise<void> {
-  if (cardVariant.value === 'student' && !studentActionsAllowed.value) {
-    return;
-  }
-  await openEvaluationResource(evaluation);
+  await openEvaluationAction(evaluation);
 }
 
 async function handleStudentStart(evaluation: Evaluation): Promise<void> {
-  if (!studentActionsAllowed.value || !currentStudentId.value) return;
-  setBusy(evaluation.id, 'start', true);
-  try {
-    const timestamp = new Date().toISOString();
-    let attempt = findAttempt(evaluation);
-
-    if (!attempt) {
-      const payload: CreateEvaluationAttemptInput = {
-        studentId: currentStudentId.value,
-        evaluationId: evaluation.id,
-        status: 'InProgress',
-        startedAt: timestamp,
-      };
-      attempt = await evaluationAttemptRepository.create(payload);
-    } else {
-      const updates: UpdateEvaluationAttemptInput = {
-        status: 'InProgress',
-        startedAt: timestamp,
-      };
-      attempt = await evaluationAttemptRepository.update(attempt.id, updates);
-    }
-
-    ensureEvaluationAttempt(evaluation, attempt);
-    updateTargetUserAttempt(attempt);
-    refreshEvaluations();
-    await evaluation.resolveFileUrl();
-    $q.notify({ type: 'positive', message: t('evaluations.actions.startSuccess') });
-  } catch (error) {
-    console.error('Failed to start evaluation', error);
-    $q.notify({ type: 'negative', message: t('evaluations.actions.startError') });
-  } finally {
-    setBusy(evaluation.id, null, false);
-  }
+  await startEvaluationAction(evaluation);
 }
 
 async function handleStudentComplete(evaluation: Evaluation): Promise<void> {
-  if (!studentActionsAllowed.value || !currentStudentId.value) return;
-  const attempt = findAttempt(evaluation);
-  if (!attempt || attempt.status !== 'InProgress') return;
-
-  setBusy(evaluation.id, 'complete', true);
-  try {
-    const timestamp = new Date().toISOString();
-    const updated = await evaluationAttemptRepository.update(attempt.id, {
-      status: 'Completed',
-      completedAt: timestamp,
-    });
-    ensureEvaluationAttempt(evaluation, updated);
-    updateTargetUserAttempt(updated);
-    refreshEvaluations();
-    $q.notify({ type: 'positive', message: t('evaluations.actions.completeSuccess') });
-  } catch (error) {
-    console.error('Failed to complete evaluation', error);
-    $q.notify({ type: 'negative', message: t('evaluations.actions.completeError') });
-  } finally {
-    setBusy(evaluation.id, null, false);
-  }
-}
-
-async function openEvaluationResource(evaluation: Evaluation): Promise<void> {
-  if (evaluation.url) {
-    window.open(evaluation.url, '_blank', 'noopener');
-    return;
-  }
-  if (!evaluation.fileKey) return;
-  try {
-    const resolved = await evaluation.resolveFileUrl();
-    if (!resolved) {
-      throw new Error('Failed to resolve evaluation file URL');
-    }
-    window.open(resolved, '_blank', 'noopener');
-  } catch (error) {
-    console.error('Failed to open evaluation', error);
-    $q.notify({ type: 'negative', message: t('evaluations.openError') });
-  }
-}
-
-function refreshEvaluations(): void {
-  evaluations.value = [...evaluations.value];
+  await completeEvaluationAction(evaluation);
 }
 
 function updateTargetUserAttempt(attempt: EvaluationAttempt): void {

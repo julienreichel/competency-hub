@@ -25,7 +25,7 @@
         :show-actions="canManage"
         :loading="mutating"
         :student-id="studentId"
-        :busy-map="studentActionBusy"
+        :busy-map="busyMap"
         :student-actions-allowed="studentActionsAllowed"
         @open="handleOpen"
         @edit="openEditDialog"
@@ -51,19 +51,14 @@ import { useQuasar } from 'quasar';
 import EvaluationFormDialog from 'src/components/evaluation/EvaluationFormDialog.vue';
 import EvaluationTable from 'src/components/evaluation/EvaluationTable.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useEvaluationStudentActions } from 'src/composables/useEvaluationStudentActions';
 import { Evaluation } from 'src/models/Evaluation';
-import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
-import {
-  evaluationAttemptRepository,
-  type CreateEvaluationAttemptInput,
-  type UpdateEvaluationAttemptInput,
-} from 'src/models/repositories/EvaluationAttemptRepository';
 import {
   evaluationRepository,
   type CreateEvaluationInput,
   type UpdateEvaluationInput,
 } from 'src/models/repositories/EvaluationRepository';
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
@@ -81,43 +76,44 @@ const evaluations = ref<Evaluation[]>([]);
 const mutating = ref(false);
 const dialogOpen = ref(false);
 const dialogInitial = ref<Evaluation | null>(null);
-const studentActionBusy = reactive<
-  Record<string, { busy: boolean; pending: 'start' | 'open' | 'complete' | null }>
->({});
-const attemptsByEvaluation = reactive<Record<string, EvaluationAttempt | null>>({});
 
 const tableVariant = computed<'manager' | 'student'>(() =>
   canManage.value ? 'manager' : 'student',
 );
 const studentId = computed(() => (props.studentId ? String(props.studentId) : ''));
-const isStudentView = computed(() => tableVariant.value === 'student' && Boolean(studentId.value));
-const studentActionsAllowed = computed(() => isStudentView.value);
+const studentActionsAllowed = computed(
+  () => tableVariant.value === 'student' && Boolean(studentId.value),
+);
+
+const {
+  busyMap,
+  openEvaluation: openEvaluationAction,
+  startEvaluation: startEvaluationFn,
+  completeEvaluation: completeEvaluationFn,
+  syncEvaluations: syncStudentEvaluations,
+} = useEvaluationStudentActions({
+  evaluations,
+  studentId,
+  actionsAllowed: studentActionsAllowed,
+});
+
+const handleStudentStart = startEvaluationFn;
+const handleStudentComplete = completeEvaluationFn;
 
 watch(
   () => props.initialEvaluations,
   (value) => {
     if (Array.isArray(value)) {
-      syncEvaluations(value);
+      evaluations.value = value.map((item) =>
+        item instanceof Evaluation ? item : new Evaluation(item),
+      );
     } else {
       evaluations.value = [];
     }
+    syncStudentEvaluations();
   },
   { immediate: true },
 );
-
-function syncEvaluations(list: Evaluation[]): void {
-  evaluations.value = list.map((item) =>
-    item instanceof Evaluation ? item : new Evaluation(item),
-  );
-  evaluations.value.forEach((evaluation) => {
-    if (isStudentView.value) {
-      attemptsByEvaluation[evaluation.id] = findStudentAttempt(evaluation);
-      if (!studentActionBusy[evaluation.id]) {
-        studentActionBusy[evaluation.id] = { busy: false, pending: null };
-      }
-    }
-  });
-}
 
 function openCreateDialog(): void {
   dialogInitial.value = null;
@@ -191,132 +187,7 @@ async function handleDeleteEvaluation(id: string): Promise<void> {
   }
 }
 
-async function handleOpenEvaluation(evaluation: Evaluation): Promise<void> {
-  if (evaluation.url) {
-    window.open(evaluation.url, '_blank', 'noopener');
-    return;
-  }
-  if (!evaluation.fileKey) return;
-  try {
-    const resolved = await evaluation.resolveFileUrl();
-    if (!resolved) {
-      throw new Error('Failed to resolve evaluation file URL');
-    }
-    window.open(resolved, '_blank', 'noopener');
-  } catch (error) {
-    console.error('Failed to open evaluation', error);
-    $q.notify({ type: 'negative', message: t('evaluations.openError') });
-  }
-}
-
-function findStudentAttempt(evaluation: Evaluation): EvaluationAttempt | null {
-  if (!studentId.value) return null;
-  const attempts = Array.isArray(evaluation.attempts) ? evaluation.attempts : [];
-  const match = attempts.find((attempt) => attempt.studentId === studentId.value);
-  return match ?? null;
-}
-
-function setBusy(
-  evaluationId: string,
-  pending: 'start' | 'open' | 'complete' | null,
-  value: boolean,
-): void {
-  studentActionBusy[evaluationId] = {
-    busy: value,
-    pending: value ? pending : null,
-  };
-}
-
-async function handleStudentOpen(evaluation: Evaluation): Promise<void> {
-  const state = studentActionBusy[evaluation.id];
-  if (state?.busy) return;
-  setBusy(evaluation.id, 'open', true);
-  try {
-    await handleOpenEvaluation(evaluation);
-  } finally {
-    setBusy(evaluation.id, null, false);
-  }
-}
-
-async function handleStudentStart(evaluation: Evaluation): Promise<void> {
-  if (!studentActionsAllowed.value || !studentId.value) return;
-  const currentAttempt = attemptsByEvaluation[evaluation.id];
-  setBusy(evaluation.id, 'start', true);
-  try {
-    const timestamp = new Date().toISOString();
-    let attempt: EvaluationAttempt;
-    if (!currentAttempt) {
-      const payload: CreateEvaluationAttemptInput = {
-        studentId: studentId.value,
-        evaluationId: evaluation.id,
-        status: 'InProgress',
-        startedAt: timestamp,
-      };
-      attempt = await evaluationAttemptRepository.create(payload);
-    } else {
-      const updates: UpdateEvaluationAttemptInput = { status: 'InProgress', startedAt: timestamp };
-      attempt = await evaluationAttemptRepository.update(currentAttempt.id, updates);
-    }
-    attemptsByEvaluation[evaluation.id] = attempt;
-    ensureEvaluationAttempt(evaluation, attempt);
-    refreshEvaluations();
-    await evaluation.resolveFileUrl();
-    $q.notify({ type: 'positive', message: t('evaluations.actions.startSuccess') });
-  } catch (error) {
-    console.error('Failed to start evaluation', error);
-    $q.notify({ type: 'negative', message: t('evaluations.actions.startError') });
-  } finally {
-    setBusy(evaluation.id, null, false);
-  }
-}
-
-async function handleStudentComplete(evaluation: Evaluation): Promise<void> {
-  if (!studentActionsAllowed.value || !studentId.value) return;
-  const attempt = attemptsByEvaluation[evaluation.id];
-  if (!attempt || attempt.status !== 'InProgress') return;
-  setBusy(evaluation.id, 'complete', true);
-  try {
-    const timestamp = new Date().toISOString();
-    const updated = await evaluationAttemptRepository.update(attempt.id, {
-      status: 'Completed',
-      completedAt: timestamp,
-    });
-    attemptsByEvaluation[evaluation.id] = updated;
-    ensureEvaluationAttempt(evaluation, updated);
-    refreshEvaluations();
-    $q.notify({ type: 'positive', message: t('evaluations.actions.completeSuccess') });
-  } catch (error) {
-    console.error('Failed to mark evaluation completed', error);
-    $q.notify({ type: 'negative', message: t('evaluations.actions.completeError') });
-  } finally {
-    setBusy(evaluation.id, null, false);
-  }
-}
-
-function ensureEvaluationAttempt(evaluation: Evaluation, attempt: EvaluationAttempt): void {
-  if (!Array.isArray(evaluation.attempts)) {
-    evaluation.attempts = [attempt];
-    return;
-  }
-  const index = evaluation.attempts.findIndex((entry) => entry.id === attempt.id);
-  if (index === -1) {
-    evaluation.attempts.push(attempt);
-  } else {
-    evaluation.attempts.splice(index, 1, attempt);
-  }
-}
-
-function refreshEvaluations(): void {
-  evaluations.value = [...evaluations.value];
-}
-
-async function handleOpen(evaluation: Evaluation): Promise<void> {
-  if (canManage.value) {
-    await handleOpenEvaluation(evaluation);
-  } else {
-    await handleStudentOpen(evaluation);
-  }
-}
+const handleOpen = openEvaluationAction;
 </script>
 
 <script lang="ts">
