@@ -38,21 +38,7 @@
 
     <template #body-cell-actions="props">
       <q-td :props="props">
-        <div class="row q-gutter-xs">
-          <q-btn
-            flat
-            color="primary"
-            icon="visibility"
-            :label="$t('common.view')"
-            @click="emit('view', props.row.id)"
-          />
-          <q-btn
-            flat
-            color="accent"
-            icon="psychology"
-            :label="t('educator.viewCompetencies')"
-            @click="emit('viewCompetencies', props.row.id)"
-          />
+        <div class="row q-gutter-xs justify-end">
           <q-btn
             v-if="currentEducatorId"
             :color="isAssigned(props.row) ? 'negative' : 'primary'"
@@ -64,6 +50,30 @@
               isAssigned(props.row) ? emit('unassign', props.row.id) : emit('assign', props.row.id)
             "
           />
+          <q-btn flat dense round icon="more_vert" :aria-label="$t('common.actions')">
+            <q-menu anchor="top right" self="top right">
+              <q-list dense style="min-width: 160px">
+                <q-item clickable v-close-popup @click="emit('view', props.row.id)">
+                  <q-item-section avatar>
+                    <q-icon name="visibility" />
+                  </q-item-section>
+                  <q-item-section>{{ $t('common.view') }}</q-item-section>
+                </q-item>
+                <q-item clickable v-close-popup @click="emit('viewCompetencies', props.row.id)">
+                  <q-item-section avatar>
+                    <q-icon name="psychology" />
+                  </q-item-section>
+                  <q-item-section>{{ t('educator.viewCompetencies') }}</q-item-section>
+                </q-item>
+                <q-item clickable v-close-popup @click="emit('viewAssessments', props.row.id)">
+                  <q-item-section avatar>
+                    <q-icon name="quiz" />
+                  </q-item-section>
+                  <q-item-section>{{ t('educator.viewAssessments') }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
         </div>
       </q-td>
     </template>
@@ -90,6 +100,7 @@ const emit = defineEmits<{
   unassign: [studentId: string];
   view: [studentId: string];
   viewCompetencies: [studentId: string];
+  viewAssessments: [studentId: string];
 }>();
 
 const { t } = useI18n();

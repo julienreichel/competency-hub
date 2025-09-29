@@ -139,6 +139,7 @@ export default {
     unassignSuccess: 'Student removed from your list.',
     refreshSuccess: 'Student list refreshed.',
     viewCompetencies: 'View competencies',
+    viewAssessments: 'View assessments',
     assignError: 'Could not assign the student. Please try again.',
     unassignError: 'Could not remove the student. Please try again.',
     assignParent: 'Assign Parent',

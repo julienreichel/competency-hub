@@ -13,23 +13,11 @@
       {{ t('assessments.viewingFor', { name: targetUser.name }) }}
     </div>
 
-    <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
-      <div v-for="card in summaryCards" :key="card.key" class="col-12 col-sm-6 col-lg-3">
-        <dashboard-stat-card
-          :title="card.caption"
-          :value="card.value"
-          :icon="card.icon"
-          :icon-color="card.color"
-        />
-      </div>
-    </div>
-
     <div class="row q-gutter-md q-mb-lg">
       <div class="col-12 col-md-4">
         <q-input
           v-model="searchQuery"
           outlined
-          dense
           :placeholder="t('assessments.filters.searchPlaceholder')"
           clearable
         >
@@ -43,7 +31,6 @@
           v-model="statusFilter"
           :options="statusOptions"
           outlined
-          dense
           emit-value
           map-options
           clearable
@@ -55,11 +42,21 @@
           v-model="domainFilter"
           :options="domainOptions"
           outlined
-          dense
           emit-value
           map-options
           clearable
           :label="t('assessments.filters.domain')"
+        />
+      </div>
+    </div>
+
+    <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
+      <div v-for="card in summaryCards" :key="card.key" class="col-6 col-md-3">
+        <dashboard-stat-card
+          :title="card.caption"
+          :value="card.value"
+          :icon="card.icon"
+          :icon-color="card.color"
         />
       </div>
     </div>
@@ -77,6 +74,7 @@
       :busy-map="busyMap"
       :student-actions-allowed="studentActionsAllowed"
       :sub-competency-map="subCompetenciesByEvaluation"
+      card-class="col-12 col-md-6"
       @open="handleOpen"
       @start="handleStudentStart"
       @complete="handleStudentComplete"

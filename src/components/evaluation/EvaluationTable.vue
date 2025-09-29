@@ -1,23 +1,27 @@
 <template>
   <div class="position-relative" style="min-height: 48px">
-    <div v-if="evaluations.length" class="column q-gutter-md">
-      <evaluation-card
-        v-for="evaluation in evaluations"
-        :key="evaluation.id"
-        :evaluation="evaluation"
-        :variant="variant"
-        :attempt="attemptFor(evaluation)"
-        :busy="busyState(evaluation.id).busy"
-        :pending-action="busyState(evaluation.id).pending"
-        :show-actions="variant === 'manager' && showActions"
-        :sub-competency="subCompetencyFor(evaluation)"
-        :student-actions-allowed="studentActionsAllowed"
-        @open="emit('open', evaluation)"
-        @edit="emit('edit', evaluation)"
-        @delete="emit('delete', evaluation.id)"
-        @start="emit('start', evaluation)"
-        @complete="emit('complete', evaluation)"
-      />
+    <div v-if="evaluations.length" class="row q-col-gutter-md">
+      <div v-for="evaluation in evaluations" :key="evaluation.id" class="col-12" :class="cardClass">
+        <evaluation-card
+          :evaluation="evaluation"
+          :variant="variant"
+          :attempt="attemptFor(evaluation)"
+          :busy="busyState(evaluation.id).busy"
+          :pending-action="busyState(evaluation.id).pending"
+          :show-actions="variant === 'manager' && showActions"
+          :sub-competency="subCompetencyFor(evaluation)"
+          :student-actions-allowed="studentActionsAllowed"
+          class="full-height"
+          @open="emit('open', evaluation)"
+          @edit="emit('edit', evaluation)"
+          @delete="emit('delete', evaluation.id)"
+          @start="emit('start', evaluation)"
+          @complete="emit('complete', evaluation)"
+        />
+      </div>
+    </div>
+    <div v-else class="text-grey-6 text-center">
+      {{ $t('evaluations.emptyState') }}
     </div>
     <q-inner-loading :showing="loading">
       <q-spinner color="primary" size="40px" />
@@ -41,6 +45,7 @@ const props = defineProps<{
   busyMap?: Record<string, { busy: boolean; pending: 'start' | 'open' | 'complete' | null }>;
   subCompetencyMap?: Record<string, SubCompetency | null | undefined>;
   studentActionsAllowed?: boolean;
+  cardClass?: string;
 }>();
 
 const emit = defineEmits<{

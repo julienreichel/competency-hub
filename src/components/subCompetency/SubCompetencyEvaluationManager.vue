@@ -15,11 +15,7 @@
     </div>
 
     <div class="q-mt-md">
-      <div v-if="!evaluations.length" class="text-grey-6 text-center">
-        {{ t('evaluations.emptyState') }}
-      </div>
       <evaluation-table
-        v-else-if="evaluations.length"
         :evaluations="evaluations"
         :variant="tableVariant"
         :show-actions="canManage"

@@ -51,7 +51,7 @@
     </div>
 
     <div v-if="summaryCardsToShow.length" class="row q-col-gutter-md q-mb-lg">
-      <div v-for="card in summaryCardsToShow" :key="card.key" class="col-12 col-sm-6 col-lg-3">
+      <div v-for="card in summaryCardsToShow" :key="card.key" class="col-6 col-md-3">
         <dashboard-stat-card
           :title="card.caption"
           :value="card.value"
