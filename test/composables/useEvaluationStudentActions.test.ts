@@ -44,6 +44,82 @@ describe('useEvaluationStudentActions', () => {
       format: EvaluationFormat.EXPERIMENT,
     });
 
+  it('notifies error if starting evaluation fails', async () => {
+    const evaluation = createEvaluation();
+    evaluation.resolveFileUrl = vi.fn().mockResolvedValue('https://example.com');
+    repoMock.create.mockRejectedValue(new Error('fail'));
+    const evaluations = ref([evaluation]);
+    const studentId = computed(() => 'student-err');
+    const actionsAllowed = computed(() => true);
+    const { startEvaluation, busyMap } = useEvaluationStudentActions({
+      evaluations,
+      studentId,
+      actionsAllowed,
+    });
+    await startEvaluation(evaluation);
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'negative' }));
+    expect(busyMap[evaluation.id]).toEqual({ busy: false, pending: null });
+  });
+
+  it('notifies error if completing evaluation fails', async () => {
+    const evaluation = createEvaluation();
+    const attempt = new EvaluationAttempt({
+      id: 'attempt-err',
+      evaluationId: evaluation.id,
+      studentId: 'student-err',
+      status: 'InProgress',
+      completionMode: 'Manual',
+      startedAt: '2024-04-04T00:00:00Z',
+      completedAt: null,
+    });
+    evaluation.attempts = [attempt];
+    repoMock.update.mockRejectedValue(new Error('fail'));
+    const evaluations = ref([evaluation]);
+    const studentId = computed(() => 'student-err');
+    const actionsAllowed = computed(() => true);
+    const { completeEvaluation, busyMap } = useEvaluationStudentActions({
+      evaluations,
+      studentId,
+      actionsAllowed,
+    });
+    await completeEvaluation(evaluation);
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ type: 'negative' }));
+    expect(busyMap[evaluation.id]).toEqual({ busy: false, pending: null });
+  });
+
+  it('opens evaluation resource by url', async () => {
+    const evaluation = createEvaluation();
+    evaluation.url = 'https://test.com';
+    window.open = vi.fn();
+    const evaluations = ref([evaluation]);
+    const studentId = computed(() => 'student-url');
+    const actionsAllowed = computed(() => true);
+    const { openEvaluation } = useEvaluationStudentActions({
+      evaluations,
+      studentId,
+      actionsAllowed,
+    });
+    await openEvaluation(evaluation);
+    expect(window.open).toHaveBeenCalledWith('https://test.com', '_blank', 'noopener');
+  });
+
+  it('opens evaluation resource by fileKey', async () => {
+    const evaluation = createEvaluation();
+    evaluation.fileKey = 'file-123';
+    evaluation.resolveFileUrl = vi.fn().mockResolvedValue('https://file.com');
+    window.open = vi.fn();
+    const evaluations = ref([evaluation]);
+    const studentId = computed(() => 'student-file');
+    const actionsAllowed = computed(() => true);
+    const { openEvaluation } = useEvaluationStudentActions({
+      evaluations,
+      studentId,
+      actionsAllowed,
+    });
+    await openEvaluation(evaluation);
+    expect(window.open).toHaveBeenCalledWith('https://file.com', '_blank', 'noopener');
+  });
+
   beforeEach(() => {
     vi.resetAllMocks();
     notify.mockClear();

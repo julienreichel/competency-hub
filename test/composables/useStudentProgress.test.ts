@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ref } from 'vue';
 
 import {
   buildPendingValidationRows,
@@ -6,6 +7,7 @@ import {
   createManagerRows,
   createPendingValidationRow,
   extractPendingProgress,
+  useStudentProgressActions,
 } from 'src/composables/useStudentProgress';
 import { Competency } from 'src/models/Competency';
 import { Domain } from 'src/models/Domain';
@@ -85,6 +87,118 @@ const createStudent = ({
   });
 
 describe('useStudentProgress helpers', () => {
+  describe('useStudentProgressActions', () => {
+    const repo = {
+      createProgress: vi.fn(),
+      updateProgress: vi.fn(),
+    };
+    beforeEach(async () => {
+      vi.resetAllMocks();
+      // Patch repository
+      const mod = await import('src/models/repositories/StudentProgressRepository');
+      mod.StudentProgressRepository.createProgress = repo.createProgress;
+      mod.StudentProgressRepository.updateProgress = repo.updateProgress;
+    });
+
+    it('persistProgress creates when local, updates when not', async () => {
+      // Local progress (no id, triggers create)
+      const local = createPendingProgress('stu-local', 'sub-local');
+      // Simulate .local property for test (not in type)
+      // @ts-expect-error: simulate .local property for test only
+      local.local = true;
+      // Remote progress (has id, triggers update)
+      const remote = createPendingProgress('stu-remote', 'sub-remote');
+      // Remove .local property if present
+      // @ts-expect-error: remove .local property for test only
+      delete remote.local;
+      repo.createProgress.mockResolvedValue({ id: 'created' });
+      repo.updateProgress.mockResolvedValue({ id: 'updated' });
+      const actions = useStudentProgressActions({ students: ref([]) });
+      const created = await actions.persistProgress(local, { percent: 99 });
+      const updated = await actions.persistProgress(remote, { percent: 100 });
+      expect(repo.createProgress).toHaveBeenCalledWith(
+        expect.objectContaining({ studentId: 'stu-local', percent: 99 }),
+      );
+      expect(repo.updateProgress).toHaveBeenCalledWith(remote.id, { percent: 100 });
+      expect(created).toEqual({ id: 'created' });
+      expect(updated).toEqual({ id: 'updated' });
+    });
+
+    it('syncProgressCaches updates all relevant collections', () => {
+      const progress = createPendingProgress('stu', 'sub');
+      const student = createStudent({ id: 'stu', name: 'Stu', progress: [progress] });
+      const sub = new SubCompetency({
+        id: 'sub',
+        competencyId: 'comp',
+        name: 'Sub',
+        studentProgress: [progress],
+      });
+      const educator = new User({
+        id: 'ed',
+        name: 'Ed',
+        role: UserRole.EDUCATOR,
+        email: 'ed@example.com',
+        students: [
+          {
+            id: student.id,
+            name: student.name,
+            role: student.role,
+            email: student.email,
+            studentProgress: student.studentProgress,
+            evaluationAttempts: student.evaluationAttempts,
+            lastActive: null,
+          },
+        ],
+        lastActive: null,
+        studentProgress: [],
+        evaluationAttempts: [],
+      });
+      const students = ref([student]);
+      const actions = useStudentProgressActions({
+        students,
+        currentEducator: ref(educator),
+        sub: ref(sub),
+      });
+      // Mutate progress to test update
+      const newProgress = createPendingProgress('stu', 'sub');
+      newProgress.percent = 99;
+      actions.syncProgressCaches(student, newProgress);
+      expect(student.studentProgress[0]).toStrictEqual(newProgress);
+      expect(sub.studentProgress[0]).toStrictEqual(newProgress);
+      expect((educator.students ?? [])[0]?.studentProgress[0]).toStrictEqual(newProgress);
+      expect(students.value[0]?.studentProgress[0]).toStrictEqual(newProgress);
+    });
+
+    it('syncProgressCaches adds new student if not present', () => {
+      const progress = createPendingProgress('stu2', 'sub2');
+      const student = createStudent({ id: 'stu2', name: 'Stu2', progress: [progress] });
+      const students = ref([]);
+      const actions = useStudentProgressActions({ students });
+      actions.syncProgressCaches(student, progress);
+      expect(students.value[0]).toStrictEqual(student);
+    });
+
+    it('applyUpdates applies updates only to rows with progress and non-empty builder result', async () => {
+      const progress = createPendingProgress('stu3', 'sub3');
+      const student = createStudent({ id: 'stu3', name: 'Stu3', progress: [progress] });
+      repo.updateProgress.mockResolvedValue(progress);
+      const actions = useStudentProgressActions({ students: ref([student]) });
+      const rows = [{ student, progress }];
+      const builder = vi.fn(() => ({ percent: 100 }));
+      const count = await actions.applyUpdates(rows, builder);
+      expect(count).toBe(1);
+      expect(repo.updateProgress).toHaveBeenCalled();
+    });
+
+    it('applyUpdates skips rows with no progress or empty builder result', async () => {
+      const student = createStudent({ id: 'stu4', name: 'Stu4', progress: [] });
+      const actions = useStudentProgressActions({ students: ref([student]) });
+      const rows = [{ student, progress: null }];
+      const builder = vi.fn(() => null);
+      const count = await actions.applyUpdates(rows, builder);
+      expect(count).toBe(0);
+    });
+  });
   it('extractPendingProgress returns only pending validation entries', () => {
     const pending = createPendingProgress('student-1', 'sub-1');
     const inProgress = new StudentSubCompetencyProgress({
