@@ -13,53 +13,27 @@
       {{ t('competencies.viewingFor', { name: targetUser.name }) }}
     </div>
 
-    <div class="row q-gutter-md q-mb-lg">
-      <div class="col-12 col-md-4">
-        <q-input
-          v-model="searchQuery"
-          outlined
-          :placeholder="t('competencies.searchPlaceholder')"
-          clearable
-        >
-          <template #prepend>
-            <q-icon name="search" />
-          </template>
-        </q-input>
-      </div>
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="statusFilter"
-          :options="statusOptions"
-          outlined
-          :label="t('common.status')"
-          emit-value
-          map-options
-          clearable
-        />
-      </div>
-      <div class="col-12 col-md-3">
-        <q-select
-          v-model="domainFilter"
-          :options="domainOptions"
-          outlined
-          :label="t('domains.title')"
-          emit-value
-          map-options
-          clearable
+    <div v-if="summaryCardsToShow.length" class="row q-col-gutter-md q-mb-lg">
+      <div v-for="card in summaryCardsToShow" :key="card.key" class="col-6 col-md-3">
+        <dashboard-stat-card
+          :title="card.caption"
+          :value="card.value"
+          :icon="card.icon"
+          :icon-color="card.color"
         />
       </div>
     </div>
 
-    <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
-      <div v-for="card in summaryCards" :key="card.key" class="col-12 col-sm-6 col-lg-3">
-        <q-card flat bordered>
-          <q-card-section>
-            <div class="text-caption text-grey-7">{{ card.caption }}</div>
-            <div class="text-h5">{{ card.value }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
+    <search-status-domain-filters
+      v-model:search="searchQuery"
+      v-model:status="statusFilter"
+      v-model:domain="domainFilter"
+      :status-options="statusOptions"
+      :domain-options="domainOptions"
+      :search-placeholder="t('competencies.searchPlaceholder')"
+      :status-label="t('common.status')"
+      :domain-label="t('domains.title')"
+    />
 
     <div class="row q-col-gutter-md">
       <div v-for="sub in filteredSubCompetencies" :key="sub.id" class="col-12 col-md-6 col-lg-4">
@@ -90,7 +64,9 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
+import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import { useUsers } from 'src/composables/useUsers';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import type { SubCompetency } from 'src/models/SubCompetency';
@@ -190,19 +166,69 @@ const statusSummary = computed(() => {
   return summary;
 });
 
+const SUMMARY_CARD_ICONS: Record<string, string> = {
+  total: 'psychology',
+  validated: 'check_circle',
+  inProgress: 'schedule',
+  pending: 'schedule',
+  locked: 'lock',
+  notStarted: 'schedule',
+};
+
+const SUMMARY_CARD_DISPLAY_LIMIT = 4;
+
 const summaryCards = computed(() => {
   const summary = statusSummary.value;
   const cards = [
-    { key: 'total', caption: t('competencies.summary.total'), value: summary.total },
-    { key: 'validated', caption: t('competencies.summary.validated'), value: summary.validated },
-    { key: 'inProgress', caption: t('competencies.summary.inProgress'), value: summary.inProgress },
-    { key: 'pending', caption: t('competencies.summary.pending'), value: summary.pending },
-    { key: 'locked', caption: t('competencies.summary.locked'), value: summary.locked },
-    { key: 'notStarted', caption: t('competencies.summary.notStarted'), value: summary.notStarted },
+    {
+      key: 'total',
+      caption: t('competencies.summary.total'),
+      value: summary.total,
+      icon: SUMMARY_CARD_ICONS.total,
+      color: 'primary',
+    },
+    {
+      key: 'validated',
+      caption: t('competencies.summary.validated'),
+      value: summary.validated,
+      icon: SUMMARY_CARD_ICONS.validated,
+      color: 'positive',
+    },
+    {
+      key: 'inProgress',
+      caption: t('competencies.summary.inProgress'),
+      value: summary.inProgress,
+      icon: SUMMARY_CARD_ICONS.inProgress,
+      color: 'info',
+    },
+    {
+      key: 'pending',
+      caption: t('competencies.summary.pending'),
+      value: summary.pending,
+      icon: SUMMARY_CARD_ICONS.pending,
+      color: 'accent',
+    },
+    {
+      key: 'locked',
+      caption: t('competencies.summary.locked'),
+      value: summary.locked,
+      icon: SUMMARY_CARD_ICONS.locked,
+      color: 'grey',
+    },
+    {
+      key: 'notStarted',
+      caption: t('competencies.summary.notStarted'),
+      value: summary.notStarted,
+      icon: SUMMARY_CARD_ICONS.notStarted,
+      color: 'grey',
+    },
   ];
-
-  return cards.filter((card) => card.key === 'total' || card.value > 0);
+  return cards
+    .filter((card) => card.key === 'total' || card.value > 0)
+    .map((card) => ({ ...card, icon: card.icon ?? '' })); // always provide a string for icon
 });
+
+const summaryCardsToShow = computed(() => summaryCards.value.slice(0, SUMMARY_CARD_DISPLAY_LIMIT));
 
 const filteredSubCompetencies = computed(() => {
   const status = statusFilter.value;
@@ -313,7 +339,7 @@ async function handleOpen(subId: string): Promise<void> {
     return;
   }
   await router.push({
-    name: 'sub-competency-resource',
+    name: 'sub-competency',
     params: { competencyId: target.competencyId, subId },
   });
 }

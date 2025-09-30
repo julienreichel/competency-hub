@@ -54,6 +54,16 @@ vi.mock('aws-amplify/data', () => ({
         update: vi.fn(),
         delete: vi.fn(),
       },
+      Evaluation: {
+        create: vi.fn(),
+        get: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      EvaluationAttempt: {
+        create: vi.fn(),
+        update: vi.fn(),
+      },
       StudentSubCompetencyProgress: {
         create: vi.fn(),
         update: vi.fn(),
@@ -112,6 +122,16 @@ interface MockAmplifyClient {
       list: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
       delete: ReturnType<typeof vi.fn>;
+    };
+    Evaluation: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+    EvaluationAttempt: {
+      create: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
     };
     StudentSubCompetencyProgress: {
       create: ReturnType<typeof vi.fn>;
@@ -195,6 +215,22 @@ describe('GraphQLClient', () => {
         expect(mockAmplifyClient.models.User.get).toHaveBeenCalledWith(
           { id },
           { authMode: 'userPool' },
+        );
+      });
+
+      it('should request user with extended relations', async () => {
+        mockAmplifyClient.models.User.get.mockResolvedValue({ data: mockUserData, errors: null });
+
+        await graphQLClient.getUserWithRelations('user-1');
+
+        expect(mockAmplifyClient.models.User.get).toHaveBeenCalledWith(
+          { id: 'user-1' },
+          expect.objectContaining({
+            selectionSet: expect.arrayContaining([
+              'evaluationAttempts.*',
+              'evaluationAttempts.evaluation.*',
+            ]),
+          }),
         );
       });
 
@@ -605,7 +641,9 @@ describe('GraphQLClient', () => {
       await graphQLClient.getSubCompetencyWithDetails('sub-1');
       expect(mockAmplifyClient.models.SubCompetency.get).toHaveBeenCalledWith(
         { id: 'sub-1' },
-        expect.objectContaining({ selectionSet: expect.arrayContaining(['studentProgress.*']) }),
+        expect.objectContaining({
+          selectionSet: expect.arrayContaining(['studentProgress.*', 'evaluations.*']),
+        }),
       );
     });
   });
@@ -654,6 +692,68 @@ describe('GraphQLClient', () => {
       await expect(graphQLClient.deleteResource('res-1')).resolves.toEqual(mockResource);
       await expect(graphQLClient.getResource('res-1')).resolves.toEqual(mockResource);
       await expect(graphQLClient.listResources()).resolves.toEqual([mockResource]);
+    });
+  });
+
+  describe('Evaluation operations', () => {
+    const mockEvaluation = { id: 'eval-1', name: 'Quiz', subCompetencyId: 'sub-1' };
+
+    it('handles CRUD for evaluations', async () => {
+      mockAmplifyClient.models.Evaluation.create.mockResolvedValue({
+        data: mockEvaluation,
+        errors: null,
+      });
+      mockAmplifyClient.models.Evaluation.update.mockResolvedValue({
+        data: mockEvaluation,
+        errors: null,
+      });
+      mockAmplifyClient.models.Evaluation.delete.mockResolvedValue({
+        data: mockEvaluation,
+        errors: null,
+      });
+      mockAmplifyClient.models.Evaluation.get.mockResolvedValue({
+        data: mockEvaluation,
+        errors: null,
+      });
+
+      await expect(
+        graphQLClient.createEvaluation({ name: 'Quiz', subCompetencyId: 'sub-1' }),
+      ).resolves.toEqual(mockEvaluation);
+      await expect(
+        graphQLClient.updateEvaluation({ id: 'eval-1', name: 'Updated Quiz' }),
+      ).resolves.toEqual(mockEvaluation);
+      await expect(graphQLClient.deleteEvaluation('eval-1')).resolves.toEqual(mockEvaluation);
+      await expect(graphQLClient.getEvaluation('eval-1')).resolves.toEqual(mockEvaluation);
+    });
+
+    it('propagates errors for evaluation create', async () => {
+      const errors = [{ message: 'Denied' }];
+      mockAmplifyClient.models.Evaluation.create.mockResolvedValue({ data: null, errors });
+      await expect(
+        graphQLClient.createEvaluation({ name: 'Quiz', subCompetencyId: 'sub-1' }),
+      ).rejects.toThrow(`GraphQL errors: ${JSON.stringify(errors)}`);
+    });
+  });
+
+  describe('EvaluationAttempt operations', () => {
+    const mockAttempt = { id: 'attempt-1', evaluationId: 'eval-1', studentId: 'student-1' };
+
+    it('creates and updates evaluation attempts', async () => {
+      mockAmplifyClient.models.EvaluationAttempt.create.mockResolvedValue({
+        data: mockAttempt,
+        errors: null,
+      });
+      mockAmplifyClient.models.EvaluationAttempt.update.mockResolvedValue({
+        data: mockAttempt,
+        errors: null,
+      });
+
+      await expect(
+        graphQLClient.createEvaluationAttempt({ evaluationId: 'eval-1', studentId: 'student-1' }),
+      ).resolves.toEqual(mockAttempt);
+      await expect(
+        graphQLClient.updateEvaluationAttempt({ id: 'attempt-1', status: 'Completed' }),
+      ).resolves.toEqual(mockAttempt);
     });
   });
 

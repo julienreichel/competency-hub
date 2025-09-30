@@ -13,7 +13,7 @@
         <div class="row q-gutter-sm">
           <q-btn
             v-if="canManage"
-            color="primary"
+            color="secondary"
             icon="add"
             :label="$t('competencies.addCompetency')"
             @click="openCreateDialog"
@@ -185,7 +185,7 @@ async function submitDialog(form: FormType): Promise<void> {
 }
 
 function openEditor(competencyId: string): void {
-  void router.push({ name: 'competency-sub-competency', params: { competencyId } });
+  void router.push({ name: 'competency', params: { competencyId } });
 }
 
 function confirmDeleteDomain(): void {

@@ -21,6 +21,7 @@ const schema = a
         children: a.hasMany('ParentLink', 'parentId'),
         helperResources: a.hasMany('Resource', 'personUserId'),
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'studentId'),
+        evaluationAttempts: a.hasMany('EvaluationAttempt', 'studentId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -82,6 +83,7 @@ const schema = a
         level: a.integer().default(0),
         resources: a.hasMany('Resource', 'subCompetencyId'),
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'subCompetencyId'),
+        evaluations: a.hasMany('Evaluation', 'subCompetencyId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -120,6 +122,41 @@ const schema = a
         allow.authenticated().to(['read']),
         allow.owner().to(['create', 'update', 'read']),
         allow.groups(['Student']).to(['update', 'read']),
+        allow.groups(['Educator', 'Admin']).to(['create', 'update', 'read']),
+      ]),
+
+    Evaluation: a
+      .model({
+        subCompetencyId: a.id().required(),
+        subCompetency: a.belongsTo('SubCompetency', 'subCompetencyId'),
+        name: a.string().required(),
+        description: a.string(),
+        mode: a.enum(['Solo', 'Peer', 'Adult']),
+        format: a.enum(['Experiment', 'PaperPencil', 'Oral', 'Digital']),
+        durationMin: a.integer(),
+        url: a.string(),
+        fileKey: a.string(),
+        attempts: a.hasMany('EvaluationAttempt', 'evaluationId'),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.groups(['Educator', 'Admin']).to(['create', 'update', 'delete']),
+      ]),
+
+    EvaluationAttempt: a
+      .model({
+        studentId: a.id().required(),
+        student: a.belongsTo('User', 'studentId'),
+        evaluationId: a.id().required(),
+        evaluation: a.belongsTo('Evaluation', 'evaluationId'),
+        status: a.enum(['NotStarted', 'InProgress', 'Completed']),
+        completionMode: a.enum(['Auto', 'Manual']),
+        startedAt: a.datetime(),
+        completedAt: a.datetime(),
+      })
+      .authorization((allow) => [
+        allow.authenticated().to(['read']),
+        allow.owner().to(['create', 'update', 'read']),
         allow.groups(['Educator', 'Admin']).to(['create', 'update', 'read']),
       ]),
 

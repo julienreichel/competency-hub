@@ -3,6 +3,7 @@ import { BaseModel } from './base/BaseModel';
 import { Competency, type AmplifyCompetency } from './Competency';
 import type { AmplifyResource } from './CompetencyResource';
 import { CompetencyResource, type ResourceInit } from './CompetencyResource';
+import { Evaluation } from './Evaluation';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { User } from './User';
 import { UserRole } from './User';
@@ -22,6 +23,7 @@ export interface SubCompetencyInit {
   updatedAt?: string;
   resources?: Array<ResourceInit | CompetencyResource>;
   studentProgress?: StudentSubCompetencyProgress[];
+  evaluations?: Evaluation[];
 }
 
 export interface CreateSubCompetencyInput {
@@ -44,6 +46,7 @@ export class SubCompetency extends BaseModel {
   public level: number;
   public readonly resources: CompetencyResource[];
   public studentProgress: StudentSubCompetencyProgress[] = [];
+  public readonly evaluations: Evaluation[];
 
   constructor(data: SubCompetencyInit) {
     super(data);
@@ -61,6 +64,12 @@ export class SubCompetency extends BaseModel {
     this.resources = initialResources.map((resource) =>
       resource instanceof CompetencyResource ? resource.clone() : new CompetencyResource(resource),
     );
+
+    this.evaluations = Array.isArray(data.evaluations)
+      ? data.evaluations.map((evaluation) =>
+          evaluation instanceof Evaluation ? evaluation.clone() : new Evaluation(evaluation),
+        )
+      : [];
 
     // Parse studentProgress array if provided, using fromAmplify if needed
     if (Array.isArray(data.studentProgress)) {
@@ -132,6 +141,21 @@ export class SubCompetency extends BaseModel {
         )
         .filter((item): item is StudentSubCompetencyProgress => item !== null);
     }
+    let evaluations: Evaluation[] = [];
+    if (raw.evaluations) {
+      const arr = Array.isArray(raw.evaluations)
+        ? raw.evaluations
+        : Array.isArray((raw.evaluations as { items?: unknown }).items)
+          ? ((raw.evaluations as { items?: unknown }).items as object[])
+          : [];
+      evaluations = arr
+        .map((entry) =>
+          entry && typeof entry === 'object' && 'id' in entry
+            ? Evaluation.fromAmplify(entry)
+            : null,
+        )
+        .filter((item): item is Evaluation => item !== null);
+    }
     return new SubCompetency({
       id: raw.id,
       competencyId: raw.competencyId,
@@ -142,6 +166,7 @@ export class SubCompetency extends BaseModel {
       level: typeof raw.level === 'number' ? raw.level : 0,
       resources,
       studentProgress,
+      evaluations,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });
@@ -166,6 +191,7 @@ export class SubCompetency extends BaseModel {
 
       resources: this.resources.map((resource) => resource.toJSON()),
       studentProgress: this.studentProgress.map((sp) => sp.toJSON()),
+      evaluations: this.evaluations.map((evaluation) => evaluation.toJSON()),
     };
   }
 
@@ -182,6 +208,7 @@ export class SubCompetency extends BaseModel {
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
       resources: this.resources.map((resource) => resource.clone()),
       studentProgress: this.studentProgress.map((sp) => sp.clone()),
+      evaluations: this.evaluations.map((evaluation) => evaluation.clone()),
     });
   }
   /**

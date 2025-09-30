@@ -4,7 +4,7 @@
     :flat="isEdit"
     :dense="isEdit"
     :icon="isEdit ? 'edit' : 'add'"
-    color="primary"
+    color="secondary"
     @click="open = true"
   />
   <base-dialog

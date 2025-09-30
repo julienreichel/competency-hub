@@ -153,19 +153,15 @@ export class Competency extends BaseModel {
    * - "NotStarted" otherwise
    */
   getStatus(): 'Locked' | 'Validated' | 'InProgress' | 'NotStarted' {
-    console.log(this.subCompetencies);
     if (!this.subCompetencies.length) return 'Locked';
     const allLocked = this.subCompetencies.every((sub) => sub.getStatus() === 'Locked');
-    console.log(allLocked);
     if (allLocked) return 'Locked';
     const allValidated = this.subCompetencies.every((sub) => sub.getStatus() === 'Validated');
-    console.log(allValidated);
     if (allValidated) return 'Validated';
     const anyInProgress = this.subCompetencies.some((sub) => {
       const status = sub.getStatus();
       return status === 'InProgress' || status === 'PendingValidation' || status === 'Validated';
     });
-    console.log(anyInProgress);
     if (anyInProgress) return 'InProgress';
     return 'NotStarted';
   }

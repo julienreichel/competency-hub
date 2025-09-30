@@ -1,16 +1,17 @@
 import type { Schema } from '../../amplify/data/resource';
+import { User, type UserRelationInit } from './User';
 
 export type AmplifyStudentSubCompetencyProgress = NonNullable<
   Schema['StudentSubCompetencyProgress']['type']
 >;
 
-import { User, type UserRelationInit } from './User';
+export type ProgressStatus = 'NotStarted' | 'InProgress' | 'PendingValidation' | 'Validated';
 
 export interface StudentSubCompetencyProgressInit {
   id: string;
   studentId: string;
   subCompetencyId: string;
-  status: 'NotStarted' | 'InProgress' | 'PendingValidation' | 'Validated';
+  status: ProgressStatus;
   percent: number;
   lockOverride?: 'Locked' | 'Unlocked' | null;
   recommended?: boolean | null;
@@ -23,7 +24,7 @@ export class StudentSubCompetencyProgress {
   public readonly id: string;
   public readonly studentId: string;
   public readonly subCompetencyId: string;
-  public status: 'NotStarted' | 'InProgress' | 'PendingValidation' | 'Validated';
+  public status: ProgressStatus;
   public percent: number;
   public lockOverride: 'Locked' | 'Unlocked' | null;
   public recommended: boolean | null;

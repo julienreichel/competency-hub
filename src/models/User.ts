@@ -1,7 +1,8 @@
 import type { Schema } from '../../amplify/data/resource';
+import { BaseModel } from './base/BaseModel';
+import { EvaluationAttempt } from './EvaluationAttempt';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { SubCompetency } from './SubCompetency';
-import { BaseModel } from './base/BaseModel';
 
 // Constants
 const MAX_INITIALS = 2;
@@ -66,6 +67,7 @@ export interface UserRelationInit {
   students?: UserRelationInit[];
   children?: UserRelationInit[];
   studentProgress?: StudentSubCompetencyProgress[];
+  evaluationAttempts?: EvaluationAttempt[];
 }
 
 type UserInit = UserRelationInit;
@@ -88,6 +90,7 @@ export class User extends BaseModel {
   public students: User[];
   public children: User[];
   public studentProgress: StudentSubCompetencyProgress[];
+  public evaluationAttempts: EvaluationAttempt[];
 
   constructor(data: UserInit) {
     super(data);
@@ -103,6 +106,11 @@ export class User extends BaseModel {
     this.students = User.normaliseRelation(data.students);
     this.children = User.normaliseRelation(data.children);
     this.studentProgress = Array.isArray(data.studentProgress) ? data.studentProgress : [];
+    this.evaluationAttempts = Array.isArray(data.evaluationAttempts)
+      ? data.evaluationAttempts.map((attempt) =>
+          attempt instanceof EvaluationAttempt ? attempt : EvaluationAttempt.fromAmplify(attempt),
+        )
+      : [];
 
     this.validate();
   }
@@ -124,6 +132,7 @@ export class User extends BaseModel {
       students: User.extractUsersFromEntries(raw.students, 'student'),
       children: User.extractUsersFromEntries(raw.children, 'student'),
       studentProgress: User.normaliseStudentProgress(raw.studentProgress),
+      evaluationAttempts: User.normaliseEvaluationAttempts(raw.evaluationAttempts),
     });
   }
   private static normaliseStudentProgress(
@@ -142,6 +151,24 @@ export class User extends BaseModel {
           : null,
       )
       .filter((item): item is StudentSubCompetencyProgress => item !== null);
+  }
+
+  static normaliseEvaluationAttempts(
+    entries: AmplifyUser['evaluationAttempts'],
+  ): EvaluationAttempt[] {
+    if (!entries) return [];
+    const arr = Array.isArray(entries)
+      ? entries
+      : Array.isArray((entries as { items?: unknown }).items)
+        ? ((entries as { items?: unknown }).items as unknown[])
+        : [];
+    return arr
+      .map((entry) =>
+        entry && typeof entry === 'object' && 'id' in entry
+          ? EvaluationAttempt.fromAmplify(entry)
+          : null,
+      )
+      .filter((item): item is EvaluationAttempt => item !== null);
   }
 
   static create(data: UserInit | User): User {

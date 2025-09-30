@@ -55,6 +55,7 @@
             @unassign="handleUnassign"
             @view="openStudentDialog"
             @view-competencies="openStudentCompetencies"
+            @view-assessments="openStudentAssessments"
           />
         </q-tab-panel>
 
@@ -70,6 +71,7 @@
             @unassign="handleUnassign"
             @view="openStudentDialog"
             @view-competencies="openStudentCompetencies"
+            @view-assessments="openStudentAssessments"
           />
         </q-tab-panel>
       </q-tab-panels>
@@ -206,6 +208,9 @@ async function refreshUsers(): Promise<void> {
 
 async function openStudentCompetencies(studentId: string): Promise<void> {
   await router.push({ name: 'user-competencies', params: { userId: studentId } });
+}
+async function openStudentAssessments(studentId: string): Promise<void> {
+  await router.push({ name: 'user-assessments', params: { userId: studentId } });
 }
 
 function updateUserInState(updated: User | null): void {

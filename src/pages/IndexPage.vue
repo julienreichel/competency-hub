@@ -13,11 +13,7 @@
 
     <template v-if="!pageLoading">
       <div v-if="summaryCards.length" class="row q-col-gutter-md q-mb-lg">
-        <div
-          v-for="card in summaryCards"
-          :key="card.title"
-          class="col-12 col-sm-6 col-md-4 col-lg-3"
-        >
+        <div v-for="card in summaryCards" :key="card.title" class="col-6 col-md-3">
           <dashboard-stat-card v-bind="card" />
         </div>
       </div>
@@ -234,7 +230,7 @@ function buildQuickActions(role: UserRole | undefined): QuickAction[] {
           icon: 'psychology',
           to: '/me/competencies',
         },
-        //{ label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/assessments' },
+        { label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/me/assessments' },
         //{ label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
       ];
     case UserRole.PARENT:

@@ -7,26 +7,21 @@
         <div class="text-caption text-grey-7">
           {{ resource.description }}
         </div>
-        <div v-if="resource.type === 'Link' && resource.url">
-          <a
-            :href="resource.url"
-            target="_blank"
-            rel="noopener"
-            @click.prevent="openLink(resource.url)"
-          >
-            {{ resource.url }}
-          </a>
-        </div>
-        <div v-else-if="resource.type === 'Document' && resource.fileKey">
-          <a href="#" @click.prevent="openResourceFile(resource)">Open</a>
-        </div>
-        <div v-else-if="resource.type === 'Human' && resource.personUserId && resource.person">
+        <div v-if="showUser && resource.person">
           <a href="#" @click.prevent="showUserDetails(resource.person)">{{
-            resource.person.name
+            resource.person?.name
           }}</a>
         </div>
       </div>
       <div class="row q-gutter-xs">
+        <q-btn
+          v-if="showLinkIcon"
+          flat
+          dense
+          color="primary"
+          icon="open_in_new"
+          @click="handleOpen"
+        />
         <q-btn
           v-if="showOpen !== false"
           flat
@@ -51,19 +46,19 @@
         />
       </div>
     </q-card-section>
-    <user-details-dialog :model-value="userDialogOpen" :user="userDialogUser" />
+    <user-details-dialog v-model="userDialogOpen" :user="userDialogUser" />
   </q-card>
 </template>
 
 <script setup lang="ts">
 import UserDetailsDialog from 'src/components/ui/UserDetailsDialog.vue';
 import type { UpdateCompetencyInput } from 'src/models/Competency';
-import type { CompetencyResource } from 'src/models/CompetencyResource';
+import { type CompetencyResource, ResourceType } from 'src/models/CompetencyResource';
 import type { User } from 'src/models/User';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ResourceFormDialog from './ResourceFormDialog.vue';
 
-defineProps<{
+const props = defineProps<{
   resource: CompetencyResource;
   showOpen?: boolean;
   showEdit?: boolean;
@@ -78,6 +73,29 @@ defineEmits<{
 
 const userDialogOpen = ref(false);
 const userDialogUser = ref<User | null>(null);
+const showLink = computed(() => props.resource.type === ResourceType.LINK && props.resource.url);
+const showLDocument = computed(
+  () => props.resource.type === ResourceType.DOCUMENT && props.resource.fileKey,
+);
+const showUser = computed(
+  () =>
+    props.resource.type === ResourceType.HUMAN &&
+    props.resource.personUserId &&
+    props.resource.person,
+);
+
+const showLinkIcon = computed(() => showLink.value || showLDocument.value || showUser.value);
+async function handleOpen(): Promise<void> {
+  if (showLink.value && props.resource.url) {
+    openLink(props.resource.url);
+  }
+  if (showLDocument.value) {
+    await openResourceFile(props.resource);
+  }
+  if (showUser.value && props.resource.person) {
+    showUserDetails(props.resource.person);
+  }
+}
 
 function openLink(url: string): void {
   window.open(url, '_blank');

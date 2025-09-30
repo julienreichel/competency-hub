@@ -83,6 +83,8 @@ export class GraphQLClient {
             'parents.parent.*',
             'children.student.*',
             'studentProgress.*',
+            'evaluationAttempts.*',
+            'evaluationAttempts.evaluation.*',
           ],
         },
       );
@@ -558,6 +560,7 @@ export class GraphQLClient {
             'updatedAt',
             'resources.*',
             'resources.person.*',
+            'evaluations.*',
           ],
         },
       );
@@ -591,6 +594,9 @@ export class GraphQLClient {
             'resources.person.*',
             'studentProgress.*',
             'studentProgress.student.*',
+            'evaluations.*',
+            'evaluations.attempts.*',
+            'evaluations.attempts.student.*',
           ],
         },
       );
@@ -759,6 +765,124 @@ export class GraphQLClient {
       return result.data;
     } catch (error) {
       console.error('Error listing Resources:', error);
+      throw error;
+    }
+  }
+
+  async createEvaluation(
+    data: Schema['Evaluation']['createType'],
+  ): Promise<Schema['Evaluation']['type'] | null> {
+    try {
+      const result = await this.client.models.Evaluation.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating Evaluation:', error);
+      throw error;
+    }
+  }
+
+  async updateEvaluation(
+    data: Schema['Evaluation']['updateType'],
+  ): Promise<Schema['Evaluation']['type'] | null> {
+    try {
+      const result = await this.client.models.Evaluation.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating Evaluation:', error);
+      throw error;
+    }
+  }
+
+  async deleteEvaluation(id: string): Promise<Schema['Evaluation']['type'] | null> {
+    try {
+      const result = await this.client.models.Evaluation.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting Evaluation with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getEvaluation(id: string): Promise<Schema['Evaluation']['type'] | null> {
+    try {
+      const result = await this.client.models.Evaluation.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'subCompetencyId',
+            'subCompetency.*',
+            'name',
+            'description',
+            'mode',
+            'format',
+            'durationMin',
+            'url',
+            'fileKey',
+            'createdAt',
+            'updatedAt',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['Evaluation']['type'];
+    } catch (error) {
+      console.error(`Error getting Evaluation with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async createEvaluationAttempt(
+    data: Schema['EvaluationAttempt']['createType'],
+  ): Promise<Schema['EvaluationAttempt']['type'] | null> {
+    try {
+      const result = await this.client.models.EvaluationAttempt.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating EvaluationAttempt:', error);
+      throw error;
+    }
+  }
+
+  async updateEvaluationAttempt(
+    data: Schema['EvaluationAttempt']['updateType'],
+  ): Promise<Schema['EvaluationAttempt']['type'] | null> {
+    try {
+      const result = await this.client.models.EvaluationAttempt.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating EvaluationAttempt:', error);
       throw error;
     }
   }

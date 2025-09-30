@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Competency } from '../../src/models/Competency';
-import { Domain } from '../../src/models/Domain';
+import { Domain, mapDomainsFromAmplify, type AmplifyDomain } from '../../src/models/Domain';
 
 describe('Domain model', () => {
   const domainInit = {
@@ -61,5 +61,85 @@ describe('Domain model', () => {
     expect(clone).not.toBe(domain);
     expect(clone.competencies[0]).not.toBe(domain.competencies[0]);
     expect(clone.toJSON()).toEqual(domain.toJSON());
+  });
+
+  it('creates fromAmplify with all fields', () => {
+    const amplify = {
+      id: 'domain-amp',
+      name: 'Science',
+      colorCode: '#00FF00',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-02T00:00:00Z',
+      competencies: [
+        {
+          id: 'comp-amp',
+          domainId: 'domain-amp',
+          name: 'Physics',
+        },
+      ],
+    };
+    const domain = Domain.fromAmplify(amplify as unknown as AmplifyDomain);
+    expect(domain.id).toBe('domain-amp');
+    expect(domain.name).toBe('Science');
+    expect(domain.colorCode).toBe('#00FF00');
+    expect(domain.createdAt).toBe('2024-01-01T00:00:00Z');
+    expect(domain.updatedAt).toBe('2024-01-02T00:00:00Z');
+    expect(domain.competencies[0] && domain.competencies[0].name).toBe('Physics');
+  });
+
+  it('fromAmplify handles missing optional fields', () => {
+    const amplify = { id: 'd2', name: 'NoColor', competencies: [] };
+    const domain = Domain.fromAmplify(amplify as unknown as AmplifyDomain);
+    expect(domain.colorCode).toBeNull();
+    expect(domain.createdAt).toBeUndefined();
+    expect(domain.updatedAt).toBeUndefined();
+    expect(domain.competencies).toEqual([]);
+  });
+
+  it('toJSON outputs all fields and correct competencyCount', () => {
+    const domain = new Domain({ ...domainInit, competencyCount: 42 });
+    const json = domain.toJSON();
+    expect(json.id).toBe(domainInit.id);
+    expect(json.name).toBe(domainInit.name);
+    expect(json.colorCode).toBe(domainInit.colorCode);
+    expect(json.competencyCount).toBe(42);
+    expect(Array.isArray(json.competencies)).toBe(true);
+  });
+
+  it('toJSON falls back to competencies.length if competencyCount is null', () => {
+    const domain = new Domain({ ...domainInit, competencyCount: null });
+    const json = domain.toJSON();
+    expect(json.competencyCount).toBe(domain.competencies.length);
+  });
+
+  it('competencyCount logic: explicit, null, fallback', () => {
+    const d1 = new Domain({ ...domainInit, competencyCount: 5 });
+    expect(d1.competencyCount).toBe(5);
+    const d2 = new Domain({ ...domainInit, competencyCount: null });
+    expect(d2.competencyCount).toBeNull();
+    const d3 = new Domain({ ...domainInit });
+    expect(d3.competencyCount).toBe(d3.competencies.length);
+  });
+
+  it('mapDomainsFromAmplify handles array, items, toArray, null, and undefined', () => {
+    const amplify = { id: 'd3', name: 'A', competencies: [] };
+    // Array
+    const arr = [amplify];
+    expect(Array.isArray(arr)).toBe(true);
+    const mappedArr = mapDomainsFromAmplify(arr as unknown as AmplifyDomain[]);
+    expect(mappedArr[0] && mappedArr[0].id).toBe('d3');
+    // Object with items
+    const itemsObj = { items: [amplify] };
+    const mappedItems = mapDomainsFromAmplify(itemsObj as unknown as { items: AmplifyDomain[] });
+    expect(mappedItems[0] && mappedItems[0].id).toBe('d3');
+    // Object with toArray
+    const toArrayObj = { toArray: (): AmplifyDomain[] => [amplify as unknown as AmplifyDomain] };
+    const mappedToArray = mapDomainsFromAmplify(
+      toArrayObj as unknown as { toArray: () => AmplifyDomain[] },
+    );
+    expect(mappedToArray[0] && mappedToArray[0].id).toBe('d3');
+    // Null/undefined
+    expect(mapDomainsFromAmplify(null as unknown as AmplifyDomain[])).toEqual([]);
+    expect(mapDomainsFromAmplify(undefined as unknown as AmplifyDomain[])).toEqual([]);
   });
 });
