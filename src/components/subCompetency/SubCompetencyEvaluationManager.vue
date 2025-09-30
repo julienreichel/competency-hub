@@ -7,7 +7,7 @@
       <q-space />
       <q-btn
         v-if="canManage"
-        color="primary"
+        color="secondary"
         icon="add"
         :label="t('evaluations.addEvaluation')"
         @click="openCreateDialog"

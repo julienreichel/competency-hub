@@ -13,7 +13,7 @@
         <div class="row q-gutter-sm">
           <q-btn
             v-if="canManage"
-            color="primary"
+            color="secondary"
             icon="add"
             :label="$t('competencies.addCompetency')"
             @click="openCreateDialog"

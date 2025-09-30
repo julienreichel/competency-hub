@@ -7,7 +7,7 @@
       </div>
       <q-btn
         v-if="hasRole('Admin')"
-        color="primary"
+        color="secondary"
         icon="add"
         :label="$t('domains.addDomain')"
         class="self-end"
