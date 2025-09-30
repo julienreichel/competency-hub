@@ -77,15 +77,13 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import StudentProgressTable from 'src/components/educator/StudentProgressTable.vue';
-import type {
-  EvaluationStatusSummary,
-  StudentProgressRow,
-} from 'src/components/educator/studentProgressTypes';
-import { useStudentProgressActions } from 'src/composables/useStudentProgress';
+import type { StudentProgressRow } from 'src/components/educator/studentProgressTypes';
+import {
+  buildPendingValidationRows,
+  useStudentProgressActions,
+} from 'src/composables/useStudentProgress';
 import { useUsers } from 'src/composables/useUsers';
-import { EvaluationAttempt } from 'src/models/EvaluationAttempt';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
-import type { StudentSubCompetencyProgress } from 'src/models/StudentSubCompetencyProgress';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import type { User } from 'src/models/User';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -178,108 +176,29 @@ async function loadData(): Promise<void> {
 }
 
 async function buildPendingRows(studentList: User[]): Promise<void> {
-  const contexts = studentList.flatMap((student) =>
-    extractPendingProgress(student).map((progress) => ({
-      student,
-      progress,
-    })),
-  );
-
-  if (contexts.length === 0) {
-    pendingRows.value = [];
-    return;
-  }
-
-  const subIds = Array.from(
-    new Set(
-      contexts.map((ctx) => ctx.progress.subCompetencyId).filter((id): id is string => Boolean(id)),
-    ),
-  );
-
-  const subMap = await resolveSubCompetencies(subIds);
-
-  const rows: StudentProgressRow[] = [];
-  contexts.forEach(({ student, progress }) => {
-    const subCompetency = subMap.get(progress.subCompetencyId);
-    if (!subCompetency) return;
-    const row = createPendingRow(student, progress, subCompetency);
-    if (row) {
-      rows.push(row);
-    }
+  const rows = await buildPendingValidationRows({
+    students: studentList,
+    loadSubCompetency,
+    cache: subCompetencyCache,
+    placeholder: FALLBACK_PLACEHOLDER,
   });
-
-  rows.sort((a, b) => a.student.name.localeCompare(b.student.name));
   pendingRows.value = rows;
 }
 
-async function resolveSubCompetencies(ids: string[]): Promise<Map<string, SubCompetency | null>> {
-  await Promise.all(
-    ids.map(async (id) => {
-      if (subCompetencyCache.has(id)) {
-        return;
-      }
-      try {
-        const sub = await subCompetencyRepository.findById(id, false);
-        subCompetencyCache.set(id, sub);
-      } catch (error) {
-        console.error('Failed to load sub-competency', error);
-        subCompetencyCache.set(id, null);
-      }
-    }),
-  );
+async function loadSubCompetency(id: string): Promise<SubCompetency | null> {
+  if (subCompetencyCache.has(id)) {
+    return subCompetencyCache.get(id) ?? null;
+  }
 
-  const map = new Map<string, SubCompetency | null>();
-  ids.forEach((id) => {
-    map.set(id, subCompetencyCache.get(id) ?? null);
-  });
-  return map;
-}
-
-function extractPendingProgress(student: User): StudentSubCompetencyProgress[] {
-  const progressList = Array.isArray(student.studentProgress) ? student.studentProgress : [];
-  return progressList.filter((progress) => progress.status === 'PendingValidation');
-}
-
-function createPendingRow(
-  student: User,
-  progress: StudentSubCompetencyProgress,
-  subCompetency: SubCompetency,
-): StudentProgressRow {
-  const competency = subCompetency.competency ?? null;
-  const domain = competency?.domain ?? null;
-  const domainName = domain?.name ?? FALLBACK_PLACEHOLDER;
-  const competencyName = competency?.name ?? FALLBACK_PLACEHOLDER;
-
-  return {
-    id: progress.id,
-    student,
-    progress,
-    subCompetency,
-    domainName,
-    domainValue: domain?.id ?? null,
-    competencyName,
-    subCompetencyName: subCompetency.name,
-    evaluationsStatusSummaries: computeEvaluationStatus(student, subCompetency),
-  };
-}
-
-function computeEvaluationStatus(
-  student: User,
-  subCompetency: SubCompetency,
-): EvaluationStatusSummary[] {
-  const attempts = Array.isArray(student.evaluationAttempts) ? student.evaluationAttempts : [];
-  const evaluations = Array.isArray(subCompetency.evaluations) ? subCompetency.evaluations : [];
-  return evaluations.map((evaluation) => {
-    const attempt = attempts.find((att) => att.evaluationId === evaluation.id);
-    const status = attempt ? attempt.status : 'NotStarted';
-    return {
-      id: evaluation.id,
-      name: evaluation.name,
-      status,
-      statusIcon: EvaluationAttempt.getStatusIcon(status),
-      statusColor: EvaluationAttempt.getStatusColor(status),
-    };
-  });
+  try {
+    const sub = await subCompetencyRepository.findById(id, true);
+    subCompetencyCache.set(id, sub);
+    return sub;
+  } catch (error) {
+    console.error('Failed to load sub-competency', error);
+    subCompetencyCache.set(id, null);
+    return null;
+  }
 }
 
 function matchesFilters(row: StudentProgressRow): boolean {

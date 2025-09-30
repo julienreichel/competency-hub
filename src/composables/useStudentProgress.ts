@@ -57,16 +57,17 @@ export function useStudentProgressActions(options: UseStudentProgressOptions): {
   function syncProgressCaches(student: User, progress: StudentSubCompetencyProgress): void {
     updateProgressCollection(student.studentProgress, progress);
 
-    if (options.sub?.value) {
-      updateProgressCollection(options.sub.value.studentProgress, progress);
+    const subCompetency = options.sub?.value;
+    if (subCompetency) {
+      updateProgressCollection(subCompetency.studentProgress, progress);
     }
 
-    if (options.currentEducator?.value?.students) {
-      const educatorStudents = options.currentEducator.value.students;
-      const index = educatorStudents.findIndex((candidate) => candidate.id === student.id);
+    const educator = options.currentEducator?.value;
+    if (educator?.students) {
+      const index = educator.students.findIndex((candidate) => candidate.id === student.id);
       if (index !== -1) {
-        updateProgressCollection(educatorStudents[index]?.studentProgress, progress);
-        educatorStudents.splice(index, 1, student);
+        updateProgressCollection(educator.students[index]?.studentProgress, progress);
+        educator.students.splice(index, 1, student);
       }
     }
 
@@ -129,19 +130,22 @@ export function createManagerRows(
       if (!progress) return null;
       const evaluations = subCompetency.evaluations ?? [];
 
-      const evaluationsStatusSummaries = evaluations
-        .map((evaluation) => {
-          const attempt = evaluation.attempts.find((attempt) => attempt.studentId === student.id);
-          if (!attempt) return null;
-          return {
-            id: attempt.id,
-            name: evaluation.name,
-            status: attempt.status,
-            statusIcon: EvaluationAttempt.getStatusIcon(attempt.status),
-            statusColor: EvaluationAttempt.getStatusColor(attempt.status),
-          };
-        })
-        .filter(Boolean) as EvaluationStatusSummary[];
+      let evaluationsStatusSummaries = [] as EvaluationStatusSummary[];
+      if (progress.status === 'PendingValidation') {
+        evaluationsStatusSummaries = evaluations
+          .map((evaluation) => {
+            const attempt = evaluation.attempts.find((attempt) => attempt.studentId === student.id);
+            if (!attempt) return null;
+            return {
+              id: attempt.id,
+              name: evaluation.name,
+              status: attempt.status,
+              statusIcon: EvaluationAttempt.getStatusIcon(attempt.status),
+              statusColor: EvaluationAttempt.getStatusColor(attempt.status),
+            };
+          })
+          .filter(Boolean) as EvaluationStatusSummary[];
+      }
 
       return {
         id: student.id,
@@ -156,4 +160,136 @@ export function createManagerRows(
       };
     })
     .filter(Boolean) as StudentProgressRow[];
+}
+
+export function extractPendingProgress(student: User): StudentSubCompetencyProgress[] {
+  const progressList = Array.isArray(student.studentProgress) ? student.studentProgress : [];
+  return progressList.filter((progress) => progress.status === 'PendingValidation');
+}
+
+export function computeEvaluationStatusSummaries(
+  student: User,
+  subCompetency: SubCompetency,
+): EvaluationStatusSummary[] {
+  const attempts = Array.isArray(student.evaluationAttempts) ? student.evaluationAttempts : [];
+  const evaluations = Array.isArray(subCompetency.evaluations) ? subCompetency.evaluations : [];
+
+  return evaluations.map((evaluation) => {
+    const attempt = attempts.find((entry) => entry.evaluationId === evaluation.id);
+    const status = attempt?.status ?? 'NotStarted';
+    return {
+      id: evaluation.id,
+      name: evaluation.name,
+      status,
+      statusIcon: EvaluationAttempt.getStatusIcon(status),
+      statusColor: EvaluationAttempt.getStatusColor(status),
+    };
+  });
+}
+
+interface CreatePendingRowOptions {
+  student: User;
+  progress: StudentSubCompetencyProgress;
+  subCompetency: SubCompetency;
+  placeholder?: string;
+}
+
+export function createPendingValidationRow({
+  student,
+  progress,
+  subCompetency,
+  placeholder = '—',
+}: CreatePendingRowOptions): StudentProgressRow {
+  const competency = subCompetency.competency ?? null;
+  const domain = competency?.domain ?? null;
+  const domainName = domain?.name ?? placeholder;
+  const competencyName = competency?.name ?? placeholder;
+
+  return {
+    id: progress.id,
+    student,
+    progress,
+    subCompetency,
+    domainName,
+    domainValue: domain?.id ?? null,
+    competencyName,
+    subCompetencyName: subCompetency.name,
+    evaluationsStatusSummaries: computeEvaluationStatusSummaries(student, subCompetency),
+  };
+}
+
+interface BuildPendingValidationRowsOptions {
+  students: User[];
+  loadSubCompetency: (id: string) => Promise<SubCompetency | null>;
+  cache?: Map<string, SubCompetency | null>;
+  placeholder?: string;
+}
+
+export async function buildPendingValidationRows({
+  students,
+  loadSubCompetency,
+  cache,
+  placeholder = '—',
+}: BuildPendingValidationRowsOptions): Promise<StudentProgressRow[]> {
+  const contexts: Array<{ student: User; progress: StudentSubCompetencyProgress }> = [];
+  const subIds = new Set<string>();
+
+  students.forEach((student) => {
+    extractPendingProgress(student).forEach((progress) => {
+      contexts.push({ student, progress });
+      if (progress.subCompetencyId) {
+        subIds.add(progress.subCompetencyId);
+      }
+    });
+  });
+
+  if (contexts.length === 0) {
+    return [];
+  }
+
+  const subMap = new Map<string, SubCompetency | null>();
+
+  await Promise.all(
+    Array.from(subIds).map(async (id) => {
+      if (!id) {
+        subMap.set(id, null);
+        return;
+      }
+
+      if (cache?.has(id)) {
+        subMap.set(id, cache.get(id) ?? null);
+        return;
+      }
+
+      const subCompetency = await loadSubCompetency(id);
+      if (cache) {
+        cache.set(id, subCompetency);
+      }
+      subMap.set(id, subCompetency);
+    }),
+  );
+
+  const rows: StudentProgressRow[] = [];
+
+  contexts.forEach(({ student, progress }) => {
+    const identifier = progress.subCompetencyId;
+    if (!identifier) {
+      return;
+    }
+    const subCompetency = subMap.get(identifier);
+    if (!subCompetency) {
+      return;
+    }
+
+    rows.push(
+      createPendingValidationRow({
+        student,
+        progress,
+        subCompetency,
+        placeholder,
+      }),
+    );
+  });
+
+  return rows.sort((a, b) => a.student.name.localeCompare(b.student.name));
 }
