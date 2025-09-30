@@ -1,8 +1,9 @@
 <template>
   <div v-if="canManage">
     <q-separator class="q-my-lg" />
-    <sub-competency-student-table
-      :students="students"
+    <student-progress-table
+      variant="manager"
+      :rows="tableRows"
       :loading="studentsLoading"
       @unlock="handleUnlock"
       @recommend="handleRecommend"
@@ -14,21 +15,19 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
+import StudentProgressTable from 'src/components/educator/StudentProgressTable.vue';
+import type { StudentProgressRow } from 'src/components/educator/studentProgressTypes';
 import { useAuth } from 'src/composables/useAuth';
+import { createManagerRows, useStudentProgressActions } from 'src/composables/useStudentProgress';
 import { useUsers } from 'src/composables/useUsers';
-import SubCompetencyStudentTable, {
-  type SubCompetencyStudentRow,
-} from 'src/components/competency/SubCompetencyStudentTable.vue';
-import type { SubCompetency } from 'src/models/SubCompetency';
-import { StudentProgressRepository } from 'src/models/repositories/StudentProgressRepository';
 import type {
   StudentSubCompetencyProgress,
   StudentSubCompetencyProgressUpdate,
 } from 'src/models/StudentSubCompetencyProgress';
+import type { SubCompetency } from 'src/models/SubCompetency';
 import type { User } from 'src/models/User';
-import { UserRole } from 'src/models/User';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const subModel = defineModel<SubCompetency | null>('sub', { default: null });
 
@@ -43,6 +42,16 @@ const students = ref<User[]>([]);
 const studentActionsLoading = ref(false);
 
 const studentsLoading = computed(() => studentActionsLoading.value);
+
+const tableRows = computed<StudentProgressRow[]>(() =>
+  subModel.value ? createManagerRows(students.value, subModel.value) : [],
+);
+
+const { applyUpdates } = useStudentProgressActions({
+  students,
+  currentEducator: currentUser,
+  sub: subModel,
+});
 
 watch(
   () => subModel.value,
@@ -81,7 +90,7 @@ function attachProgressToStudents(): void {
 }
 
 async function applyProgressUpdate(
-  rows: SubCompetencyStudentRow[],
+  rows: StudentProgressRow[],
   builder: (progress: StudentSubCompetencyProgress) => StudentSubCompetencyProgressUpdate,
   successMessage: string,
 ): Promise<void> {
@@ -89,22 +98,7 @@ async function applyProgressUpdate(
 
   studentActionsLoading.value = true;
   try {
-    let updatedCount = 0;
-    for (const row of rows) {
-      const progress = row.progress;
-      if (!progress) continue;
-
-      const updates = builder(progress);
-      if (!updates || Object.keys(updates).length === 0) {
-        continue;
-      }
-      const updated = progress.local
-        ? await StudentProgressRepository.createProgress({ ...progress, ...updates })
-        : await StudentProgressRepository.updateProgress(progress.id, updates);
-
-      updateLocalProgressCache(row.student, updated);
-      updatedCount += 1;
-    }
+    const updatedCount = await applyUpdates(rows, builder);
 
     if (updatedCount > 0) {
       $q.notify({ type: 'positive', message: successMessage });
@@ -117,43 +111,7 @@ async function applyProgressUpdate(
   }
 }
 
-function updateLocalProgressCache(student: User, progress: StudentSubCompetencyProgress): void {
-  const sub = subModel.value;
-  if (!sub) return;
-
-  let progressIndex = sub.studentProgress.findIndex((entry) => entry.id === progress.id);
-  if (progressIndex === -1) {
-    sub.studentProgress.push(progress);
-  } else {
-    sub.studentProgress.splice(progressIndex, 1, progress);
-  }
-
-  progressIndex = student.studentProgress.findIndex((entry) => entry.id === progress.id);
-  if (progressIndex === -1) {
-    student.studentProgress.push(progress);
-  } else {
-    student.studentProgress.splice(progressIndex, 1, progress);
-  }
-
-  if (currentUser.value?.role === UserRole.EDUCATOR && Array.isArray(currentUser.value.students)) {
-    const educatorStudentIndex = currentUser.value.students.findIndex(
-      (entry) => entry.id === student.id,
-    );
-    if (educatorStudentIndex !== -1) {
-      currentUser.value.students.splice(educatorStudentIndex, 1, student);
-    }
-  }
-
-  const localIndex = students.value.findIndex((entry) => entry.id === student.id);
-  if (localIndex !== -1) {
-    students.value.splice(localIndex, 1, student);
-  } else {
-    students.value.push(student);
-  }
-  students.value = [...students.value];
-}
-
-async function handleUnlock(rows: SubCompetencyStudentRow[]): Promise<void> {
+async function handleUnlock(rows: StudentProgressRow[]): Promise<void> {
   await applyProgressUpdate(
     rows,
     (progress) => {
@@ -167,7 +125,7 @@ async function handleUnlock(rows: SubCompetencyStudentRow[]): Promise<void> {
   );
 }
 
-async function handleRecommend(rows: SubCompetencyStudentRow[]): Promise<void> {
+async function handleRecommend(rows: StudentProgressRow[]): Promise<void> {
   await applyProgressUpdate(
     rows,
     (progress) => {
@@ -184,7 +142,7 @@ async function handleRecommend(rows: SubCompetencyStudentRow[]): Promise<void> {
   );
 }
 
-async function handleLock(rows: SubCompetencyStudentRow[]): Promise<void> {
+async function handleLock(rows: StudentProgressRow[]): Promise<void> {
   await applyProgressUpdate(
     rows,
     (progress) => {
@@ -201,7 +159,7 @@ async function handleLock(rows: SubCompetencyStudentRow[]): Promise<void> {
   );
 }
 
-async function handleValidate(rows: SubCompetencyStudentRow[]): Promise<void> {
+async function handleValidate(rows: StudentProgressRow[]): Promise<void> {
   await applyProgressUpdate(
     rows,
     (progress) => {

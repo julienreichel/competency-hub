@@ -367,7 +367,7 @@ export default {
     emptyState: 'No sub-competencies found',
     noDescription: 'No description provided',
     studentProgress: 'Student Progress',
-    studentProgressHint: 'Select one or more students to manage their access.',
+    studentProgressHint: 'Manage student progress.',
     status: 'Status',
     percent: 'Percent',
     locked: 'Locked',

@@ -56,12 +56,13 @@
       </div>
     </div>
 
-    <pending-validation-table
+    <student-progress-table
+      variant="pending-validation"
       :rows="filteredRows"
       :loading="pageLoading"
       :busy-ids="busyProgressIds"
       :no-data-label="t('educator.assessments.emptyState')"
-      @validate="handleValidate"
+      @validate-row="handleValidate"
       @open-student-competencies="openStudentCompetencies"
       @open-student-assessments="openStudentAssessments"
       @open-sub-competency="openSubCompetency"
@@ -75,14 +76,14 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import StudentProgressTable from 'src/components/educator/StudentProgressTable.vue';
 import type {
   EvaluationStatusSummary,
-  PendingValidationRow,
-} from 'src/components/educator/PendingValidationTable.vue';
-import PendingValidationTable from 'src/components/educator/PendingValidationTable.vue';
+  StudentProgressRow,
+} from 'src/components/educator/studentProgressTypes';
+import { useStudentProgressActions } from 'src/composables/useStudentProgress';
 import { useUsers } from 'src/composables/useUsers';
 import { EvaluationAttempt } from 'src/models/EvaluationAttempt';
-import { StudentProgressRepository } from 'src/models/repositories/StudentProgressRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import type { StudentSubCompetencyProgress } from 'src/models/StudentSubCompetencyProgress';
 import type { SubCompetency } from 'src/models/SubCompetency';
@@ -102,12 +103,14 @@ const errorMessage = ref<string | null>(null);
 const searchQuery = ref('');
 const domainFilter = ref<string | null>(null);
 const studentFilter = ref<string | null>(null);
-const pendingRows = ref<PendingValidationRow[]>([]);
+const pendingRows = ref<StudentProgressRow[]>([]);
 const students = ref<User[]>([]);
 const busyProgressIds = ref<string[]>([]);
 
 const subCompetencyCache = new Map<string, SubCompetency | null>();
 const FALLBACK_PLACEHOLDER = '—';
+
+const { persistProgress, syncProgressCaches } = useStudentProgressActions({ students });
 
 const domainOptions = computed(() => {
   const entries = new Map<string, string>();
@@ -195,7 +198,7 @@ async function buildPendingRows(studentList: User[]): Promise<void> {
 
   const subMap = await resolveSubCompetencies(subIds);
 
-  const rows: PendingValidationRow[] = [];
+  const rows: StudentProgressRow[] = [];
   contexts.forEach(({ student, progress }) => {
     const subCompetency = subMap.get(progress.subCompetencyId);
     if (!subCompetency) return;
@@ -241,7 +244,7 @@ function createPendingRow(
   student: User,
   progress: StudentSubCompetencyProgress,
   subCompetency: SubCompetency,
-): PendingValidationRow {
+): StudentProgressRow {
   const competency = subCompetency.competency ?? null;
   const domain = competency?.domain ?? null;
   const domainName = domain?.name ?? FALLBACK_PLACEHOLDER;
@@ -279,7 +282,7 @@ function computeEvaluationStatus(
   });
 }
 
-function matchesFilters(row: PendingValidationRow): boolean {
+function matchesFilters(row: StudentProgressRow): boolean {
   if (domainFilter.value && row.domainValue !== domainFilter.value) {
     return false;
   }
@@ -305,15 +308,15 @@ function matchesFilters(row: PendingValidationRow): boolean {
   return haystack.includes(normalizedSearch.value);
 }
 
-async function handleValidate(row: PendingValidationRow): Promise<void> {
+async function handleValidate(row: StudentProgressRow): Promise<void> {
   if (busyProgressIds.value.includes(row.progress.id)) {
     return;
   }
 
   busyProgressIds.value = [...busyProgressIds.value, row.progress.id];
   try {
-    await StudentProgressRepository.updateProgress(row.progress.id, { status: 'Validated' });
-    updateStudentProgressState(row);
+    const updated = await persistProgress(row.progress, { status: 'Validated' });
+    syncProgressCaches(row.student, updated);
     pendingRows.value = pendingRows.value.filter((candidate) => candidate.id !== row.id);
     $q.notify({ type: 'positive', message: t('subCompetencies.validateSuccess') });
   } catch (error) {
@@ -321,17 +324,6 @@ async function handleValidate(row: PendingValidationRow): Promise<void> {
     $q.notify({ type: 'negative', message: t('subCompetencies.progressUpdateError') });
   } finally {
     busyProgressIds.value = busyProgressIds.value.filter((id) => id !== row.progress.id);
-  }
-}
-
-function updateStudentProgressState(row: PendingValidationRow): void {
-  const student = students.value.find((candidate) => candidate.id === row.student.id);
-  if (!student) {
-    return;
-  }
-  const entry = student.studentProgress.find((progress) => progress.id === row.progress.id);
-  if (entry) {
-    entry.status = 'Validated';
   }
 }
 
