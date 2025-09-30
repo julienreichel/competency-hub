@@ -164,6 +164,23 @@ export default {
     noParentsAssigned: 'No parents assigned yet.',
     assignSelf: 'Assign myself',
     unassignSelf: 'Unassign myself',
+    assessments: {
+      title: 'Pending validations',
+      searchPlaceholder: 'Search students or competencies...',
+      domainFilterLabel: 'Domain',
+      studentFilterLabel: 'Student',
+      emptyState: 'No pending validations to review.',
+      table: {
+        student: 'Student',
+        evaluationStatus: 'Evaluations status',
+        markValidated: 'Mark validated',
+        menu: {
+          openCompetencies: 'Open all competencies',
+          openAssessments: 'Open all assessments',
+          openSubCompetency: 'Open sub-competency',
+        },
+      },
+    },
   },
 
   domains: {

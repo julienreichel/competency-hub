@@ -107,12 +107,12 @@
             link="/classes"
           /-->
 
-          <!--essential-link
+          <essential-link
             title="Assessments"
             caption="Create and grade assessments"
             icon="assignment"
             link="/educator/assessments"
-          /-->
+          />
 
           <!-- essential-link
             title="Reports"

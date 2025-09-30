@@ -108,7 +108,7 @@
 
 <script setup lang="ts">
 import type { Evaluation } from 'src/models/Evaluation';
-import type { EvaluationAttempt } from 'src/models/EvaluationAttempt';
+import { EvaluationAttempt } from 'src/models/EvaluationAttempt';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
 
@@ -147,27 +147,8 @@ const studentActionsAllowed = computed(() =>
 );
 const subCompetency = computed(() => props.subCompetency ?? null);
 
-const statusIcon = computed(() => {
-  switch (status.value) {
-    case 'Completed':
-      return 'check_circle';
-    case 'InProgress':
-      return 'play_circle';
-    default:
-      return 'hourglass_empty';
-  }
-});
-
-const statusColor = computed(() => {
-  switch (status.value) {
-    case 'Completed':
-      return 'positive';
-    case 'InProgress':
-      return 'primary';
-    default:
-      return 'grey-5';
-  }
-});
+const statusIcon = computed(() => EvaluationAttempt.getStatusIcon(status.value));
+const statusColor = computed(() => EvaluationAttempt.getStatusColor(status.value));
 
 function handleOpen(): void {
   if (isStudentVariant.value && (!studentActionsAllowed.value || !canStudentOpen.value)) {

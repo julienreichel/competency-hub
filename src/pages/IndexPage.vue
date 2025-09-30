@@ -230,7 +230,7 @@ function buildQuickActions(role: UserRole | undefined): QuickAction[] {
           icon: 'psychology',
           to: '/me/competencies',
         },
-        { label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/assessments' },
+        { label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/me/assessments' },
         //{ label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
       ];
     case UserRole.PARENT:

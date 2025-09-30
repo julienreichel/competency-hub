@@ -6,11 +6,13 @@ import { User, type UserRelationInit } from './User';
 
 export type AmplifyEvaluationAttempt = NonNullable<Schema['EvaluationAttempt']['type']>;
 
+export type EvaluationStatus = 'NotStarted' | 'InProgress' | 'Completed';
+
 export interface EvaluationAttemptInit extends Record<string, unknown> {
   id: string;
   studentId: string;
   evaluationId: string;
-  status?: 'NotStarted' | 'InProgress' | 'Completed';
+  status?: EvaluationStatus;
   completionMode?: 'Auto' | 'Manual';
   startedAt?: string | null;
   completedAt?: string | null;
@@ -23,7 +25,7 @@ export interface EvaluationAttemptInit extends Record<string, unknown> {
 export class EvaluationAttempt extends BaseModel {
   public readonly studentId: string;
   public readonly evaluationId: string;
-  public status: 'NotStarted' | 'InProgress' | 'Completed';
+  public status: EvaluationStatus;
   public completionMode: 'Auto' | 'Manual';
   public startedAt: string | null;
   public completedAt: string | null;
@@ -106,4 +108,28 @@ export class EvaluationAttempt extends BaseModel {
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
     });
   }
+  statusIcon = (): string => EvaluationAttempt.getStatusIcon(this.status);
+  statusColor = (): string => EvaluationAttempt.getStatusColor(this.status);
+
+  static getStatusIcon = (status: EvaluationStatus): string => {
+    switch (status) {
+      case 'Completed':
+        return 'check_circle';
+      case 'InProgress':
+        return 'play_circle';
+      default:
+        return 'watch_later';
+    }
+  };
+
+  static getStatusColor = (status: EvaluationStatus): string => {
+    switch (status) {
+      case 'Completed':
+        return 'positive';
+      case 'InProgress':
+        return 'primary';
+      default:
+        return 'grey-5';
+    }
+  };
 }

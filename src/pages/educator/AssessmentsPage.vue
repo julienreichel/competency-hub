@@ -1,362 +1,356 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg">
-      <q-icon name="assignment" class="q-mr-sm" />
-      Assessment Management
+    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
+      <q-icon name="assignment_turned_in" />
+      <span>{{ t('educator.assessments.title') }}</span>
     </div>
 
-    <!-- Action Bar -->
-    <div class="row justify-between items-center q-mb-lg">
-      <div class="row q-gutter-md">
+    <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
+      {{ errorMessage }}
+    </q-banner>
+
+    <div class="row items-end q-col-gutter-md q-mb-lg">
+      <div class="col-12 col-md-4">
         <q-input
           v-model="searchQuery"
-          filled
-          placeholder="Search assessments..."
-          debounce="300"
-          style="width: 300px"
+          outlined
+          :placeholder="t('educator.assessments.searchPlaceholder')"
+          clearable
         >
-          <template v-slot:append>
+          <template #prepend>
             <q-icon name="search" />
           </template>
         </q-input>
+      </div>
+      <div class="col-12 col-md-4 col-lg-3">
         <q-select
-          v-model="statusFilter"
-          filled
-          :options="statusOptions"
-          label="Status"
+          v-model="domainFilter"
+          outlined
           clearable
-          style="width: 150px"
-        />
-        <q-select
-          v-model="subjectFilter"
-          filled
-          :options="subjectOptions"
-          label="Subject"
-          clearable
-          style="width: 150px"
+          emit-value
+          map-options
+          :options="domainOptions"
+          :label="t('educator.assessments.domainFilterLabel')"
         />
       </div>
-      <q-btn color="primary" icon="add" label="Create Assessment" @click="createAssessment" />
-    </div>
-
-    <!-- Assessments Table -->
-    <q-table
-      :rows="filteredAssessments"
-      :columns="columns"
-      row-key="id"
-      :pagination="{ rowsPerPage: 10 }"
-      flat
-      bordered
-    >
-      <template v-slot:body-cell-status="props">
-        <q-td :props="props">
-          <q-chip :color="getStatusColor(props.value)" text-color="white" size="sm">
-            {{ props.value }}
-          </q-chip>
-        </q-td>
-      </template>
-
-      <template v-slot:body-cell-students="props">
-        <q-td :props="props">
-          <div class="text-center">
-            {{ props.row.submissions }} / {{ props.row.totalStudents }}
-            <q-tooltip
-              >{{ props.row.submissions }} submissions out of
-              {{ props.row.totalStudents }} students</q-tooltip
-            >
-          </div>
-        </q-td>
-      </template>
-
-      <template v-slot:body-cell-actions="props">
-        <q-td :props="props">
-          <q-btn-group flat>
-            <q-btn flat icon="visibility" size="sm" @click="viewAssessment(props.row)">
-              <q-tooltip>View Assessment</q-tooltip>
-            </q-btn>
-            <q-btn flat icon="edit" size="sm" @click="editAssessment(props.row)">
-              <q-tooltip>Edit Assessment</q-tooltip>
-            </q-btn>
-            <q-btn flat icon="analytics" size="sm" @click="viewResults(props.row)">
-              <q-tooltip>View Results</q-tooltip>
-            </q-btn>
-            <q-btn flat icon="more_vert" size="sm">
-              <q-menu>
-                <q-list>
-                  <q-item clickable @click="duplicateAssessment(props.row)">
-                    <q-item-section>Duplicate</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="shareAssessment(props.row)">
-                    <q-item-section>Share</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="exportResults(props.row)">
-                    <q-item-section>Export Results</q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <q-item clickable @click="deleteAssessment(props.row)">
-                    <q-item-section>Delete</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
-          </q-btn-group>
-        </q-td>
-      </template>
-    </q-table>
-
-    <!-- Quick Stats Cards -->
-    <div class="row q-gutter-md q-mt-lg">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="assignment" size="2em" color="blue" />
-            <div class="text-h5 q-mt-sm">{{ stats.totalAssessments }}</div>
-            <div class="text-subtitle2">Total Assessments</div>
-          </q-card-section>
-        </q-card>
+      <div class="col-12 col-md-4 col-lg-3">
+        <q-select
+          v-model="studentFilter"
+          outlined
+          clearable
+          emit-value
+          map-options
+          :options="studentOptions"
+          :label="t('educator.assessments.studentFilterLabel')"
+        />
       </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="pending" size="2em" color="orange" />
-            <div class="text-h5 q-mt-sm">{{ stats.activeAssessments }}</div>
-            <div class="text-subtitle2">Active Assessments</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="groups" size="2em" color="green" />
-            <div class="text-h5 q-mt-sm">{{ stats.totalSubmissions }}</div>
-            <div class="text-subtitle2">Total Submissions</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card>
-          <q-card-section class="text-center">
-            <q-icon name="trending_up" size="2em" color="purple" />
-            <div class="text-h5 q-mt-sm">{{ stats.averageScore }}%</div>
-            <div class="text-subtitle2">Average Score</div>
-          </q-card-section>
-        </q-card>
+      <div class="col-12 col-md-auto">
+        <q-btn
+          outline
+          color="primary"
+          icon="refresh"
+          :label="t('common.refresh')"
+          :loading="pageLoading"
+          @click="refresh"
+        />
       </div>
     </div>
+
+    <pending-validation-table
+      :rows="filteredRows"
+      :loading="pageLoading"
+      :busy-ids="busyProgressIds"
+      :no-data-label="t('educator.assessments.emptyState')"
+      @validate="handleValidate"
+      @open-student-competencies="openStudentCompetencies"
+      @open-student-assessments="openStudentAssessments"
+      @open-sub-competency="openSubCompetency"
+    />
+
+    <q-inner-loading :showing="pageLoading">
+      <q-spinner-tail color="primary" size="64px" />
+    </q-inner-loading>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { useQuasar } from 'quasar';
+import type {
+  EvaluationStatusSummary,
+  PendingValidationRow,
+} from 'src/components/educator/PendingValidationTable.vue';
+import PendingValidationTable from 'src/components/educator/PendingValidationTable.vue';
+import { useUsers } from 'src/composables/useUsers';
+import { EvaluationAttempt } from 'src/models/EvaluationAttempt';
+import { StudentProgressRepository } from 'src/models/repositories/StudentProgressRepository';
+import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
+import type { StudentSubCompetencyProgress } from 'src/models/StudentSubCompetencyProgress';
+import type { SubCompetency } from 'src/models/SubCompetency';
+import type { User } from 'src/models/User';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
-interface Assessment {
-  id: string;
-  title: string;
-  subject: string;
-  type: string;
-  status: 'Draft' | 'Active' | 'Completed' | 'Archived';
-  dueDate: string;
-  submissions: number;
-  totalStudents: number;
-  averageScore?: number;
-  createdDate: string;
-}
+const { t } = useI18n();
+const $q = useQuasar();
+const router = useRouter();
 
+const { getCurrentUser, getUsersByIds } = useUsers();
+
+const pageLoading = ref(false);
+const errorMessage = ref<string | null>(null);
 const searchQuery = ref('');
-const statusFilter = ref<string | null>(null);
-const subjectFilter = ref<string | null>(null);
+const domainFilter = ref<string | null>(null);
+const studentFilter = ref<string | null>(null);
+const pendingRows = ref<PendingValidationRow[]>([]);
+const students = ref<User[]>([]);
+const busyProgressIds = ref<string[]>([]);
 
-const statusOptions = ['Draft', 'Active', 'Completed', 'Archived'];
-const subjectOptions = [
-  'Mathematics',
-  'Science',
-  'Language Arts',
-  'Social Studies',
-  'Art',
-  'Music',
-];
+const subCompetencyCache = new Map<string, SubCompetency | null>();
+const FALLBACK_PLACEHOLDER = '—';
 
-const columns = [
-  {
-    name: 'title',
-    label: 'Assessment Title',
-    field: 'title',
-    align: 'left' as const,
-    sortable: true,
-  },
-  {
-    name: 'subject',
-    label: 'Subject',
-    field: 'subject',
-    align: 'left' as const,
-    sortable: true,
-  },
-  {
-    name: 'type',
-    label: 'Type',
-    field: 'type',
-    align: 'left' as const,
-    sortable: true,
-  },
-  {
-    name: 'status',
-    label: 'Status',
-    field: 'status',
-    align: 'center' as const,
-    sortable: true,
-  },
-  {
-    name: 'dueDate',
-    label: 'Due Date',
-    field: 'dueDate',
-    align: 'center' as const,
-    sortable: true,
-  },
-  {
-    name: 'students',
-    label: 'Submissions',
-    field: 'students',
-    align: 'center' as const,
-  },
-  {
-    name: 'averageScore',
-    label: 'Avg Score',
-    field: 'averageScore',
-    align: 'center' as const,
-    format: (val: number | undefined): string => (val ? `${val}%` : 'N/A'),
-  },
-  {
-    name: 'actions',
-    label: 'Actions',
-    field: 'actions',
-    align: 'center' as const,
-  },
-];
-
-// Mock data - replace with actual API call
-const assessments = ref<Assessment[]>([
-  {
-    id: '1',
-    title: 'Algebra Fundamentals Quiz',
-    subject: 'Mathematics',
-    type: 'Quiz',
-    status: 'Active',
-    dueDate: '2024-02-15',
-    submissions: 18,
-    totalStudents: 25,
-    averageScore: 87,
-    createdDate: '2024-01-20',
-  },
-  {
-    id: '2',
-    title: 'Cell Biology Test',
-    subject: 'Science',
-    type: 'Test',
-    status: 'Active',
-    dueDate: '2024-02-20',
-    submissions: 12,
-    totalStudents: 25,
-    averageScore: 92,
-    createdDate: '2024-01-25',
-  },
-  {
-    id: '3',
-    title: 'Essay Writing Assignment',
-    subject: 'Language Arts',
-    type: 'Assignment',
-    status: 'Draft',
-    dueDate: '2024-02-25',
-    submissions: 0,
-    totalStudents: 25,
-    createdDate: '2024-01-30',
-  },
-  {
-    id: '4',
-    title: 'History Timeline Project',
-    subject: 'Social Studies',
-    type: 'Project',
-    status: 'Completed',
-    dueDate: '2024-01-31',
-    submissions: 25,
-    totalStudents: 25,
-    averageScore: 85,
-    createdDate: '2024-01-15',
-  },
-]);
-
-const stats = ref({
-  totalAssessments: 24,
-  activeAssessments: 8,
-  totalSubmissions: 156,
-  averageScore: 88,
-});
-
-const filteredAssessments = computed(() => {
-  return assessments.value.filter((assessment) => {
-    const matchesSearch =
-      !searchQuery.value ||
-      assessment.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      assessment.subject.toLowerCase().includes(searchQuery.value.toLowerCase());
-
-    const matchesStatus = !statusFilter.value || assessment.status === statusFilter.value;
-    const matchesSubject = !subjectFilter.value || assessment.subject === subjectFilter.value;
-
-    return matchesSearch && matchesStatus && matchesSubject;
+const domainOptions = computed(() => {
+  const entries = new Map<string, string>();
+  pendingRows.value.forEach((row) => {
+    if (row.domainValue) {
+      entries.set(row.domainValue, row.domainName);
+    }
   });
+  return Array.from(entries).map(([value, label]) => ({ label, value }));
 });
 
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'Active':
-      return 'green';
-    case 'Draft':
-      return 'grey';
-    case 'Completed':
-      return 'blue';
-    case 'Archived':
-      return 'orange';
-    default:
-      return 'grey';
+const studentOptions = computed(() =>
+  students.value.map((student) => ({ label: student.name, value: student.id })),
+);
+
+const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase());
+
+const filteredRows = computed(() => pendingRows.value.filter((row) => matchesFilters(row)));
+
+watch(domainOptions, (options) => {
+  if (domainFilter.value && !options.some((option) => option.value === domainFilter.value)) {
+    domainFilter.value = null;
+  }
+});
+
+watch(studentOptions, (options) => {
+  if (studentFilter.value && !options.some((option) => option.value === studentFilter.value)) {
+    studentFilter.value = null;
+  }
+});
+
+onMounted(() => {
+  void loadData();
+});
+
+async function loadData(): Promise<void> {
+  pageLoading.value = true;
+  errorMessage.value = null;
+  try {
+    const educator = await getCurrentUser();
+    if (!educator) {
+      students.value = [];
+      pendingRows.value = [];
+      errorMessage.value = t('assessments.errors.noUser');
+      return;
+    }
+
+    const studentIds = educator.studentIds;
+    if (studentIds.length === 0) {
+      students.value = [];
+      pendingRows.value = [];
+      return;
+    }
+
+    const loadedStudents = await getUsersByIds(studentIds);
+    students.value = loadedStudents;
+
+    await buildPendingRows(loadedStudents);
+  } catch (error) {
+    console.error('Failed to load educator assessments data', error);
+    errorMessage.value = error instanceof Error ? error.message : t('assessments.errors.generic');
+  } finally {
+    pageLoading.value = false;
   }
 }
 
-function createAssessment(): void {
-  console.log('Creating new assessment');
-  // TODO: Navigate to assessment creation page
+async function buildPendingRows(studentList: User[]): Promise<void> {
+  const contexts = studentList.flatMap((student) =>
+    extractPendingProgress(student).map((progress) => ({
+      student,
+      progress,
+    })),
+  );
+
+  if (contexts.length === 0) {
+    pendingRows.value = [];
+    return;
+  }
+
+  const subIds = Array.from(
+    new Set(
+      contexts.map((ctx) => ctx.progress.subCompetencyId).filter((id): id is string => Boolean(id)),
+    ),
+  );
+
+  const subMap = await resolveSubCompetencies(subIds);
+
+  const rows: PendingValidationRow[] = [];
+  contexts.forEach(({ student, progress }) => {
+    const subCompetency = subMap.get(progress.subCompetencyId);
+    if (!subCompetency) return;
+    const row = createPendingRow(student, progress, subCompetency);
+    if (row) {
+      rows.push(row);
+    }
+  });
+
+  rows.sort((a, b) => a.student.name.localeCompare(b.student.name));
+  pendingRows.value = rows;
 }
 
-function viewAssessment(assessment: Assessment): void {
-  console.log('Viewing assessment:', assessment.title);
-  // TODO: Navigate to assessment view page
+async function resolveSubCompetencies(ids: string[]): Promise<Map<string, SubCompetency | null>> {
+  await Promise.all(
+    ids.map(async (id) => {
+      if (subCompetencyCache.has(id)) {
+        return;
+      }
+      try {
+        const sub = await subCompetencyRepository.findById(id, false);
+        subCompetencyCache.set(id, sub);
+      } catch (error) {
+        console.error('Failed to load sub-competency', error);
+        subCompetencyCache.set(id, null);
+      }
+    }),
+  );
+
+  const map = new Map<string, SubCompetency | null>();
+  ids.forEach((id) => {
+    map.set(id, subCompetencyCache.get(id) ?? null);
+  });
+  return map;
 }
 
-function editAssessment(assessment: Assessment): void {
-  console.log('Editing assessment:', assessment.title);
-  // TODO: Navigate to assessment edit page
+function extractPendingProgress(student: User): StudentSubCompetencyProgress[] {
+  const progressList = Array.isArray(student.studentProgress) ? student.studentProgress : [];
+  return progressList.filter((progress) => progress.status === 'PendingValidation');
 }
 
-function viewResults(assessment: Assessment): void {
-  console.log('Viewing results for:', assessment.title);
-  // TODO: Navigate to results analysis page
+function createPendingRow(
+  student: User,
+  progress: StudentSubCompetencyProgress,
+  subCompetency: SubCompetency,
+): PendingValidationRow {
+  const competency = subCompetency.competency ?? null;
+  const domain = competency?.domain ?? null;
+  const domainName = domain?.name ?? FALLBACK_PLACEHOLDER;
+  const competencyName = competency?.name ?? FALLBACK_PLACEHOLDER;
+
+  return {
+    id: progress.id,
+    student,
+    progress,
+    subCompetency,
+    domainName,
+    domainValue: domain?.id ?? null,
+    competencyName,
+    subCompetencyName: subCompetency.name,
+    evaluationsStatusSummaries: computeEvaluationStatus(student, subCompetency),
+  };
 }
 
-function duplicateAssessment(assessment: Assessment): void {
-  console.log('Duplicating assessment:', assessment.title);
-  // TODO: Implement duplication logic
+function computeEvaluationStatus(
+  student: User,
+  subCompetency: SubCompetency,
+): EvaluationStatusSummary[] {
+  const attempts = Array.isArray(student.evaluationAttempts) ? student.evaluationAttempts : [];
+  const evaluations = Array.isArray(subCompetency.evaluations) ? subCompetency.evaluations : [];
+  return evaluations.map((evaluation) => {
+    const attempt = attempts.find((att) => att.evaluationId === evaluation.id);
+    const status = attempt ? attempt.status : 'NotStarted';
+    return {
+      id: evaluation.id,
+      name: evaluation.name,
+      status,
+      statusIcon: EvaluationAttempt.getStatusIcon(status),
+      statusColor: EvaluationAttempt.getStatusColor(status),
+    };
+  });
 }
 
-function shareAssessment(assessment: Assessment): void {
-  console.log('Sharing assessment:', assessment.title);
-  // TODO: Implement sharing functionality
+function matchesFilters(row: PendingValidationRow): boolean {
+  if (domainFilter.value && row.domainValue !== domainFilter.value) {
+    return false;
+  }
+
+  if (studentFilter.value && row.student.id !== studentFilter.value) {
+    return false;
+  }
+
+  if (!normalizedSearch.value) {
+    return true;
+  }
+
+  const haystack = [
+    row.student.name,
+    row.student.email,
+    row.domainName,
+    row.competencyName,
+    row.subCompetencyName,
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  return haystack.includes(normalizedSearch.value);
 }
 
-function exportResults(assessment: Assessment): void {
-  console.log('Exporting results for:', assessment.title);
-  // TODO: Implement export functionality
+async function handleValidate(row: PendingValidationRow): Promise<void> {
+  if (busyProgressIds.value.includes(row.progress.id)) {
+    return;
+  }
+
+  busyProgressIds.value = [...busyProgressIds.value, row.progress.id];
+  try {
+    await StudentProgressRepository.updateProgress(row.progress.id, { status: 'Validated' });
+    updateStudentProgressState(row);
+    pendingRows.value = pendingRows.value.filter((candidate) => candidate.id !== row.id);
+    $q.notify({ type: 'positive', message: t('subCompetencies.validateSuccess') });
+  } catch (error) {
+    console.error('Failed to validate progress', error);
+    $q.notify({ type: 'negative', message: t('subCompetencies.progressUpdateError') });
+  } finally {
+    busyProgressIds.value = busyProgressIds.value.filter((id) => id !== row.progress.id);
+  }
 }
 
-function deleteAssessment(assessment: Assessment): void {
-  console.log('Deleting assessment:', assessment.title);
-  // TODO: Show confirmation dialog and delete
+function updateStudentProgressState(row: PendingValidationRow): void {
+  const student = students.value.find((candidate) => candidate.id === row.student.id);
+  if (!student) {
+    return;
+  }
+  const entry = student.studentProgress.find((progress) => progress.id === row.progress.id);
+  if (entry) {
+    entry.status = 'Validated';
+  }
+}
+
+async function refresh(): Promise<void> {
+  await loadData();
+}
+
+async function openStudentCompetencies(studentId: string): Promise<void> {
+  await router.push({ name: 'user-competencies', params: { userId: studentId } });
+}
+
+async function openStudentAssessments(studentId: string): Promise<void> {
+  await router.push({ name: 'user-assessments', params: { userId: studentId } });
+}
+
+async function openSubCompetency(subCompetency: SubCompetency): Promise<void> {
+  await router.push({
+    name: 'sub-competency',
+    params: { competencyId: subCompetency.competencyId, subId: subCompetency.id },
+  });
 }
 </script>
