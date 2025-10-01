@@ -109,7 +109,7 @@ function updateProgressCollection(
   if (!Array.isArray(collection)) {
     return;
   }
-  const index = collection.findIndex((entry) => entry.id === progress.id);
+  const index = collection.findIndex((entry) => entry.id === progress.id || entry.local);
   if (index === -1) {
     collection.push(progress);
   } else {
