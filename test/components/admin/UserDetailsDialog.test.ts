@@ -1,10 +1,14 @@
+import type { VueWrapper } from '@vue/test-utils';
 import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
+import type { ComponentPublicInstance } from 'vue';
 import UserDetailsDialog from '../../../src/components/ui/UserDetailsDialog.vue';
 import { UserRole } from '../../../src/models/User';
 import { withQuasarBrowser } from '../../browser-test-utils';
 
-const buildWrapper = (overrides: Partial<{ modelValue: boolean }> = {}) =>
+const buildWrapper = (
+  overrides: Partial<{ modelValue: boolean }> = {},
+): VueWrapper<ComponentPublicInstance> =>
   mount(
     UserDetailsDialog,
     withQuasarBrowser({
