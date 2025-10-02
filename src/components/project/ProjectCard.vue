@@ -103,9 +103,9 @@
 
 <script setup lang="ts">
 import { date } from 'quasar';
-import { computed } from 'vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project, type ProjectStatus } from 'src/models/Project';
+import { computed } from 'vue';
 
 // Props
 interface Props {
