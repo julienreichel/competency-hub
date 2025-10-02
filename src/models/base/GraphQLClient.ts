@@ -1005,6 +1005,39 @@ export class GraphQLClient {
       throw error;
     }
   }
+
+  async listProjects(options?: {
+    filter?: Record<string, unknown>;
+    limit?: number;
+  }): Promise<Schema['Project']['type'][]> {
+    try {
+      const result = await this.client.models.Project.list({
+        ...(options?.filter && { filter: options.filter }),
+        ...(options?.limit && { limit: options.limit }),
+        authMode: 'userPool',
+        selectionSet: [
+          'id',
+          'studentId',
+          'student.*',
+          'subCompetencyId',
+          'subCompetency.*',
+          'name',
+          'description',
+          'fileKey',
+          'status',
+          'createdAt',
+          'updatedAt',
+        ],
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['Project']['type'][];
+    } catch (error) {
+      console.error('Error listing Projects:', error);
+      throw error;
+    }
+  }
 }
 
 // Singleton instance

@@ -56,6 +56,18 @@ const routes: RouteRecordRaw[] = [
         meta: { roles: ['Educator', 'Parent'] },
       },
       {
+        path: 'me/projects',
+        name: 'my-projects',
+        component: () => import('pages/StudentProjectsPage.vue'),
+        meta: { roles: ['Student'] },
+      },
+      {
+        path: 'projects/:projectId',
+        name: 'project-detail',
+        component: () => import('pages/ProjectDetailPage.vue'),
+        meta: { roles: ['Student', 'Educator', 'Admin'] },
+      },
+      {
         path: 'classes',
         name: 'classes',
         component: () => import('pages/ClassesPage.vue'),

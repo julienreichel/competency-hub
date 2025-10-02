@@ -39,6 +39,7 @@ export default {
     actions: {
       myCompetencies: 'My competencies',
       viewAssessments: 'View assessments',
+      myProjects: 'My projects',
       viewReports: 'View reports',
       viewChildren: 'View children',
       manageStudents: 'Manage students',
@@ -72,6 +73,7 @@ export default {
     clear: 'Clear',
     yes: 'Yes',
     no: 'No',
+    loading: 'Loading...',
   },
 
   resource: {
@@ -468,6 +470,7 @@ export default {
     firstNameRequired: 'First name is required',
     lastNameRequired: 'Last name is required',
     roleRequired: 'Role is required',
+    maxLength: 'Maximum {max} characters allowed',
   },
 
   // Login and authentication
@@ -481,5 +484,60 @@ export default {
     termsAndPrivacy: 'By signing in, you agree to our Terms of Service and Privacy Policy',
     success: 'Login successful',
     signedIn: 'You are now signed in to Competency Hub.',
+  },
+
+  // Projects
+  projects: {
+    myProjects: 'My Projects',
+    manageDescription: 'Create and manage your project submissions',
+    newProject: 'New Project',
+    createFirst: 'Create Your First Project',
+    subCompetency: 'Sub-Competency',
+    noDescription: 'No description provided',
+    emptyState: {
+      title: 'No Projects Yet',
+      description: 'Start your learning journey by creating your first project submission.',
+    },
+    status: {
+      draft: 'Draft',
+      submitted: 'Submitted',
+      approved: 'Approved',
+      rejected: 'Rejected',
+    },
+    form: {
+      createTitle: 'Create New Project',
+      editTitle: 'Edit Project',
+      name: 'Project Name',
+      description: 'Description',
+      subCompetency: 'Sub-Competency',
+      noSubCompetencies: 'No sub-competencies available',
+      currentFile: 'Current File',
+      fileUploaded: 'File uploaded',
+      uploadFile: 'Upload File',
+      selectFile: 'Choose file or drag here',
+      fileHint: 'Supported formats: PDF, DOC, DOCX, TXT, ZIP (max 10MB)',
+      fileTooLarge: 'File is too large (max 10MB)',
+      fileRejected: 'File type not supported',
+      status: 'Status',
+      createSuccess: 'Project created successfully',
+      updateSuccess: 'Project updated successfully',
+      createError: 'Failed to create project',
+      updateError: 'Failed to update project',
+      errorLoadingSubCompetencies: 'Failed to load sub-competencies',
+    },
+    detail: {
+      errorTitle: 'Project Not Found',
+      notFound: 'The requested project could not be found',
+      loadError: 'Failed to load project details',
+      information: 'Project Information',
+      metadata: 'Details',
+      subCompetency: 'Sub-Competency',
+      noDescription: 'No description provided',
+      attachment: 'File Attachment',
+      fileUploaded: 'Uploaded file',
+      student: 'Student',
+      created: 'Created',
+      updated: 'Last Updated',
+    },
   },
 };

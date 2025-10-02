@@ -44,6 +44,27 @@ export class ProjectRepository {
     }
     return Project.fromAmplify(raw);
   }
+
+  async findByStudentId(studentId: string): Promise<Project[]> {
+    const projects = await graphQLClient.listProjects({
+      filter: { studentId: { eq: studentId } },
+    });
+    return projects.map((raw) => Project.fromAmplify(raw));
+  }
+
+  async findBySubCompetencyId(subCompetencyId: string): Promise<Project[]> {
+    const projects = await graphQLClient.listProjects({
+      filter: { subCompetencyId: { eq: subCompetencyId } },
+    });
+    return projects.map((raw) => Project.fromAmplify(raw));
+  }
+
+  async findByStatus(status: ProjectStatus): Promise<Project[]> {
+    const projects = await graphQLClient.listProjects({
+      filter: { status: { eq: status } },
+    });
+    return projects.map((raw) => Project.fromAmplify(raw));
+  }
 }
 
 export const projectRepository = new ProjectRepository();

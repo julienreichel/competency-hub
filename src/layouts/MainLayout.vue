@@ -85,6 +85,15 @@
 
         <template v-if="hasRole('Student')">
           <essential-link
+            title="My Projects"
+            caption="Manage project submissions"
+            icon="assignment"
+            link="/me/projects"
+          />
+        </template>
+
+        <template v-if="hasRole('Student')">
+          <essential-link
             title="Domains"
             caption="Browse domains"
             icon="category"

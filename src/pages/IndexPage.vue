@@ -231,6 +231,11 @@ function buildQuickActions(role: UserRole | undefined): QuickAction[] {
           to: '/me/competencies',
         },
         { label: t('dashboard.actions.viewAssessments'), icon: 'quiz', to: '/me/assessments' },
+        {
+          label: t('dashboard.actions.myProjects'),
+          icon: 'assignment',
+          to: '/me/projects',
+        },
         //{ label: t('dashboard.actions.viewReports'), icon: 'assessment', to: '/reports' },
       ];
     case UserRole.PARENT:
