@@ -57,54 +57,18 @@
         </template>
       </q-select>
 
-      <!-- File Upload (if editing existing project) -->
-      <div v-if="project?.fileKey" class="q-mb-md">
-        <q-label>{{ $t('projects.form.currentFile') }}</q-label>
-        <q-item dense class="q-pa-none">
-          <q-item-section avatar>
-            <q-icon name="attachment" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{ project.fileKey }}</q-item-label>
-            <q-item-label caption>{{ $t('projects.form.fileUploaded') }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-btn
-              flat
-              dense
-              icon="download"
-              :label="$t('common.download')"
-              @click="downloadFile"
-              :disable="loading"
-            />
-          </q-item-section>
-        </q-item>
-      </div>
-
-      <!-- File Upload Component (placeholder for now) -->
-      <div class="q-mb-md">
-        <q-label>{{ $t('projects.form.uploadFile') }}</q-label>
-        <q-file
-          v-model="fileToUpload"
-          :label="$t('projects.form.selectFile')"
-          outlined
-          :disable="loading"
-          accept=".pdf,.doc,.docx,.txt,.zip"
-          max-file-size="10485760"
-          @rejected="onFileRejected"
-        >
-          <template #prepend>
-            <q-icon name="attach_file" />
-          </template>
-        </q-file>
-        <q-item-label caption class="q-mt-xs">
-          {{ $t('projects.form.fileHint') }}
-        </q-item-label>
-      </div>
+      <!-- File Upload -->
+      <file-uploader-field
+        v-model="form.fileKey"
+        :label="$t('projects.form.uploadFile')"
+        :sub-competency-id="form.subCompetencyId"
+        :accept="'.pdf,.doc,.docx,.txt,.zip'"
+        :disable="loading"
+      />
 
       <!-- Status (for editing existing projects) -->
       <div v-if="project?.id && isEducatorOrAdmin" class="q-mb-md">
-        <q-label>{{ $t('projects.form.status') }}</q-label>
+        <label>{{ $t('projects.form.status') }}</label>
         <q-option-group v-model="form.status" :options="statusOptions" inline :disable="loading" />
       </div>
     </q-form>
@@ -113,6 +77,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import FileUploaderField from 'src/components/common/FileUploaderField.vue';
 import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project, type ProjectStatus } from 'src/models/Project';
@@ -152,7 +117,6 @@ const subCompetencyRepository = new SubCompetencyRepository();
 // State
 const loading = ref(false);
 const loadingSubCompetencies = ref(false);
-const fileToUpload = ref<File | null>(null);
 const subCompetencies = ref<SubCompetency[]>([]);
 
 // Form data
@@ -161,6 +125,7 @@ const form = ref({
   description: '',
   subCompetencyId: '',
   status: 'Draft' as ProjectStatus,
+  fileKey: null as string | null,
 });
 
 // Computed
@@ -219,8 +184,8 @@ const resetForm = (): void => {
     description: '',
     subCompetencyId: '',
     status: 'Draft',
+    fileKey: null,
   };
-  fileToUpload.value = null;
 };
 
 const populateForm = (project: Project): void => {
@@ -229,6 +194,7 @@ const populateForm = (project: Project): void => {
     description: project.description || '',
     subCompetencyId: project.subCompetencyId,
     status: project.status,
+    fileKey: project.fileKey || null,
   };
 };
 
@@ -246,7 +212,7 @@ const handleSubmit = async (): Promise<void> => {
         description: form.value.description.trim() || null,
         subCompetencyId: form.value.subCompetencyId,
         status: form.value.status,
-        // TODO: Handle file upload
+        fileKey: form.value.fileKey,
       });
     } else {
       // Create new project
@@ -256,7 +222,7 @@ const handleSubmit = async (): Promise<void> => {
         description: form.value.description.trim() || null,
         subCompetencyId: form.value.subCompetencyId,
         status: form.value.status,
-        // TODO: Handle file upload
+        fileKey: form.value.fileKey,
       });
     }
 
@@ -285,27 +251,6 @@ const handleCancel = (): void => {
     resetForm();
   }
   isVisible.value = false;
-};
-
-const downloadFile = (): void => {
-  if (props.project?.fileKey) {
-    // TODO: Implement file download using Amplify Storage
-    console.log('Download file:', props.project.fileKey);
-  }
-};
-
-const onFileRejected = (rejectedEntries: { file: File; failedPropValidation: string }[]): void => {
-  const reasons = rejectedEntries.map((entry) => {
-    if (entry.failedPropValidation === 'max-file-size') {
-      return t('projects.form.fileTooLarge');
-    }
-    return t('projects.form.fileRejected');
-  });
-
-  $q.notify({
-    type: 'negative',
-    message: reasons.join(', '),
-  });
 };
 
 // Watchers

@@ -1,3 +1,4 @@
+import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import type { SubCompetencyInit } from './SubCompetency';
@@ -127,6 +128,29 @@ export class Project extends BaseModel {
           ? { updatedAt: this.updatedAt }
           : {}),
     });
+  }
+
+  /**
+   * Resolves the file URL for this project's file attachment
+   * @returns Promise<string | null> The resolved file URL or null if no file
+   */
+  async resolveFileUrl(): Promise<string | null> {
+    if (!this.fileKey) {
+      return null;
+    }
+
+    // If already a full URL, return as is
+    if (/^https?:\/\//i.test(this.fileKey)) {
+      return this.fileKey;
+    }
+
+    try {
+      const { url } = await getUrl({ path: this.fileKey });
+      return url.toString();
+    } catch (error) {
+      console.error('Failed to resolve file URL', error);
+      return null;
+    }
   }
 
   toJSON(): Record<string, unknown> {

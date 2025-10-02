@@ -224,10 +224,21 @@ const onProjectUpdated = (updatedProject: Project): void => {
   showEditDialog.value = false;
 };
 
-const downloadFile = (): void => {
-  if (project.value?.fileKey) {
-    // TODO: Implement file download using Amplify Storage
-    console.log('Download file:', project.value.fileKey);
+const downloadFile = async (): Promise<void> => {
+  if (!project.value?.fileKey) {
+    return;
+  }
+
+  try {
+    const url = await project.value.resolveFileUrl();
+
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+    } else {
+      console.error('Failed to get file URL for project:', project.value.id);
+    }
+  } catch (error) {
+    console.error('Error downloading project file:', error);
   }
 };
 
