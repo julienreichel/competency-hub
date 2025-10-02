@@ -335,6 +335,10 @@ export function useReportData(): {
     period: ReportPeriod,
     filters: ReportFilters,
   ) => Promise<ReportData | null>;
+  generateDomainSummary: (
+    user: User,
+    period?: ReportPeriod,
+  ) => Promise<{ name: string; color: string; progress: number }[]>;
 } {
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -362,10 +366,70 @@ export function useReportData(): {
     }
   };
 
+  const generateDomainSummary = async (
+    user: User,
+    period?: ReportPeriod,
+  ): Promise<{ name: string; color: string; progress: number }[]> => {
+    const progress = user.studentProgress || [];
+
+    if (progress.length === 0) {
+      return [];
+    }
+
+    // Get unique sub-competency IDs
+    const progressIds = Array.from(
+      new Set(progress.map((p) => p.subCompetencyId).filter((id): id is string => Boolean(id))),
+    );
+
+    if (progressIds.length === 0) {
+      return [];
+    }
+
+    // Fetch sub-competencies with their domain information
+    const subCompetencies = await Promise.all(
+      progressIds.map(async (id) => {
+        const sub = await subCompetencyRepository.findById(id);
+        if (!sub || !sub.competency?.domain) return null;
+
+        // Add the student progress to the sub-competency
+        const studentProgress = progress.find((p) => p.subCompetencyId === id);
+        if (studentProgress) {
+          sub.studentProgress = [studentProgress];
+        }
+
+        return sub;
+      }),
+    );
+
+    // Filter out null values
+    const validSubCompetencies = subCompetencies.filter((sub): sub is NonNullable<typeof sub> =>
+      Boolean(sub),
+    );
+
+    // Use default period covering all time if not provided
+    const reportPeriod: ReportPeriod = period || {
+      startDate: new Date(0), // Beginning of time
+      endDate: new Date(), // Current time
+    };
+
+    // Use the existing groupByDomain function to get detailed domain data
+    const domainData = groupByDomain(validSubCompetencies, reportPeriod);
+
+    // Transform to simplified format for summary use
+    return domainData
+      .map((domain) => ({
+        name: domain.domainName,
+        color: domain.domainColor ?? 'grey',
+        progress: Math.round(domain.overallProgress),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
   return {
     loading,
     error,
     reportData,
     generateReport,
+    generateDomainSummary,
   };
 }
