@@ -255,8 +255,11 @@ const isNewChildValid = computed(() => {
 });
 
 function viewChildReports(child: Child): void {
-  console.log('Viewing reports for:', child.name);
-  // TODO: Navigate to child-specific reports page
+  if (child.user) {
+    void router.push({ name: 'student-report', params: { studentId: child.user.id } });
+    return;
+  }
+  console.log('No user data available for child:', child.name);
 }
 
 function viewChildCompetencies(child: Child): void {

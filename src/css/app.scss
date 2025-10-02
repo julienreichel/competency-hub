@@ -1,1 +1,57 @@
 // app global css in SCSS form
+
+// Print styles - hide layout elements when printing
+@media print {
+  // Hide main layout navigation elements
+  .q-header,
+  .q-drawer,
+  .q-footer {
+    display: none !important;
+  }
+
+  // Hide any elements marked as no-print
+  .no-print {
+    display: none !important;
+  }
+
+  // Adjust main content area for print
+  .q-page-container {
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  // Ensure good print formatting
+  body {
+    background: white !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+  }
+
+  // Optimize cards for print
+  .q-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  // Optimize text for print
+  .text-h4 {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+  }
+
+  .text-h6 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+  }
+
+  .text-body1,
+  .text-body2 {
+    font-size: 11pt !important;
+  }
+
+  .text-caption {
+    font-size: 9pt !important;
+  }
+}
