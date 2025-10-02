@@ -133,16 +133,6 @@
         </q-td>
       </template>
 
-      <template #body-cell-status="props">
-        <q-td :props="props">
-          <q-chip
-            :color="getStatusColor(props.row.status)"
-            :label="$t(`projects.status.${props.row.status.toLowerCase()}`)"
-            size="sm"
-          />
-        </q-td>
-      </template>
-
       <template #body-cell-submittedAt="props">
         <q-td :props="props">
           {{ formatDate(props.row.updatedAt) }}
@@ -193,10 +183,9 @@
 </template>
 
 <script setup lang="ts">
-import { date } from 'quasar';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { useAuth } from 'src/composables/useAuth';
-import { type Project, type ProjectStatus } from 'src/models/Project';
+import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
 import { UserRepository } from 'src/models/repositories/UserRepository';
 import { type User } from 'src/models/User';
@@ -204,7 +193,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
-const { t } = useI18n();
+const { t, d } = useI18n();
 const router = useRouter();
 const { userId } = useAuth();
 
@@ -253,14 +242,6 @@ const columns = computed(() => [
     align: 'left' as const,
     sortable: true,
     style: 'width: 200px',
-  },
-  {
-    name: 'status',
-    label: t('educator.projects.columns.status'),
-    field: 'status',
-    align: 'center' as const,
-    sortable: true,
-    style: 'width: 120px',
   },
   {
     name: 'submittedAt',
@@ -479,19 +460,9 @@ const bulkReject = async (): Promise<void> => {
   }
 };
 
-const getStatusColor = (status: ProjectStatus): string => {
-  const COLOR_MAP: Record<ProjectStatus, string> = {
-    Draft: 'grey-6',
-    Submitted: 'orange',
-    Approved: 'green',
-    Rejected: 'red',
-  };
-  return COLOR_MAP[status] || 'grey-6';
-};
-
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
-  return date.formatDate(dateString, 'MMM D, YYYY [at] h:mm A');
+  return d(dateString, 'short');
 };
 
 // Lifecycle

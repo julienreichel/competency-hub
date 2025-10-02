@@ -190,7 +190,7 @@ export default {
       title: 'Student Projects',
       searchPlaceholder: 'Search projects, students, or competencies...',
       studentFilterLabel: 'Student',
-      subCompetencyFilterLabel: 'Sub-Competency',
+      subCompetencyFilterLabel: 'Competency',
       emptyState: 'No submitted projects to review.',
       loadError: 'Failed to load student projects',
       selectedCount: '{count} project(s) selected',
@@ -199,7 +199,7 @@ export default {
       columns: {
         student: 'Student',
         name: 'Project',
-        subCompetency: 'Sub-Competency',
+        subCompetency: 'Competency',
         status: 'Status',
         submittedAt: 'Submitted',
       },
