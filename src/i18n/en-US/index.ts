@@ -194,6 +194,8 @@ export default {
       emptyState: 'No submitted projects to review.',
       loadError: 'Failed to load student projects',
       selectedCount: '{count} project(s) selected',
+      tableTitle: 'Submitted Projects',
+      tableHint: 'Review and approve or reject student project submissions',
       columns: {
         student: 'Student',
         name: 'Project',

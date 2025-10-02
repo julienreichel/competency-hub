@@ -56,36 +56,10 @@
       </div>
     </div>
 
-    <!-- Bulk Actions -->
-    <div v-if="selected.length > 0" class="q-mb-md">
-      <q-banner class="bg-primary text-white">
-        <div class="row items-center justify-between">
-          <div>
-            {{ $t('educator.projects.selectedCount', { count: selected.length }) }}
-          </div>
-          <div class="q-gutter-sm">
-            <q-btn
-              flat
-              icon="check_circle"
-              :label="$t('projects.actions.approve')"
-              @click="bulkApprove"
-              :loading="bulkActionLoading"
-            />
-            <q-btn
-              flat
-              icon="cancel"
-              :label="$t('projects.actions.reject')"
-              @click="bulkReject"
-              :loading="bulkActionLoading"
-            />
-            <q-btn flat icon="clear" :label="$t('common.clearSelection')" @click="selected = []" />
-          </div>
-        </div>
-      </q-banner>
-    </div>
-
     <!-- Projects Table -->
     <q-table
+      flat
+      bordered
       v-model:selected="selected"
       :rows="filteredProjects"
       :columns="columns"
@@ -94,17 +68,42 @@
       selection="multiple"
       :no-data-label="$t('educator.projects.emptyState')"
       :pagination="pagination"
-      class="projects-table"
     >
+      <template #top>
+        <div class="row items-center justify-between full-width q-col-gutter-md">
+          <div class="col">
+            <div class="text-subtitle1">{{ $t('educator.projects.tableTitle') }}</div>
+            <div class="text-caption text-grey-7">
+              {{ $t('educator.projects.tableHint') }}
+            </div>
+          </div>
+          <div v-if="selected.length > 0" class="col-auto row q-gutter-sm">
+            <q-btn
+              color="positive"
+              icon="check_circle"
+              :label="$t('projects.actions.approve')"
+              :disable="selected.length === 0"
+              :loading="bulkActionLoading"
+              @click="bulkApprove"
+            />
+            <q-btn
+              color="negative"
+              icon="cancel"
+              :label="$t('projects.actions.reject')"
+              :disable="selected.length === 0"
+              :loading="bulkActionLoading"
+              @click="bulkReject"
+            />
+          </div>
+        </div>
+      </template>
       <template #body-cell-student="props">
         <q-td :props="props">
-          <div class="row items-center q-gutter-sm">
-            <user-avatar :user="props.row.student" size="32px" />
+          <div class="row items-center no-wrap q-gutter-sm">
+            <user-avatar :user="props.row.student" size="40px" />
             <div>
-              <div class="text-weight-medium">
-                {{ props.row.student?.name || $t('common.unknown') }}
-              </div>
-              <div class="text-caption text-grey-6">{{ props.row.student?.email }}</div>
+              <div class="text-body1">{{ props.row.student?.name || $t('common.unknown') }}</div>
+              <div class="text-caption text-grey-7">{{ props.row.student?.email }}</div>
             </div>
           </div>
         </q-td>
@@ -113,8 +112,8 @@
       <template #body-cell-name="props">
         <q-td :props="props">
           <div>
-            <div class="text-weight-medium">{{ props.row.name }}</div>
-            <div class="text-caption text-grey-6 line-clamp-1">
+            <div class="text-body1">{{ props.row.name }}</div>
+            <div class="text-caption text-grey-7 line-clamp-1">
               {{ props.row.description || $t('projects.noDescription') }}
             </div>
           </div>
@@ -124,10 +123,10 @@
       <template #body-cell-subCompetency="props">
         <q-td :props="props">
           <div>
-            <div class="text-weight-medium">
+            <div class="text-body1">
               {{ props.row.subCompetency?.name || $t('common.loading') }}
             </div>
-            <div class="text-caption text-grey-6">
+            <div class="text-caption text-grey-7">
               {{ props.row.subCompetency?.description }}
             </div>
           </div>
@@ -152,36 +151,36 @@
 
       <template #body-cell-actions="props">
         <q-td :props="props">
-          <div class="q-gutter-xs">
+          <div class="row q-gutter-xs">
+            <q-space />
             <q-btn
               flat
               dense
-              icon="visibility"
-              :label="$t('common.view')"
-              color="primary"
-              size="sm"
-              @click="viewProject(props.row)"
-            />
-            <q-btn
-              flat
-              dense
-              icon="check_circle"
-              :label="$t('projects.actions.approve')"
               color="positive"
-              size="sm"
+              icon="check_circle"
               @click="approveProject(props.row)"
               :loading="actionLoading.has(props.row.id)"
             />
             <q-btn
               flat
               dense
-              icon="cancel"
-              :label="$t('projects.actions.reject')"
               color="negative"
-              size="sm"
+              icon="cancel"
               @click="rejectProject(props.row)"
               :loading="actionLoading.has(props.row.id)"
             />
+            <q-btn dense flat round icon="more_vert" :aria-label="$t('common.actions')">
+              <q-menu anchor="top right" self="top right">
+                <q-list dense style="min-width: 180px">
+                  <q-item clickable v-close-popup @click="viewProject(props.row)">
+                    <q-item-section avatar>
+                      <q-icon name="visibility" />
+                    </q-item-section>
+                    <q-item-section>{{ $t('common.view') }}</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
           </div>
         </q-td>
       </template>
