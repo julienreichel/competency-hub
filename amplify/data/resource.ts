@@ -22,6 +22,7 @@ const schema = a
         helperResources: a.hasMany('Resource', 'personUserId'),
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'studentId'),
         evaluationAttempts: a.hasMany('EvaluationAttempt', 'studentId'),
+        projects: a.hasMany('Project', 'studentId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -84,6 +85,7 @@ const schema = a
         resources: a.hasMany('Resource', 'subCompetencyId'),
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'subCompetencyId'),
         evaluations: a.hasMany('Evaluation', 'subCompetencyId'),
+        projects: a.hasMany('Project', 'subCompetencyId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -158,6 +160,23 @@ const schema = a
         allow.authenticated().to(['read']),
         allow.owner().to(['create', 'update', 'read']),
         allow.groups(['Educator', 'Admin']).to(['create', 'update', 'read']),
+      ]),
+
+    Project: a
+      .model({
+        studentId: a.id().required(),
+        student: a.belongsTo('User', 'studentId'),
+        subCompetencyId: a.id().required(),
+        subCompetency: a.belongsTo('SubCompetency', 'subCompetencyId'),
+        name: a.string().required(),
+        description: a.string(),
+        fileKey: a.string(),
+        status: a.enum(['Draft', 'Submitted', 'Approved', 'Rejected']),
+      })
+      .authorization((allow) => [
+        allow.owner().to(['create', 'read', 'update', 'delete']),
+        allow.groups(['Educator', 'Admin']).to(['read', 'update']),
+        allow.authenticated().to(['read']),
       ]),
 
     addUserToGroup: a

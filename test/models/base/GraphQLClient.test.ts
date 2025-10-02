@@ -68,6 +68,13 @@ vi.mock('aws-amplify/data', () => ({
         create: vi.fn(),
         update: vi.fn(),
       },
+      Project: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
     },
   })),
 }));
@@ -136,6 +143,13 @@ interface MockAmplifyClient {
     StudentSubCompetencyProgress: {
       create: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
+    };
+    Project: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
     };
   };
 }
@@ -780,6 +794,68 @@ describe('GraphQLClient', () => {
     });
   });
 
+  describe('Project operations', () => {
+    const mockProject = {
+      id: 'project-1',
+      studentId: 'student-1',
+      subCompetencyId: 'sub-1',
+      name: 'My Science Project',
+      status: 'Draft',
+    };
+
+    it('handles CRUD for projects', async () => {
+      mockAmplifyClient.models.Project.create.mockResolvedValue({
+        data: mockProject,
+        errors: null,
+      });
+      mockAmplifyClient.models.Project.update.mockResolvedValue({
+        data: mockProject,
+        errors: null,
+      });
+      mockAmplifyClient.models.Project.delete.mockResolvedValue({
+        data: mockProject,
+        errors: null,
+      });
+      mockAmplifyClient.models.Project.get.mockResolvedValue({
+        data: mockProject,
+        errors: null,
+      });
+      mockAmplifyClient.models.Project.list.mockResolvedValue({
+        data: [mockProject],
+        errors: null,
+      });
+
+      await expect(
+        graphQLClient.createProject({
+          studentId: 'student-1',
+          subCompetencyId: 'sub-1',
+          name: 'My Science Project',
+        }),
+      ).resolves.toEqual(mockProject);
+      await expect(
+        graphQLClient.updateProject({ id: 'project-1', name: 'Updated Project' }),
+      ).resolves.toEqual(mockProject);
+      await expect(graphQLClient.deleteProject('project-1')).resolves.toEqual(mockProject);
+      await expect(graphQLClient.getProject('project-1')).resolves.toEqual(mockProject);
+    });
+
+    it('propagates errors for project operations', async () => {
+      const graphQLErrors = [{ message: 'Access denied' }];
+      mockAmplifyClient.models.Project.create.mockResolvedValue({
+        data: null,
+        errors: graphQLErrors,
+      });
+
+      await expect(
+        graphQLClient.createProject({
+          studentId: 'student-1',
+          subCompetencyId: 'sub-1',
+          name: 'My Project',
+        }),
+      ).rejects.toThrow(`GraphQL errors: ${JSON.stringify(graphQLErrors)}`);
+    });
+  });
+
   describe('Teaching assignments and parent links', () => {
     const mockAssignment = { id: 'assign-1' };
     const mockLink = { id: 'link-1' };
@@ -1255,6 +1331,34 @@ describe('GraphQLClient', () => {
       () => graphQLClient.updateStudentProgress({ id: 'id', status: 'Validated' }),
       [],
       () => mockAmplifyClient.models.StudentSubCompetencyProgress.update,
+    );
+
+    testGraphQLErrors(
+      'createProject',
+      () => graphQLClient.createProject({ studentId: 's', subCompetencyId: 'sc', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Project.create,
+    );
+
+    testGraphQLErrors(
+      'updateProject',
+      () => graphQLClient.updateProject({ id: 'id', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Project.update,
+    );
+
+    testGraphQLErrors(
+      'deleteProject',
+      () => graphQLClient.deleteProject('id'),
+      [],
+      () => mockAmplifyClient.models.Project.delete,
+    );
+
+    testGraphQLErrors(
+      'getProject',
+      () => graphQLClient.getProject('id'),
+      [],
+      () => mockAmplifyClient.models.Project.get,
     );
   });
 });

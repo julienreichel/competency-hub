@@ -4,6 +4,7 @@ import { Competency, type AmplifyCompetency } from './Competency';
 import type { AmplifyResource } from './CompetencyResource';
 import { CompetencyResource, type ResourceInit } from './CompetencyResource';
 import { Evaluation } from './Evaluation';
+import { Project, type ProjectInit } from './Project';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { User } from './User';
 import { UserRole } from './User';
@@ -24,6 +25,7 @@ export interface SubCompetencyInit {
   resources?: Array<ResourceInit | CompetencyResource>;
   studentProgress?: StudentSubCompetencyProgress[];
   evaluations?: Evaluation[];
+  projects?: Array<ProjectInit | Project>;
 }
 
 export interface CreateSubCompetencyInput {
@@ -47,6 +49,7 @@ export class SubCompetency extends BaseModel {
   public readonly resources: CompetencyResource[];
   public studentProgress: StudentSubCompetencyProgress[] = [];
   public readonly evaluations: Evaluation[];
+  public readonly projects: Project[];
 
   constructor(data: SubCompetencyInit) {
     super(data);
@@ -68,6 +71,12 @@ export class SubCompetency extends BaseModel {
     this.evaluations = Array.isArray(data.evaluations)
       ? data.evaluations.map((evaluation) =>
           evaluation instanceof Evaluation ? evaluation.clone() : new Evaluation(evaluation),
+        )
+      : [];
+
+    this.projects = Array.isArray(data.projects)
+      ? data.projects.map((project) =>
+          project instanceof Project ? project.clone() : new Project(project),
         )
       : [];
 
@@ -156,6 +165,7 @@ export class SubCompetency extends BaseModel {
         )
         .filter((item): item is Evaluation => item !== null);
     }
+    const projects = SubCompetency.parseProjects(raw.projects);
     return new SubCompetency({
       id: raw.id,
       competencyId: raw.competencyId,
@@ -167,9 +177,24 @@ export class SubCompetency extends BaseModel {
       resources,
       studentProgress,
       evaluations,
+      projects,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });
+  }
+
+  private static parseProjects(rawProjects: AmplifySubCompetency['projects']): Project[] {
+    if (!rawProjects) return [];
+    const arr = Array.isArray(rawProjects)
+      ? rawProjects
+      : Array.isArray((rawProjects as { items?: unknown }).items)
+        ? ((rawProjects as { items?: unknown }).items as object[])
+        : [];
+    return arr
+      .map((entry) =>
+        entry && typeof entry === 'object' && 'id' in entry ? Project.fromAmplify(entry) : null,
+      )
+      .filter((item): item is Project => item !== null);
   }
 
   validate(): void {
@@ -192,6 +217,7 @@ export class SubCompetency extends BaseModel {
       resources: this.resources.map((resource) => resource.toJSON()),
       studentProgress: this.studentProgress.map((sp) => sp.toJSON()),
       evaluations: this.evaluations.map((evaluation) => evaluation.toJSON()),
+      projects: this.projects.map((project) => project.toJSON()),
     };
   }
 
@@ -209,6 +235,7 @@ export class SubCompetency extends BaseModel {
       resources: this.resources.map((resource) => resource.clone()),
       studentProgress: this.studentProgress.map((sp) => sp.clone()),
       evaluations: this.evaluations.map((evaluation) => evaluation.clone()),
+      projects: this.projects.map((project) => project.clone()),
     });
   }
   /**

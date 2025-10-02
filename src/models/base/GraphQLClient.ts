@@ -85,6 +85,7 @@ export class GraphQLClient {
             'studentProgress.*',
             'evaluationAttempts.*',
             'evaluationAttempts.evaluation.*',
+            'projects.*',
           ],
         },
       );
@@ -597,6 +598,8 @@ export class GraphQLClient {
             'evaluations.*',
             'evaluations.attempts.*',
             'evaluations.attempts.student.*',
+            'projects.*',
+            'projects.student.*',
           ],
         },
       );
@@ -916,6 +919,89 @@ export class GraphQLClient {
       return result.data;
     } catch (error) {
       console.error('Error updating StudentSubCompetencyProgress:', error);
+      throw error;
+    }
+  }
+
+  async createProject(
+    data: Schema['Project']['createType'],
+  ): Promise<Schema['Project']['type'] | null> {
+    try {
+      const result = await this.client.models.Project.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating Project:', error);
+      throw error;
+    }
+  }
+
+  async updateProject(
+    data: Schema['Project']['updateType'],
+  ): Promise<Schema['Project']['type'] | null> {
+    try {
+      const result = await this.client.models.Project.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error updating Project:', error);
+      throw error;
+    }
+  }
+
+  async deleteProject(id: string): Promise<Schema['Project']['type'] | null> {
+    try {
+      const result = await this.client.models.Project.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error(`Error deleting Project with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getProject(id: string): Promise<Schema['Project']['type'] | null> {
+    try {
+      const result = await this.client.models.Project.get(
+        { id },
+        {
+          authMode: 'userPool',
+          selectionSet: [
+            'id',
+            'studentId',
+            'student.*',
+            'subCompetencyId',
+            'subCompetency.*',
+            'name',
+            'description',
+            'fileKey',
+            'status',
+            'createdAt',
+            'updatedAt',
+          ],
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['Project']['type'];
+    } catch (error) {
+      console.error(`Error getting Project with ID ${id}:`, error);
       throw error;
     }
   }

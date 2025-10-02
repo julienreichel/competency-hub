@@ -1,6 +1,7 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { EvaluationAttempt } from './EvaluationAttempt';
+import { Project, type ProjectInit } from './Project';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { SubCompetency } from './SubCompetency';
 
@@ -68,6 +69,7 @@ export interface UserRelationInit {
   children?: UserRelationInit[];
   studentProgress?: StudentSubCompetencyProgress[];
   evaluationAttempts?: EvaluationAttempt[];
+  projects?: ProjectInit[];
 }
 
 type UserInit = UserRelationInit;
@@ -91,6 +93,7 @@ export class User extends BaseModel {
   public children: User[];
   public studentProgress: StudentSubCompetencyProgress[];
   public evaluationAttempts: EvaluationAttempt[];
+  public projects: Project[];
 
   constructor(data: UserInit) {
     super(data);
@@ -109,6 +112,11 @@ export class User extends BaseModel {
     this.evaluationAttempts = Array.isArray(data.evaluationAttempts)
       ? data.evaluationAttempts.map((attempt) =>
           attempt instanceof EvaluationAttempt ? attempt : EvaluationAttempt.fromAmplify(attempt),
+        )
+      : [];
+    this.projects = Array.isArray(data.projects)
+      ? data.projects.map((project) =>
+          project instanceof Project ? project : new Project(project),
         )
       : [];
 
@@ -133,6 +141,7 @@ export class User extends BaseModel {
       children: User.extractUsersFromEntries(raw.children, 'student'),
       studentProgress: User.normaliseStudentProgress(raw.studentProgress),
       evaluationAttempts: User.normaliseEvaluationAttempts(raw.evaluationAttempts),
+      projects: User.normaliseProjects(raw.projects),
     });
   }
   private static normaliseStudentProgress(
@@ -169,6 +178,24 @@ export class User extends BaseModel {
           : null,
       )
       .filter((item): item is EvaluationAttempt => item !== null);
+  }
+
+  static normaliseProjects(entries: AmplifyUser['projects']): ProjectInit[] {
+    if (!entries) return [];
+    const arr = Array.isArray(entries)
+      ? entries
+      : Array.isArray((entries as { items?: unknown }).items)
+        ? ((entries as { items?: unknown }).items as unknown[])
+        : [];
+    return arr
+      .map((entry) => {
+        if (entry && typeof entry === 'object' && 'id' in entry) {
+          const project = Project.fromAmplify(entry);
+          return project.toJSON() as ProjectInit;
+        }
+        return null;
+      })
+      .filter((item): item is ProjectInit => item !== null);
   }
 
   static create(data: UserInit | User): User {
