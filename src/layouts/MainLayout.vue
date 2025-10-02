@@ -123,6 +123,13 @@
             link="/educator/assessments"
           />
 
+          <essential-link
+            title="Projects"
+            caption="Review student projects"
+            icon="folder"
+            link="/educator/projects"
+          />
+
           <!-- essential-link
             title="Reports"
             caption="Student progress reports"
