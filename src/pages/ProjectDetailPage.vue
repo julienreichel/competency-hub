@@ -32,14 +32,63 @@
         </div>
 
         <!-- Actions -->
-        <div class="col-auto" v-if="canEdit">
-          <q-btn
-            color="primary"
-            :label="$t('common.edit')"
-            icon="edit"
-            @click="editProject"
-            :loading="actionLoading"
-          />
+        <div class="col-auto">
+          <q-btn-group v-if="availableActions.length > 0" flat>
+            <!-- Edit Button -->
+            <q-btn
+              v-if="canEdit"
+              color="primary"
+              :label="$t('common.edit')"
+              icon="edit"
+              @click="editProject"
+              :loading="actionLoading"
+              flat
+            />
+
+            <!-- Submit Button (Student only) -->
+            <q-btn
+              v-if="canSubmit"
+              color="positive"
+              :label="$t('projects.actions.submit')"
+              icon="send"
+              @click="submitProject"
+              :loading="actionLoading"
+              flat
+            />
+
+            <!-- Approve Button (Educator only) -->
+            <q-btn
+              v-if="canApprove"
+              color="positive"
+              :label="$t('projects.actions.approve')"
+              icon="check_circle"
+              @click="approveProject"
+              :loading="actionLoading"
+              flat
+            />
+
+            <!-- Reject Button (Educator only) -->
+            <q-btn
+              v-if="canReject"
+              color="negative"
+              :label="$t('projects.actions.reject')"
+              icon="cancel"
+              @click="rejectProject"
+              :loading="actionLoading"
+              flat
+            />
+
+            <!-- Delete Button (Student only) -->
+            <q-btn
+              v-if="canDelete"
+              color="negative"
+              :label="$t('common.delete')"
+              icon="delete"
+              @click="showDeleteConfirmation = true"
+              :loading="actionLoading"
+              flat
+            />
+          </q-btn-group>
         </div>
       </div>
 
@@ -151,6 +200,36 @@
 
     <!-- Edit Dialog -->
     <project-form-dialog v-model="showEditDialog" :project="project" @saved="onProjectUpdated" />
+
+    <!-- Delete Confirmation Dialog -->
+    <q-dialog v-model="showDeleteConfirmation" persistent>
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar icon="warning" color="negative" text-color="white" />
+          <span class="q-ml-sm">{{ $t('projects.delete.confirmTitle') }}</span>
+        </q-card-section>
+
+        <q-card-section class="pt-none">
+          {{ $t('projects.delete.confirmMessage', { name: project?.name }) }}
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            :label="$t('common.cancel')"
+            color="primary"
+            @click="showDeleteConfirmation = false"
+          />
+          <q-btn
+            flat
+            :label="$t('common.delete')"
+            color="negative"
+            @click="deleteProject"
+            :loading="actionLoading"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -163,9 +242,10 @@ import { type Project, type ProjectStatus } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const { userId, hasAnyRole } = useAuth();
 
@@ -175,6 +255,7 @@ const loading = ref(false);
 const actionLoading = ref(false);
 const error = ref<string | null>(null);
 const showEditDialog = ref(false);
+const showDeleteConfirmation = ref(false);
 
 // Repository
 const projectRepository = new ProjectRepository();
@@ -185,11 +266,65 @@ const projectId = computed(() => route.params.projectId as string);
 const canEdit = computed(() => {
   if (!project.value) return false;
 
+  // Edit is only allowed for Draft/Rejected status
+  const editableStatuses: ProjectStatus[] = ['Draft', 'Rejected'];
+  if (!editableStatuses.includes(project.value.status)) return false;
+
   // Students can edit their own projects
   if (project.value.studentId === userId.value) return true;
 
   // Educators and admins can edit any project
   return hasAnyRole(['Educator', 'Admin']);
+});
+
+const canSubmit = computed(() => {
+  if (!project.value) return false;
+
+  // Only students can submit their own projects
+  if (project.value.studentId !== userId.value) return false;
+
+  // Can only submit Draft or Rejected projects
+  return ['Draft', 'Rejected'].includes(project.value.status);
+});
+
+const canApprove = computed(() => {
+  if (!project.value) return false;
+
+  // Only educators/admins can approve
+  if (!hasAnyRole(['Educator', 'Admin'])) return false;
+
+  // Can only approve Submitted projects
+  return project.value.status === 'Submitted';
+});
+
+const canReject = computed(() => {
+  if (!project.value) return false;
+
+  // Only educators/admins can reject
+  if (!hasAnyRole(['Educator', 'Admin'])) return false;
+
+  // Can only reject Submitted projects
+  return project.value.status === 'Submitted';
+});
+
+const canDelete = computed(() => {
+  if (!project.value) return false;
+
+  // Only students can delete their own projects
+  if (project.value.studentId !== userId.value) return false;
+
+  // Can only delete Draft or Rejected projects
+  return ['Draft', 'Rejected'].includes(project.value.status);
+});
+
+const availableActions = computed(() => {
+  const actions = [];
+  if (canEdit.value) actions.push('edit');
+  if (canSubmit.value) actions.push('submit');
+  if (canApprove.value) actions.push('approve');
+  if (canReject.value) actions.push('reject');
+  if (canDelete.value) actions.push('delete');
+  return actions;
 });
 
 const showStudentInfo = computed(() => {
@@ -239,6 +374,70 @@ const downloadFile = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Error downloading project file:', error);
+  }
+};
+
+const submitProject = async (): Promise<void> => {
+  if (!project.value) return;
+
+  actionLoading.value = true;
+  try {
+    const updatedProject = await projectRepository.update(project.value.id, {
+      status: 'Submitted',
+    });
+    project.value = updatedProject;
+  } catch (error) {
+    console.error('Failed to submit project:', error);
+    // TODO: Show error notification
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const approveProject = async (): Promise<void> => {
+  if (!project.value) return;
+
+  actionLoading.value = true;
+  try {
+    const updatedProject = await projectRepository.update(project.value.id, { status: 'Approved' });
+    project.value = updatedProject;
+  } catch (error) {
+    console.error('Failed to approve project:', error);
+    // TODO: Show error notification
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const rejectProject = async (): Promise<void> => {
+  if (!project.value) return;
+
+  actionLoading.value = true;
+  try {
+    const updatedProject = await projectRepository.update(project.value.id, { status: 'Rejected' });
+    project.value = updatedProject;
+  } catch (error) {
+    console.error('Failed to reject project:', error);
+    // TODO: Show error notification
+  } finally {
+    actionLoading.value = false;
+  }
+};
+
+const deleteProject = async (): Promise<void> => {
+  if (!project.value) return;
+
+  actionLoading.value = true;
+  try {
+    await projectRepository.delete(project.value.id);
+    // Navigate back to projects list after successful deletion
+    await router.push({ name: 'student-projects' });
+  } catch (error) {
+    console.error('Failed to delete project:', error);
+    // TODO: Show error notification
+  } finally {
+    actionLoading.value = false;
+    showDeleteConfirmation.value = false;
   }
 };
 

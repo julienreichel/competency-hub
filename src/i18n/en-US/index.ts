@@ -526,6 +526,23 @@ export default {
       updateError: 'Failed to update project',
       errorLoadingSubCompetencies: 'Failed to load sub-competencies',
     },
+    actions: {
+      submit: 'Submit',
+      approve: 'Approve',
+      reject: 'Reject',
+      submitSuccess: 'Project submitted successfully',
+      approveSuccess: 'Project approved successfully',
+      rejectSuccess: 'Project rejected successfully',
+      submitError: 'Failed to submit project',
+      approveError: 'Failed to approve project',
+      rejectError: 'Failed to reject project',
+    },
+    delete: {
+      confirmTitle: 'Delete Project',
+      confirmMessage: 'Are you sure you want to delete "{name}"? This action cannot be undone.',
+      success: 'Project deleted successfully',
+      error: 'Failed to delete project',
+    },
     detail: {
       errorTitle: 'Project Not Found',
       notFound: 'The requested project could not be found',

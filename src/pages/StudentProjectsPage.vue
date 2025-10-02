@@ -41,7 +41,15 @@
     <!-- Projects List -->
     <div v-else class="row q-col-gutter-md">
       <div v-for="project in projects" :key="project.id" class="col-12 col-md-6 col-lg-4">
-        <project-card :project="project" @view="viewProject" @edit="editProject" />
+        <project-card
+          :project="project"
+          @view="viewProject"
+          @edit="editProject"
+          @submit="submitProject"
+          @approve="approveProject"
+          @reject="rejectProject"
+          @delete="deleteProject"
+        />
       </div>
     </div>
 
@@ -114,6 +122,58 @@ const onProjectSaved = (project: Project): void => {
   // Reset dialog state
   editingProject.value = null;
   showProjectDialog.value = false;
+};
+
+const submitProject = async (project: Project): Promise<void> => {
+  try {
+    const updatedProject = await projectRepository.update(project.id, { status: 'Submitted' });
+    const index = projects.value.findIndex((p) => p.id === project.id);
+    if (index !== -1) {
+      projects.value[index] = updatedProject;
+    }
+  } catch (error) {
+    console.error('Failed to submit project:', error);
+    // TODO: Show error notification
+  }
+};
+
+const approveProject = async (project: Project): Promise<void> => {
+  try {
+    const updatedProject = await projectRepository.update(project.id, { status: 'Approved' });
+    const index = projects.value.findIndex((p) => p.id === project.id);
+    if (index !== -1) {
+      projects.value[index] = updatedProject;
+    }
+  } catch (error) {
+    console.error('Failed to approve project:', error);
+    // TODO: Show error notification
+  }
+};
+
+const rejectProject = async (project: Project): Promise<void> => {
+  try {
+    const updatedProject = await projectRepository.update(project.id, { status: 'Rejected' });
+    const index = projects.value.findIndex((p) => p.id === project.id);
+    if (index !== -1) {
+      projects.value[index] = updatedProject;
+    }
+  } catch (error) {
+    console.error('Failed to reject project:', error);
+    // TODO: Show error notification
+  }
+};
+
+const deleteProject = async (project: Project): Promise<void> => {
+  try {
+    await projectRepository.delete(project.id);
+    const index = projects.value.findIndex((p) => p.id === project.id);
+    if (index !== -1) {
+      projects.value.splice(index, 1);
+    }
+  } catch (error) {
+    console.error('Failed to delete project:', error);
+    // TODO: Show error notification
+  }
 };
 
 // Lifecycle
