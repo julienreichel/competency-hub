@@ -144,6 +144,29 @@ describe('GraphQLClient', () => {
   let graphQLClient: GraphQLClient;
   let mockAmplifyClient: MockAmplifyClient;
 
+  /**
+   * DRY helper to test GraphQL error handling for GraphQLClient methods.
+   * @param label - Name of the method for test description
+   * @param method - The method to test (should be bound to the client instance)
+   * @param args - Arguments to pass to the method
+   * @param mockFn - The mock function to set up the error response
+   */
+  function testGraphQLErrors(
+    label: string,
+    method: (...args: unknown[]) => Promise<unknown>,
+    args: unknown[],
+    getMockFn: () => ReturnType<typeof vi.fn>,
+  ): void {
+    it(`throws when GraphQL returns errors for ${label}`, async () => {
+      const graphQLErrors = [{ message: 'Denied' }];
+      const mockFn = getMockFn();
+      mockFn.mockResolvedValueOnce({ data: null, errors: graphQLErrors });
+      await expect(method(...args)).rejects.toThrow(
+        `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
+      );
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     graphQLClient = new GraphQLClient();
@@ -956,5 +979,282 @@ describe('GraphQLClient', () => {
         { authMode: 'userPool' },
       );
     });
+  });
+  describe('GraphQL error handling (DRY)', () => {
+    beforeEach(() => {
+      // Ensure mocks are reset for each test
+      vi.clearAllMocks();
+    });
+
+    testGraphQLErrors(
+      'getUser',
+      () => graphQLClient.getUser('id'),
+      [],
+      () => mockAmplifyClient.models.User.get,
+    );
+    testGraphQLErrors(
+      'getUserWithRelations',
+      () => graphQLClient.getUserWithRelations('id'),
+      [],
+      () => mockAmplifyClient.models.User.get,
+    );
+    testGraphQLErrors(
+      'listUsers',
+      () => graphQLClient.listUsers(),
+      [],
+      () => mockAmplifyClient.models.User.list,
+    );
+    testGraphQLErrors(
+      'updateUser',
+      () => graphQLClient.updateUser('id', { name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.User.update,
+    );
+    testGraphQLErrors(
+      'deleteUser',
+      () => graphQLClient.deleteUser('id'),
+      [],
+      () => mockAmplifyClient.models.User.delete,
+    );
+
+    // TeachingAssignment
+    testGraphQLErrors(
+      'createTeachingAssignment',
+      () => graphQLClient.createTeachingAssignment({ studentId: 's', educatorId: 'e' }),
+      [],
+      () => mockAmplifyClient.models.TeachingAssignment.create,
+    );
+    testGraphQLErrors(
+      'deleteTeachingAssignment',
+      () => graphQLClient.deleteTeachingAssignment('assign-1'),
+      [],
+      () => mockAmplifyClient.models.TeachingAssignment.delete,
+    );
+    testGraphQLErrors(
+      'listTeachingAssignments',
+      () => graphQLClient.listTeachingAssignments(),
+      [],
+      () => mockAmplifyClient.models.TeachingAssignment.list,
+    );
+
+    // ParentLink
+    testGraphQLErrors(
+      'createParentLink',
+      () => graphQLClient.createParentLink({ studentId: 's', parentId: 'p' }),
+      [],
+      () => mockAmplifyClient.models.ParentLink.create,
+    );
+    testGraphQLErrors(
+      'deleteParentLink',
+      () => graphQLClient.deleteParentLink('link-1'),
+      [],
+      () => mockAmplifyClient.models.ParentLink.delete,
+    );
+    testGraphQLErrors(
+      'listParentLinks',
+      () => graphQLClient.listParentLinks(),
+      [],
+      () => mockAmplifyClient.models.ParentLink.list,
+    );
+
+    // Domain
+    testGraphQLErrors(
+      'createDomain',
+      () => graphQLClient.createDomain({ name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Domain.create,
+    );
+    testGraphQLErrors(
+      'updateDomain',
+      () => graphQLClient.updateDomain({ id: 'domain-1', name: 'Updated' }),
+      [],
+      () => mockAmplifyClient.models.Domain.update,
+    );
+    testGraphQLErrors(
+      'deleteDomain',
+      () => graphQLClient.deleteDomain('domain-1'),
+      [],
+      () => mockAmplifyClient.models.Domain.delete,
+    );
+    testGraphQLErrors(
+      'getDomain',
+      () => graphQLClient.getDomain('domain-1'),
+      [],
+      () => mockAmplifyClient.models.Domain.get,
+    );
+    testGraphQLErrors(
+      'getDomainWithHierarchy',
+      () => graphQLClient.getDomainWithHierarchy('domain-1'),
+      [],
+      () => mockAmplifyClient.models.Domain.get,
+    );
+    testGraphQLErrors(
+      'listDomains',
+      () => graphQLClient.listDomains(),
+      [],
+      () => mockAmplifyClient.models.Domain.list,
+    );
+
+    // Competency
+    testGraphQLErrors(
+      'createCompetency',
+      () => graphQLClient.createCompetency({ name: 'n', domainId: 'd' }),
+      [],
+      () => mockAmplifyClient.models.Competency.create,
+    );
+    testGraphQLErrors(
+      'updateCompetency',
+      () => graphQLClient.updateCompetency({ id: 'id', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Competency.update,
+    );
+    testGraphQLErrors(
+      'deleteCompetency',
+      () => graphQLClient.deleteCompetency('id'),
+      [],
+      () => mockAmplifyClient.models.Competency.delete,
+    );
+    testGraphQLErrors(
+      'getCompetency',
+      () => graphQLClient.getCompetency('id'),
+      [],
+      () => mockAmplifyClient.models.Competency.get,
+    );
+    testGraphQLErrors(
+      'getCompetencyWithDetails',
+      () => graphQLClient.getCompetencyWithDetails('id'),
+      [],
+      () => mockAmplifyClient.models.Competency.get,
+    );
+    testGraphQLErrors(
+      'listCompetencies',
+      () => graphQLClient.listCompetencies(),
+      [],
+      () => mockAmplifyClient.models.Competency.list,
+    );
+
+    // SubCompetency
+    testGraphQLErrors(
+      'createSubCompetency',
+      () => graphQLClient.createSubCompetency({ competencyId: 'c', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.SubCompetency.create,
+    );
+    testGraphQLErrors(
+      'updateSubCompetency',
+      () => graphQLClient.updateSubCompetency({ id: 'id', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.SubCompetency.update,
+    );
+    testGraphQLErrors(
+      'deleteSubCompetency',
+      () => graphQLClient.deleteSubCompetency('id'),
+      [],
+      () => mockAmplifyClient.models.SubCompetency.delete,
+    );
+    testGraphQLErrors(
+      'getSubCompetency',
+      () => graphQLClient.getSubCompetency('id'),
+      [],
+      () => mockAmplifyClient.models.SubCompetency.get,
+    );
+    testGraphQLErrors(
+      'getSubCompetencyWithDetails',
+      () => graphQLClient.getSubCompetencyWithDetails('id'),
+      [],
+      () => mockAmplifyClient.models.SubCompetency.get,
+    );
+    testGraphQLErrors(
+      'listSubCompetencies',
+      () => graphQLClient.listSubCompetencies(),
+      [],
+      () => mockAmplifyClient.models.SubCompetency.list,
+    );
+
+    // Resource
+    testGraphQLErrors(
+      'createResource',
+      () => graphQLClient.createResource({ subCompetencyId: 's', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Resource.create,
+    );
+    testGraphQLErrors(
+      'updateResource',
+      () => graphQLClient.updateResource({ id: 'id', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Resource.update,
+    );
+    testGraphQLErrors(
+      'deleteResource',
+      () => graphQLClient.deleteResource('id'),
+      [],
+      () => mockAmplifyClient.models.Resource.delete,
+    );
+    testGraphQLErrors(
+      'getResource',
+      () => graphQLClient.getResource('id'),
+      [],
+      () => mockAmplifyClient.models.Resource.get,
+    );
+    testGraphQLErrors(
+      'listResources',
+      () => graphQLClient.listResources(),
+      [],
+      () => mockAmplifyClient.models.Resource.list,
+    );
+
+    // Evaluation
+    testGraphQLErrors(
+      'createEvaluation',
+      () => graphQLClient.createEvaluation({ subCompetencyId: 's', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Evaluation.create,
+    );
+    testGraphQLErrors(
+      'updateEvaluation',
+      () => graphQLClient.updateEvaluation({ id: 'id', name: 'n' }),
+      [],
+      () => mockAmplifyClient.models.Evaluation.update,
+    );
+    testGraphQLErrors(
+      'deleteEvaluation',
+      () => graphQLClient.deleteEvaluation('id'),
+      [],
+      () => mockAmplifyClient.models.Evaluation.delete,
+    );
+    testGraphQLErrors(
+      'getEvaluation',
+      () => graphQLClient.getEvaluation('id'),
+      [],
+      () => mockAmplifyClient.models.Evaluation.get,
+    );
+
+    // EvaluationAttempt
+    testGraphQLErrors(
+      'createEvaluationAttempt',
+      () => graphQLClient.createEvaluationAttempt({ evaluationId: 'e', studentId: 's' }),
+      [],
+      () => mockAmplifyClient.models.EvaluationAttempt.create,
+    );
+    testGraphQLErrors(
+      'updateEvaluationAttempt',
+      () => graphQLClient.updateEvaluationAttempt({ id: 'id', status: 'Completed' }),
+      [],
+      () => mockAmplifyClient.models.EvaluationAttempt.update,
+    );
+
+    // StudentSubCompetencyProgress
+    testGraphQLErrors(
+      'createStudentProgress',
+      () => graphQLClient.createStudentProgress({ studentId: 's', subCompetencyId: 'sc' }),
+      [],
+      () => mockAmplifyClient.models.StudentSubCompetencyProgress.create,
+    );
+    testGraphQLErrors(
+      'updateStudentProgress',
+      () => graphQLClient.updateStudentProgress({ id: 'id', status: 'Validated' }),
+      [],
+      () => mockAmplifyClient.models.StudentSubCompetencyProgress.update,
+    );
   });
 });

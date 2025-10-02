@@ -71,6 +71,12 @@
                   </q-item-section>
                   <q-item-section>{{ t('educator.viewAssessments') }}</q-item-section>
                 </q-item>
+                <q-item clickable v-close-popup @click="emit('viewReport', props.row.id)">
+                  <q-item-section avatar>
+                    <q-icon name="assessment" />
+                  </q-item-section>
+                  <q-item-section>{{ t('educator.viewReport') }}</q-item-section>
+                </q-item>
               </q-list>
             </q-menu>
           </q-btn>
@@ -101,6 +107,7 @@ const emit = defineEmits<{
   view: [studentId: string];
   viewCompetencies: [studentId: string];
   viewAssessments: [studentId: string];
+  viewReport: [studentId: string];
 }>();
 
 const { t } = useI18n();

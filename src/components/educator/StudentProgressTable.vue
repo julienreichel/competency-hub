@@ -96,7 +96,7 @@
             dense
             color="primary"
             icon="lock_open"
-            :disable="props.row.progress?.lockOverride === 'Locked'"
+            :disable="props.row.progress?.lockOverride !== 'Locked'"
             @click="emitRow('unlock', props.row)"
           />
           <q-btn

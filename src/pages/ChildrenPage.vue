@@ -98,31 +98,32 @@
 
 <script setup lang="ts">
 import ChildCard from 'src/components/parent/ChildCard.vue';
+import { useReportData } from 'src/composables/useReportData';
 import { useUsers } from 'src/composables/useUsers';
 import type { User } from 'src/models/User';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-interface SubjectProgress {
+interface ChildDomainProgress {
   name: string;
+  color: string;
   progress: number;
 }
 
 interface ChildStats {
-  completedAssessments: number;
-  averageScore: number;
-  studyHours: number;
+  totalCompetencies: number;
+  validatedCount: number;
+  inProgressCount: number;
 }
 
 interface ChildCardData {
   id: string;
   name: string;
-  age: number;
-  grade: string;
-  school: string;
+  email: string;
   avatar?: string | null;
+  primaryEducator?: string | null;
   stats: ChildStats;
-  subjects: SubjectProgress[];
+  domains: ChildDomainProgress[];
 }
 
 type Child = ChildCardData & { user?: User | null };
@@ -136,7 +137,7 @@ interface NewChild {
 }
 
 const router = useRouter();
-const { getCurrentUser } = useUsers();
+const { getCurrentUser, getUserById } = useUsers();
 
 const showAddChildDialog = ref(false);
 
@@ -165,52 +166,35 @@ const gradeOptions = [
   '12th Grade',
 ];
 
-const mockChildrenTemplate: Child[] = [
-  {
-    id: '1',
-    name: '...Loading',
-    age: 12,
-    grade: '7th Grade',
-    school: 'Lincoln Middle School',
-    stats: {
-      completedAssessments: 18,
-      averageScore: 92,
-      studyHours: 45,
-    },
-    subjects: [
-      { name: 'Mathematics', progress: 85 },
-      { name: 'Science', progress: 92 },
-      { name: 'Language Arts', progress: 88 },
-      { name: 'Social Studies', progress: 90 },
-    ],
-  },
-  {
-    id: '2',
-    name: '...Loading',
-    age: 9,
-    grade: '4th Grade',
-    school: 'Riverside Elementary',
-    stats: {
-      completedAssessments: 12,
-      averageScore: 87,
-      studyHours: 32,
-    },
-    subjects: [
-      { name: 'Mathematics', progress: 78 },
-      { name: 'Science', progress: 85 },
-      { name: 'Language Arts', progress: 90 },
-      { name: 'Art', progress: 95 },
-    ],
-  },
-];
+function generateStatsFromUser(user: User): ChildStats {
+  const progress = user.studentProgress || [];
 
-function cloneChild(child: Child): Child {
+  const totalCompetencies = progress.length;
+  const validatedCount = progress.filter((p) => p.status === 'Validated').length;
+  // InProgress should include both InProgress and PendingValidation
+  const inProgressCount = progress.filter(
+    (p) => p.status === 'InProgress' || p.status === 'PendingValidation',
+  ).length;
+
   return {
-    ...child,
-    stats: { ...child.stats },
-    subjects: child.subjects.map((subject) => ({ ...subject })),
-    user: child.user ?? null,
+    totalCompetencies,
+    validatedCount,
+    inProgressCount,
   };
+}
+
+const { generateDomainSummary } = useReportData();
+
+async function generateDomainsFromUser(user: User): Promise<ChildDomainProgress[]> {
+  // Use the composable's generateDomainSummary method
+  return await generateDomainSummary(user);
+}
+
+function getPrimaryEducator(user: User): string | null {
+  if (user.educators && user.educators.length > 0 && user.educators[0]) {
+    return user.educators[0].name;
+  }
+  return null;
 }
 
 const children = ref<Child[]>([]);
@@ -232,17 +216,21 @@ async function loadChildren(): Promise<void> {
     return;
   }
 
-  children.value = childUsers.map((childUser, index) => {
-    const child = mockChildrenTemplate[index % mockChildrenTemplate.length];
-    const template = cloneChild(child as Child);
-    return {
-      ...template,
-      id: childUser.id,
-      name: childUser.name,
-      avatar: childUser.avatar || childUser.picture || template.avatar || null,
-      user: childUser,
-    };
-  });
+  children.value = await Promise.all(
+    childUsers.map(async (childUser) => {
+      childUser = (await getUserById(childUser.id)) || childUser;
+      return {
+        id: childUser.id,
+        name: childUser.name,
+        email: childUser.email,
+        avatar: childUser.avatar || childUser.picture || null,
+        primaryEducator: getPrimaryEducator(childUser),
+        stats: generateStatsFromUser(childUser),
+        domains: await generateDomainsFromUser(childUser),
+        user: childUser,
+      };
+    }),
+  );
   isLoadingChildren.value = false;
 }
 
@@ -255,8 +243,11 @@ const isNewChildValid = computed(() => {
 });
 
 function viewChildReports(child: Child): void {
-  console.log('Viewing reports for:', child.name);
-  // TODO: Navigate to child-specific reports page
+  if (child.user) {
+    void router.push({ name: 'student-report', params: { studentId: child.user.id } });
+    return;
+  }
+  console.log('No user data available for child:', child.name);
 }
 
 function viewChildCompetencies(child: Child): void {

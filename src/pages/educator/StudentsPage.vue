@@ -56,6 +56,7 @@
             @view="openStudentDialog"
             @view-competencies="openStudentCompetencies"
             @view-assessments="openStudentAssessments"
+            @view-report="openStudentReport"
           />
         </q-tab-panel>
 
@@ -72,6 +73,7 @@
             @view="openStudentDialog"
             @view-competencies="openStudentCompetencies"
             @view-assessments="openStudentAssessments"
+            @view-report="openStudentReport"
           />
         </q-tab-panel>
       </q-tab-panels>
@@ -211,6 +213,10 @@ async function openStudentCompetencies(studentId: string): Promise<void> {
 }
 async function openStudentAssessments(studentId: string): Promise<void> {
   await router.push({ name: 'user-assessments', params: { userId: studentId } });
+}
+
+async function openStudentReport(studentId: string): Promise<void> {
+  await router.push({ name: 'student-report', params: { studentId } });
 }
 
 function updateUserInState(updated: User | null): void {

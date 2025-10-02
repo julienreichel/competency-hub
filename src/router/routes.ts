@@ -103,10 +103,10 @@ const routes: RouteRecordRaw[] = [
         ],
       },
       {
-        path: 'reports',
-        name: 'reports',
-        component: () => import('pages/ReportsPage.vue'),
-        meta: { roles: ['Educator'] },
+        path: 'reports/:studentId',
+        name: 'student-report',
+        component: () => import('pages/ReportPage.vue'),
+        meta: { roles: ['Educator', 'Parent'] },
       },
       {
         path: 'children',

@@ -26,6 +26,28 @@ export default defineBoot(({ app }) => {
     locale: 'en-US',
     legacy: false,
     messages,
+    datetimeFormats: {
+      'en-US': {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+        },
+        datetime: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        },
+      },
+    },
   });
 
   // Set i18n instance on app

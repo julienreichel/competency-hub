@@ -9,44 +9,44 @@
         <div class="q-ml-md">
           <div class="text-h6">{{ child.name }}</div>
           <div class="text-subtitle2 text-grey-6">
-            Grade {{ child.grade }} • Age {{ child.age }}
+            {{ child.email }}
           </div>
-          <div class="text-caption text-grey-5">
-            {{ child.school }}
+          <div class="text-caption text-grey-5" v-if="child.primaryEducator">
+            Educator: {{ child.primaryEducator }}
           </div>
         </div>
       </div>
     </q-card-section>
 
     <q-card-section>
-      <div class="text-subtitle1 q-mb-sm">Recent Progress</div>
+      <div class="text-subtitle1 q-mb-sm">Progress Overview</div>
       <div class="row q-gutter-sm">
         <div class="col">
-          <div class="text-caption">Assessments</div>
-          <div class="text-h6 text-green">{{ child.stats.completedAssessments }}</div>
+          <div class="text-caption">Total Competencies</div>
+          <div class="text-h6 text-blue">{{ child.stats.totalCompetencies }}</div>
         </div>
         <div class="col">
-          <div class="text-caption">Avg Score</div>
-          <div class="text-h6 text-blue">{{ child.stats.averageScore }}%</div>
+          <div class="text-caption">Validated</div>
+          <div class="text-h6 text-green">{{ child.stats.validatedCount }}</div>
         </div>
         <div class="col">
-          <div class="text-caption">Study Time</div>
-          <div class="text-h6 text-purple">{{ child.stats.studyHours }}h</div>
+          <div class="text-caption">In Progress</div>
+          <div class="text-h6 text-orange">{{ child.stats.inProgressCount }}</div>
         </div>
       </div>
     </q-card-section>
 
     <q-card-section>
-      <div class="text-subtitle1 q-mb-sm">Subject Progress</div>
-      <div v-for="subject in child.subjects" :key="subject.name" class="q-mb-xs">
+      <div class="text-subtitle1 q-mb-sm">Domain Progress</div>
+      <div v-for="domain in child.domains" :key="domain.name" class="q-mb-xs">
         <div class="row items-center justify-between">
-          <span class="text-caption">{{ subject.name }}</span>
-          <span class="text-caption">{{ subject.progress }}%</span>
+          <span class="text-caption">{{ domain.name }}</span>
+          <span class="text-caption">{{ Math.round(domain.progress) }}%</span>
         </div>
         <q-linear-progress
-          :value="subject.progress / 100"
-          :color="getProgressColor(subject.progress)"
-          size="8px"
+          :value="domain.progress / 100"
+          :style="{ color: domain.color }"
+          size="md"
         />
       </div>
     </q-card-section>
@@ -72,9 +72,6 @@
             <q-item clickable @click="emit('edit', child)">
               <q-item-section>Edit Profile</q-item-section>
             </q-item>
-            <q-item clickable @click="emit('view-detailed', child)">
-              <q-item-section>Detailed Progress</q-item-section>
-            </q-item>
             <q-item clickable @click="emit('contact', child)">
               <q-item-section>Contact Teachers</q-item-section>
             </q-item>
@@ -93,11 +90,6 @@
 import { computed } from 'vue';
 
 const MAX_INITIALS = 2;
-const PROGRESS_THRESHOLDS = {
-  EXCELLENT: 90,
-  GOOD: 80,
-  FAIR: 70,
-} as const;
 
 const props = defineProps<{
   child: ChildCardData;
@@ -122,13 +114,6 @@ function getInitials(name: string): string {
     .toUpperCase()
     .slice(0, MAX_INITIALS);
 }
-
-function getProgressColor(progress: number): string {
-  if (progress >= PROGRESS_THRESHOLDS.EXCELLENT) return 'green';
-  if (progress >= PROGRESS_THRESHOLDS.GOOD) return 'blue';
-  if (progress >= PROGRESS_THRESHOLDS.FAIR) return 'orange';
-  return 'red';
-}
 </script>
 
 <script lang="ts">
@@ -137,25 +122,25 @@ export default defineComponent({
   name: 'ChildCard',
 });
 
-interface SubjectProgress {
+interface DomainProgress {
   name: string;
+  color: string;
   progress: number;
 }
 
 interface ChildCardStats {
-  completedAssessments: number;
-  averageScore: number;
-  studyHours: number;
+  totalCompetencies: number;
+  validatedCount: number;
+  inProgressCount: number;
 }
 
 export interface ChildCardData {
   id: string;
   name: string;
-  age: number;
-  grade: string;
-  school: string;
+  email: string;
   avatar?: string | null;
+  primaryEducator?: string | null;
   stats: ChildCardStats;
-  subjects: SubjectProgress[];
+  domains: DomainProgress[];
 }
 </script>
