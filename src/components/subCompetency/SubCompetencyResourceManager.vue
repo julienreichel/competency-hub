@@ -19,7 +19,7 @@
       :items="resources"
       :show-actions="canManage"
       @edit="handleUpdateResource"
-      @delete="handleDeleteResource"
+      @delete="confirmDeleteResource"
     />
 
     <resource-form-dialog
@@ -99,6 +99,17 @@ async function handleUpdateResource(payload: UpdateResourceInput): Promise<void>
     console.error('Failed to update resource', error);
     $q.notify({ type: 'negative', message: t('resources.messages.error') });
   }
+}
+
+function confirmDeleteResource(id: string): void {
+  $q.dialog({
+    title: t('resources.title'),
+    message: t('resources.messages.deleteConfirm'),
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void handleDeleteResource(id);
+  });
 }
 
 async function handleDeleteResource(id: string): Promise<void> {

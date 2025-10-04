@@ -1,24 +1,27 @@
 <template>
   <q-page padding>
     <breadcrumb-header
-      :breadcrumbs="[
-        { label: domainName, to: { name: 'domain', params: { domainId } } },
-        {
-          label: competencyName,
-          to: { name: 'competency', params: { competencyId } },
-        },
-        { label: sub && sub.name ? sub.name : t('subCompetencies.loading') },
-      ]"
-      :title="sub && sub.name ? sub.name : t('subCompetencies.loading')"
+      :breadcrumbs="breadcrumbs"
+      :title="sub?.name ?? t('subCompetencies.loading')"
       :loading="loading"
       :back-target="{ name: 'competency', params: { competencyId } }"
-    />
+    >
+      <template #default>
+        <q-btn
+          v-if="canDeleteSub"
+          color="negative"
+          icon="delete"
+          :label="t('common.delete')"
+          @click="confirmDeleteSub"
+        />
+      </template>
+    </breadcrumb-header>
 
     <template v-if="sub">
       <sub-competency-card
         v-if="!editing"
         :sub="sub"
-        :show-edit="hasRole('Admin') || hasRole('Educator')"
+        :show-edit="canManage"
         :show-student-progress="hasRole('Student')"
         @edit="editing = true"
       />
@@ -76,21 +79,22 @@ import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import { StudentProgressRepository } from 'src/models/repositories/StudentProgressRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 
 import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
 import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
-import SubCompetencyStudentManager from 'src/components/subCompetency/SubCompetencyStudentManager.vue';
-import SubCompetencyResourceManager from 'src/components/subCompetency/SubCompetencyResourceManager.vue';
 import SubCompetencyEvaluationManager from 'src/components/subCompetency/SubCompetencyEvaluationManager.vue';
+import SubCompetencyResourceManager from 'src/components/subCompetency/SubCompetencyResourceManager.vue';
+import SubCompetencyStudentManager from 'src/components/subCompetency/SubCompetencyStudentManager.vue';
 import { useAuth } from 'src/composables/useAuth';
 
 const $q = useQuasar();
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const { hasRole } = useAuth();
 const { getCurrentUser } = useUsers();
 
@@ -112,6 +116,7 @@ const APPLY_PROGRESS_PERCENT = 75;
 const FINAL_PROGRESS_PERCENT = 100;
 
 const isStudent = computed(() => currentUser.value?.role === UserRole.STUDENT);
+const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
 const currentStudentId = computed(() => currentUser.value?.id ?? '');
 const canShowStudentEvaluations = computed(
   () => isStudent.value && studentProgress.value?.status === 'PendingValidation',
@@ -169,6 +174,32 @@ const visibleProgressSteps = computed<ProgressButton[]>(() => {
   return [{ ...nextStep, enabled: true }] as ProgressButton[];
 });
 
+const resourcesCount = computed(() => sub.value?.resources?.length ?? 0);
+const evaluationsCount = computed(() => sub.value?.evaluations?.length ?? 0);
+
+const canDeleteSub = computed(
+  () =>
+    canManage.value &&
+    !loading.value &&
+    !editing.value &&
+    resourcesCount.value === 0 &&
+    evaluationsCount.value === 0,
+);
+
+const breadcrumbs = computed(() => [
+  {
+    label: domainName.value,
+    to: { name: 'domain', params: { domainId } },
+  },
+  {
+    label: competencyName.value,
+    to: { name: 'competency', params: { competencyId } },
+  },
+  {
+    label: sub.value?.name ?? t('subCompetencies.loading'),
+  },
+]);
+
 onMounted(async () => {
   await load();
   await loadCurrentUser();
@@ -190,6 +221,30 @@ async function load(): Promise<void> {
     }
   } finally {
     loading.value = false;
+  }
+}
+
+function confirmDeleteSub(): void {
+  if (!sub.value || !canDeleteSub.value) return;
+  $q.dialog({
+    title: t('subCompetencies.title'),
+    message: t('subCompetencies.deleteConfirm', { name: sub.value.name }),
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void deleteSub();
+  });
+}
+
+async function deleteSub(): Promise<void> {
+  if (!sub.value) return;
+  try {
+    await subCompetencyRepository.delete(sub.value.id);
+    $q.notify({ type: 'positive', message: t('subCompetencies.deleted') });
+    await router.push({ name: 'competency', params: { competencyId } });
+  } catch (error) {
+    console.error('Failed to delete sub-competency', error);
+    $q.notify({ type: 'negative', message: t('subCompetencies.deleteError') });
   }
 }
 

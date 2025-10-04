@@ -55,7 +55,6 @@
     <sub-competency-list
       class="q-mt-md"
       :items="subs"
-      :show-delete="canManage"
       :show-student-progress="hasRole('Student')"
       @open="openSubCompetency"
       @rename="renameSubCompetency"

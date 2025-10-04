@@ -25,7 +25,7 @@
         :student-actions-allowed="studentActionsAllowed"
         @open="handleOpen"
         @edit="openEditDialog"
-        @delete="handleDeleteEvaluation"
+        @delete="confirmDeleteEvaluation"
         @start="handleStudentStart"
         @complete="handleStudentComplete"
       />
@@ -161,6 +161,19 @@ async function handleUpdateEvaluation({
   } finally {
     mutating.value = false;
   }
+}
+
+function confirmDeleteEvaluation(id: string): void {
+  const evaluation = evaluations.value.find((entry) => entry.id === id);
+  const name = evaluation?.name ?? '';
+  $q.dialog({
+    title: t('evaluations.title'),
+    message: t('evaluations.deleteConfirm', { name }),
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void handleDeleteEvaluation(id);
+  });
 }
 
 async function handleDeleteEvaluation(id: string): Promise<void> {

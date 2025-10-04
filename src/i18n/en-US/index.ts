@@ -255,6 +255,7 @@ export default {
       updated: 'Resource updated.',
       deleted: 'Resource deleted.',
       error: 'Could not update the resource. Please try again.',
+      deleteConfirm: 'Delete this resource? This action cannot be undone.',
     },
   },
 
@@ -273,6 +274,7 @@ export default {
     updateError: 'Could not update the evaluation. Please try again.',
     deleteSuccess: 'Evaluation deleted.',
     deleteError: 'Could not delete the evaluation. Please try again.',
+    deleteConfirm: 'Delete the evaluation "{name}"? This action cannot be undone.',
     openError: 'Unable to open the evaluation file. Please try again.',
     deliveryRequired: 'Provide a URL or upload a file before saving.',
     actions: {
@@ -389,6 +391,9 @@ export default {
     name: 'Sub-competency name',
     emptyState: 'No sub-competencies found',
     noDescription: 'No description provided',
+    deleted: 'Sub-competency deleted successfully.',
+    deleteConfirm: 'Delete the sub-competency "{name}"? This action cannot be undone.',
+    deleteError: 'Could not delete the sub-competency. Please try again.',
     studentProgress: 'Student Progress',
     studentProgressHint: 'Manage student progress.',
     status: 'Status',
