@@ -1,12 +1,4 @@
 <template>
-  <q-btn
-    :label="label"
-    :flat="isEdit"
-    :dense="isEdit"
-    :icon="isEdit ? 'edit' : 'add'"
-    color="secondary"
-    @click="open = true"
-  />
   <base-dialog
     v-model="open"
     :title="isEdit ? $t('resources.editTitle') : $t('resources.addTitle')"
@@ -99,11 +91,15 @@ import {
 } from 'src/models/CompetencyResource';
 import { computed, reactive, watch } from 'vue';
 
-const props = defineProps<{
-  label?: string;
-  subCompetencyId: string; // required for create
-  initial?: CompetencyResource | null; // if provided -> edit mode
-}>();
+const props = withDefaults(
+  defineProps<{
+    subCompetencyId: string; // required for create
+    initial?: CompetencyResource | null; // if provided -> edit mode
+  }>(),
+  {
+    initial: null,
+  },
+);
 const emit = defineEmits<{
   (e: 'create', payload: CreateResourceInput): void;
   (e: 'update', payload: UpdateResourceInput): void;

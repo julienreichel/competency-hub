@@ -1,109 +1,92 @@
 <template>
-  <q-card flat bordered>
-    <q-card-section class="row items-start justify-between q-gutter-sm">
-      <div class="column q-gutter-xs">
-        <div class="row items-center q-gutter-sm">
-          <template v-if="isStudentVariant">
-            <q-icon :name="statusIcon" :color="statusColor" size="22px" />
-          </template>
-          <div class="text-subtitle2 text-grey-7">
-            {{ evaluation.mode }} • {{ evaluation.format }}
-          </div>
-        </div>
-        <div class="text-subtitle1">{{ evaluation.name }}</div>
-        <div v-if="subCompetency" class="text-caption text-grey-6">
-          <span v-if="subCompetency?.competency?.domain?.name">
-            {{ subCompetency?.competency?.domain?.name }}
-          </span>
-          <span v-if="subCompetency?.competency?.domain?.name && subCompetency?.competency?.name">
-            •
-          </span>
-          <span v-if="subCompetency?.competency?.name">
-            {{ subCompetency?.competency?.name }}
-          </span>
-          <span
-            v-if="
-              (subCompetency?.competency?.name || subCompetency?.competency?.domain?.name) &&
-              subCompetency?.name
-            "
-          >
-            •
-          </span>
-          <span v-if="subCompetency?.name">{{ subCompetency?.name }}</span>
-        </div>
-        <div v-if="evaluation.description" class="text-caption text-grey-7">
-          {{ evaluation.description }}
-        </div>
-        <div class="text-caption text-grey-6">
-          <span v-if="evaluation.durationMin">
-            {{ evaluation.durationMin }} {{ $t('evaluations.minutesShort') }}
-          </span>
-          <span v-else>{{ $t('evaluations.noDuration') }}</span>
-        </div>
-      </div>
-      <div class="row q-gutter-xs">
+  <base-card
+    :clickable="!isStudentVariant && canOpen"
+    :show-open-action="!isStudentVariant && canOpen"
+    :show-edit-action="!isStudentVariant && showActions"
+    :show-delete-action="!isStudentVariant && showActions"
+    :open-icon="!isStudentVariant ? 'open_in_new' : 'arrow_forward'"
+    @card-click="handleOpen"
+    @open="handleOpen"
+    @edit="$emit('edit', evaluation)"
+    @delete="$emit('delete', evaluation.id)"
+  >
+    <template #default>
+      <div class="row items-center q-gutter-sm">
         <template v-if="isStudentVariant">
-          <q-btn
-            v-if="status === 'NotStarted' && studentActionsAllowed"
-            color="primary"
-            dense
-            class="q-px-sm"
-            :disable="busy"
-            :loading="busy && pendingAction === 'start'"
-            @click="emitStart"
-          >
-            {{ $t('evaluations.actions.start') }}
-          </q-btn>
-          <q-btn
-            v-if="status === 'InProgress'"
-            color="positive"
-            dense
-            class="q-px-sm"
-            :disable="busy"
-            :loading="busy && pendingAction === 'complete'"
-            @click="emitComplete"
-          >
-            {{ $t('evaluations.actions.complete') }}
-          </q-btn>
-          <q-btn
-            color="primary"
-            dense
-            flat
-            icon="open_in_new"
-            :disable="!canStudentOpen || busy"
-            :loading="busy && pendingAction === 'open'"
-            @click="handleOpen"
-          />
+          <q-icon :name="statusIcon" :color="statusColor" size="22px" />
         </template>
-        <template v-else>
-          <q-btn
-            flat
-            dense
-            color="primary"
-            icon="open_in_new"
-            :disable="!canOpen"
-            @click="handleOpen"
-          />
-          <q-btn
-            v-if="showActions"
-            flat
-            dense
-            color="secondary"
-            icon="edit"
-            @click="$emit('edit', evaluation)"
-          />
-          <q-btn
-            v-if="showActions"
-            flat
-            dense
-            color="negative"
-            icon="delete"
-            @click="$emit('delete', evaluation.id)"
-          />
-        </template>
+        <div class="text-subtitle2 text-grey-7">
+          {{ evaluation.mode }} • {{ evaluation.format }}
+        </div>
       </div>
-    </q-card-section>
-  </q-card>
+      <div class="text-subtitle1">{{ evaluation.name }}</div>
+      <div v-if="subCompetency" class="text-caption text-grey-6">
+        <span v-if="subCompetency?.competency?.domain?.name">
+          {{ subCompetency?.competency?.domain?.name }}
+        </span>
+        <span v-if="subCompetency?.competency?.domain?.name && subCompetency?.competency?.name">
+          •
+        </span>
+        <span v-if="subCompetency?.competency?.name">
+          {{ subCompetency?.competency?.name }}
+        </span>
+        <span
+          v-if="
+            (subCompetency?.competency?.name || subCompetency?.competency?.domain?.name) &&
+            subCompetency?.name
+          "
+        >
+          •
+        </span>
+        <span v-if="subCompetency?.name">{{ subCompetency?.name }}</span>
+      </div>
+      <div v-if="evaluation.description" class="text-caption text-grey-7">
+        {{ evaluation.description }}
+      </div>
+      <div class="text-caption text-grey-6">
+        <span v-if="evaluation.durationMin">
+          {{ evaluation.durationMin }} {{ $t('evaluations.minutesShort') }}
+        </span>
+        <span v-else>{{ $t('evaluations.noDuration') }}</span>
+      </div>
+    </template>
+
+    <template v-if="isStudentVariant" #actions>
+      <div class="row q-gutter-xs justify-end">
+        <q-btn
+          v-if="status === 'NotStarted' && studentActionsAllowed"
+          color="primary"
+          dense
+          class="q-px-sm"
+          :disable="busy"
+          :loading="busy && pendingAction === 'start'"
+          @click.stop="emitStart"
+        >
+          {{ $t('evaluations.actions.start') }}
+        </q-btn>
+        <q-btn
+          v-if="status === 'InProgress'"
+          color="positive"
+          dense
+          class="q-px-sm"
+          :disable="busy"
+          :loading="busy && pendingAction === 'complete'"
+          @click.stop="emitComplete"
+        >
+          {{ $t('evaluations.actions.complete') }}
+        </q-btn>
+        <q-btn
+          color="primary"
+          dense
+          flat
+          icon="open_in_new"
+          :disable="!canStudentOpen || busy"
+          :loading="busy && pendingAction === 'open'"
+          @click.stop="handleOpen"
+        />
+      </div>
+    </template>
+  </base-card>
 </template>
 
 <script setup lang="ts">
@@ -111,6 +94,7 @@ import type { Evaluation } from 'src/models/Evaluation';
 import { EvaluationAttempt } from 'src/models/EvaluationAttempt';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
+import BaseCard from 'src/components/common/BaseCard.vue';
 
 const props = defineProps<{
   evaluation: Evaluation;

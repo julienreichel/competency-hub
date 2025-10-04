@@ -1,53 +1,49 @@
 <template>
-  <q-card flat bordered>
-    <q-card-section class="row items-center justify-between q-gutter-sm">
-      <div>
-        <div class="text-subtitle2">{{ resource.type }}</div>
-        <div class="text-subtitle1">{{ resource.name }}</div>
-        <div class="text-caption text-grey-7">
-          {{ resource.description }}
-        </div>
-        <div v-if="showUser && resource.person">
-          <a href="#" @click.prevent="showUserDetails(resource.person)">{{
-            resource.person?.name
-          }}</a>
-        </div>
+  <base-card
+    :clickable="allowOpen"
+    :show-open-action="allowOpen"
+    :show-edit-action="showEdit"
+    :show-delete-action="showDelete"
+    @card-click="$emit('open', resource.id)"
+    @open="$emit('open', resource.id)"
+    @edit="openEditDialog"
+    @delete="$emit('delete', resource.id)"
+  >
+    <template #default>
+      <div class="text-subtitle2">{{ resource.type }}</div>
+      <div class="text-subtitle1">{{ resource.name }}</div>
+      <div class="text-caption text-grey-7">
+        {{ resource.description }}
       </div>
-      <div class="row q-gutter-xs">
-        <q-btn
-          v-if="showLinkIcon"
-          flat
-          dense
-          color="primary"
-          icon="open_in_new"
-          @click="handleOpen"
-        />
-        <q-btn
-          v-if="showOpen !== false"
-          flat
-          dense
-          color="primary"
-          icon="arrow_forward"
-          @click="$emit('open', resource.id)"
-        />
-        <resource-form-dialog
-          v-if="showEdit"
-          :initial="resource"
-          :sub-competency-id="resource.subCompetencyId"
-          @update="$emit('edit', $event)"
-        />
-        <q-btn
-          v-if="showDelete"
-          flat
-          dense
-          color="negative"
-          icon="delete"
-          @click="$emit('delete', resource.id)"
-        />
+      <div v-if="showUser && resource.person">
+        <a href="#" @click.prevent="showUserDetails(resource.person)">{{
+          resource.person?.name
+        }}</a>
       </div>
-    </q-card-section>
-    <user-details-dialog v-model="userDialogOpen" :user="userDialogUser" />
-  </q-card>
+    </template>
+
+    <template #actions-before>
+      <q-btn
+        v-if="showLinkIcon"
+        flat
+        dense
+        color="primary"
+        icon="open_in_new"
+        @click.stop="handleOpen"
+      />
+    </template>
+
+    <template #actions-after>
+      <resource-form-dialog
+        v-if="showEdit"
+        v-model="editDialogOpen"
+        :initial="resource"
+        :sub-competency-id="resource.subCompetencyId"
+        @update="$emit('edit', $event)"
+      />
+    </template>
+  </base-card>
+  <user-details-dialog v-model="userDialogOpen" :user="userDialogUser" />
 </template>
 
 <script setup lang="ts">
@@ -57,6 +53,7 @@ import { type CompetencyResource, ResourceType } from 'src/models/CompetencyReso
 import type { User } from 'src/models/User';
 import { computed, ref } from 'vue';
 import ResourceFormDialog from './ResourceFormDialog.vue';
+import BaseCard from 'src/components/common/BaseCard.vue';
 
 const props = defineProps<{
   resource: CompetencyResource;
@@ -73,6 +70,7 @@ defineEmits<{
 
 const userDialogOpen = ref(false);
 const userDialogUser = ref<User | null>(null);
+const editDialogOpen = ref(false);
 const showLink = computed(() => props.resource.type === ResourceType.LINK && props.resource.url);
 const showLDocument = computed(
   () => props.resource.type === ResourceType.DOCUMENT && props.resource.fileKey,
@@ -111,6 +109,14 @@ async function openResourceFile(resource: CompetencyResource): Promise<void> {
 function showUserDetails(user: User): void {
   userDialogUser.value = user;
   userDialogOpen.value = true;
+}
+
+const allowOpen = computed(() => props.showOpen !== false);
+const showEdit = computed(() => props.showEdit !== false);
+const showDelete = computed(() => props.showDelete !== false);
+
+function openEditDialog(): void {
+  editDialogOpen.value = true;
 }
 </script>
 

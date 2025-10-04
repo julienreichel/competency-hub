@@ -1,124 +1,94 @@
 <template>
-  <q-card
-    flat
-    bordered
-    :class="['project-card', { 'cursor-pointer': allowOpen }]"
-    @click="handleCardClick"
+  <base-card
+    card-class="project-card"
+    :clickable="allowOpen"
+    :show-open-action="allowOpen"
+    :show-edit-action="canEdit && showEditAction"
+    :show-delete-action="canDelete && showDeleteAction"
+    @card-click="$emit('view', project)"
+    @open="$emit('view', project)"
+    @edit="$emit('edit', project)"
+    @delete="$emit('delete', project)"
   >
-    <q-card-section class="row items-start justify-between q-gutter-sm">
-      <div class="column col q-gutter-xs">
-        <div v-if="competencyName" class="text-caption text-grey-6">
-          {{ competencyName }}
-        </div>
-        <div class="text-subtitle1 text-weight-medium text-truncate">
-          {{ project.name }}
-        </div>
-        <div class="text-caption text-grey-7 line-clamp-2">
-          {{ project.description || $t('projects.noDescription') }}
-        </div>
-        <div v-if="subCompetencyName" class="text-caption text-grey-6">
-          {{ $t('projects.subCompetency') }}: {{ subCompetencyName }}
-        </div>
-        <div v-if="project.updatedAt" class="text-caption text-grey-6">
-          {{ $t('projects.detail.updated') }}: {{ formatDate(project.updatedAt) }}
-        </div>
+    <template #default>
+      <div v-if="competencyName" class="text-caption text-grey-6">
+        {{ competencyName }}
       </div>
-
-      <div class="column items-end col-auto q-gutter-sm">
-        <q-chip
-          dense
-          size="sm"
-          :color="getStatusColor(project.status)"
-          :label="$t(`projects.status.${project.status.toLowerCase()}`)"
-          @click.stop="noop"
-        />
-
-        <div class="row q-gutter-xs justify-end">
-          <q-btn
-            v-if="canEdit && showEditAction"
-            flat
-            dense
-            round
-            color="secondary"
-            icon="edit"
-            @click.stop="$emit('edit', project)"
-          >
-            <q-tooltip>{{ $t('common.edit') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="canSubmit && showActions"
-            flat
-            dense
-            round
-            color="positive"
-            icon="send"
-            @click.stop="$emit('submit', project)"
-          >
-            <q-tooltip>{{ $t('projects.actions.submit') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="canApprove && showActions"
-            flat
-            dense
-            round
-            color="positive"
-            icon="check_circle"
-            @click.stop="$emit('approve', project)"
-          >
-            <q-tooltip>{{ $t('projects.actions.approve') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="canReject && showActions"
-            flat
-            dense
-            round
-            color="negative"
-            icon="cancel"
-            @click.stop="$emit('reject', project)"
-          >
-            <q-tooltip>{{ $t('projects.actions.reject') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="canDelete && showDeleteAction"
-            flat
-            dense
-            round
-            color="negative"
-            icon="delete"
-            @click.stop="$emit('delete', project)"
-          >
-            <q-tooltip>{{ $t('common.delete') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="showDownloadAction"
-            flat
-            dense
-            round
-            color="primary"
-            icon="open_in_new"
-            @click.stop="$emit('download', project)"
-          >
-            <q-tooltip>{{ $t('common.download') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="allowOpen"
-            flat
-            dense
-            round
-            color="primary"
-            icon="arrow_forward"
-            @click.stop="$emit('view', project)"
-          >
-            <q-tooltip>{{ $t('common.view') }}</q-tooltip>
-          </q-btn>
-        </div>
+      <div class="text-subtitle1 text-weight-medium text-truncate">
+        {{ project.name }}
       </div>
-    </q-card-section>
-  </q-card>
+      <div class="text-caption text-grey-7 line-clamp-2">
+        {{ project.description || $t('projects.noDescription') }}
+      </div>
+      <div v-if="subCompetencyName" class="text-caption text-grey-6">
+        {{ $t('projects.subCompetency') }}: {{ subCompetencyName }}
+      </div>
+      <div v-if="project.updatedAt" class="text-caption text-grey-6">
+        {{ $t('projects.detail.updated') }}: {{ formatDate(project.updatedAt) }}
+      </div>
+    </template>
+
+    <template #aside>
+      <q-chip
+        dense
+        size="sm"
+        :color="getStatusColor(project.status)"
+        :label="$t(`projects.status.${project.status.toLowerCase()}`)"
+      />
+    </template>
+
+    <template #actions-after>
+      <q-btn
+        v-if="canSubmit && showManagerActions"
+        flat
+        dense
+        round
+        color="positive"
+        icon="send"
+        @click.stop="$emit('submit', project)"
+      >
+        <q-tooltip>{{ $t('projects.actions.submit') }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        v-if="canApprove && showManagerActions"
+        flat
+        dense
+        round
+        color="positive"
+        icon="check_circle"
+        @click.stop="$emit('approve', project)"
+      >
+        <q-tooltip>{{ $t('projects.actions.approve') }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        v-if="canReject && showManagerActions"
+        flat
+        dense
+        round
+        color="negative"
+        icon="cancel"
+        @click.stop="$emit('reject', project)"
+      >
+        <q-tooltip>{{ $t('projects.actions.reject') }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        v-if="showDownloadAction"
+        flat
+        dense
+        round
+        color="primary"
+        icon="open_in_new"
+        @click.stop="$emit('download', project)"
+      >
+        <q-tooltip>{{ $t('common.download') }}</q-tooltip>
+      </q-btn>
+    </template>
+  </base-card>
 </template>
 
 <script setup lang="ts">
 import { date } from 'quasar';
+import BaseCard from 'src/components/common/BaseCard.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project, type ProjectStatus } from 'src/models/Project';
 import { computed } from 'vue';
@@ -132,7 +102,7 @@ const props = defineProps<{
   showDownload?: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   view: [project: Project];
   edit: [project: Project];
   submit: [project: Project];
@@ -182,6 +152,7 @@ const subCompetencyName = computed(() => props.project.subCompetency?.name ?? nu
 const allowOpen = computed(() => props.showOpen !== false);
 const showEditAction = computed(() => props.showEdit !== false);
 const showDeleteAction = computed(() => props.showDelete !== false);
+const showManagerActions = computed(() => props.showActions !== false);
 const showDownloadAction = computed(
   () => props.showDownload !== false && Boolean(props.project.fileKey),
 );
@@ -199,13 +170,6 @@ const getStatusColor = (status: ProjectStatus): string => {
 const formatDate = (dateString?: string): string => {
   if (!dateString) return '';
   return date.formatDate(dateString, 'MMM D, YYYY');
-};
-
-const noop = (): void => {};
-
-const handleCardClick = (): void => {
-  if (!allowOpen.value) return;
-  emit('view', props.project);
 };
 </script>
 

@@ -1,57 +1,38 @@
 <template>
-  <q-card flat bordered>
-    <q-card-section class="row justify-between item-start q-gutter-sm full-height">
-      <div class="column col">
-        <div v-if="showContext && competency.domain">
-          <div class="text-h6">{{ competency.domain.name }}</div>
-        </div>
-        <div class="text-subtitle1">{{ competency.name }}</div>
-        <div class="text-caption text-grey-7">
-          {{ competency.description || t('competencies.noDescription') }}
-        </div>
-        <div v-if="competency.objectives" class="q-mt-sm">
-          <div class="text-caption">{{ competency.objectives }}</div>
-        </div>
+  <base-card
+    :clickable="allowOpen"
+    :show-open-action="allowOpen"
+    :show-edit-action="showEdit"
+    :show-delete-action="showDelete"
+    @card-click="$emit('open', competency.id)"
+    @open="$emit('open', competency.id)"
+    @edit="$emit('edit', competency.id)"
+    @delete="$emit('delete', competency.id)"
+  >
+    <template #default>
+      <div v-if="showContext && competency.domain">
+        <div class="text-h6">{{ competency.domain.name }}</div>
       </div>
-      <div class="col-auto column q-gutter-sm">
-        <div v-if="progress" class="col-auto">
-          <student-progress-badge :student-progress="progress" />
-        </div>
-        <div class="row q-gutter-xs">
-          <q-space />
-          <q-btn
-            v-if="showOpen !== false"
-            flat
-            dense
-            color="primary"
-            icon="arrow_forward"
-            @click="$emit('open', competency.id)"
-          />
-          <q-btn
-            v-if="showEdit"
-            flat
-            dense
-            color="secondary"
-            icon="edit"
-            @click="$emit('edit', competency.id)"
-          />
-          <q-btn
-            v-if="showDelete"
-            flat
-            color="negative"
-            icon="delete"
-            @click="$emit('delete', competency.id)"
-          />
-        </div>
+      <div class="text-subtitle1">{{ competency.name }}</div>
+      <div class="text-caption text-grey-7">
+        {{ competency.description || t('competencies.noDescription') }}
       </div>
-    </q-card-section>
-  </q-card>
+      <div v-if="competency.objectives" class="q-mt-sm">
+        <div class="text-caption">{{ competency.objectives }}</div>
+      </div>
+    </template>
+
+    <template v-if="progress" #aside>
+      <student-progress-badge :student-progress="progress" />
+    </template>
+  </base-card>
 </template>
 
 <script setup lang="ts">
 import type { Competency } from 'src/models/Competency';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import BaseCard from 'src/components/common/BaseCard.vue';
 import StudentProgressBadge from './StudentProgressBadge.vue';
 
 const props = defineProps<{
@@ -76,6 +57,10 @@ const progress = computed(() => {
   const percent = props.competency.getProgress();
   return { status, percent };
 });
+
+const allowOpen = computed(() => props.showOpen !== false);
+const showEdit = computed(() => props.showEdit !== false);
+const showDelete = computed(() => props.showDelete !== false);
 </script>
 
 <script lang="ts">

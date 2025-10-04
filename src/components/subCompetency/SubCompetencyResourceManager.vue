@@ -5,12 +5,12 @@
     <div class="row items-center q-gutter-sm">
       <div class="text-h6">{{ t('resources.title') }}</div>
       <q-space />
-      <resource-form-dialog
+      <q-btn
         v-if="canManage"
-        v-model="createDialogOpen"
+        color="secondary"
+        icon="add"
         :label="t('resources.addResource')"
-        :sub-competency-id="subCompetencyId"
-        @create="handleCreateResource"
+        @click="createDialogOpen = true"
       />
     </div>
 
@@ -20,6 +20,13 @@
       :show-actions="canManage"
       @edit="handleUpdateResource"
       @delete="handleDeleteResource"
+    />
+
+    <resource-form-dialog
+      v-if="canManage"
+      v-model="createDialogOpen"
+      :sub-competency-id="subCompetencyId"
+      @create="handleCreateResource"
     />
   </div>
 </template>
