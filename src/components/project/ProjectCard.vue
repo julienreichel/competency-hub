@@ -35,7 +35,7 @@
 
         <div class="row q-gutter-xs justify-end">
           <q-btn
-            v-if="canEdit && showEdit"
+            v-if="canEdit && showEditAction"
             flat
             dense
             round
@@ -46,7 +46,7 @@
             <q-tooltip>{{ $t('common.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="canSubmit && showSubmit"
+            v-if="canSubmit && showSubmitAction"
             flat
             dense
             round
@@ -79,7 +79,7 @@
             <q-tooltip>{{ $t('projects.actions.reject') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="canDelete && showDelete"
+            v-if="canDelete && showDeleteAction"
             flat
             dense
             round
@@ -88,6 +88,17 @@
             @click.stop="$emit('delete', project)"
           >
             <q-tooltip>{{ $t('common.delete') }}</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="showDownloadAction"
+            flat
+            dense
+            round
+            color="primary"
+            icon="download"
+            @click.stop="$emit('download', project)"
+          >
+            <q-tooltip>{{ $t('common.download') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="allowOpen"
@@ -118,6 +129,7 @@ const props = defineProps<{
   showEdit?: boolean;
   showSubmit?: boolean;
   showDelete?: boolean;
+  showDownload?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -127,6 +139,7 @@ const emit = defineEmits<{
   approve: [project: Project];
   reject: [project: Project];
   delete: [project: Project];
+  download: [project: Project];
 }>();
 
 const { userId, hasAnyRole } = useAuth();
@@ -167,9 +180,12 @@ const competencyName = computed(() => props.project.subCompetency?.competency?.n
 const subCompetencyName = computed(() => props.project.subCompetency?.name ?? null);
 
 const allowOpen = computed(() => props.showOpen !== false);
-const showEdit = computed(() => props.showEdit !== false);
-const showSubmit = computed(() => props.showSubmit !== false);
-const showDelete = computed(() => props.showDelete !== false);
+const showEditAction = computed(() => props.showEdit !== false);
+const showSubmitAction = computed(() => props.showSubmit !== false);
+const showDeleteAction = computed(() => props.showDelete !== false);
+const showDownloadAction = computed(
+  () => props.showDownload !== false && Boolean(props.project.fileKey),
+);
 
 const getStatusColor = (status: ProjectStatus): string => {
   const COLOR_MAP: Record<ProjectStatus, string> = {

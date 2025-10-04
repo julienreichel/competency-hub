@@ -12,80 +12,25 @@
     @submit="handleSubmit"
     @cancel="handleCancel"
   >
-    <q-form id="project-form" class="q-gutter-md" @submit="handleSubmit">
-      <!-- Project Name -->
-      <q-input
-        v-model="form.name"
-        :label="$t('projects.form.name')"
-        outlined
-        required
-        :disable="loading"
-        autofocus
-      />
-
-      <!-- Description -->
-      <q-input
-        v-model="form.description"
-        :label="$t('projects.form.description')"
-        type="textarea"
-        rows="3"
-        outlined
-        :disable="loading"
-      />
-
-      <!-- Sub-Competency Selection -->
-      <q-select
-        v-model="form.subCompetencyId"
-        :options="subCompetencyOptions"
-        :label="$t('projects.form.subCompetency')"
-        :rules="subCompetencyRules"
-        option-value="value"
-        option-label="label"
-        emit-value
-        map-options
-        outlined
-        required
-        :loading="loadingSubCompetencies"
-        :disable="loading"
-      >
-        <template #no-option>
-          <q-item>
-            <q-item-section class="text-grey">
-              {{ $t('projects.form.noSubCompetencies') }}
-            </q-item-section>
-          </q-item>
-        </template>
-      </q-select>
-
-      <!-- File Upload -->
-      <file-uploader-field
-        v-model="form.fileKey"
-        :label="$t('projects.form.uploadFile')"
-        :sub-competency-id="form.subCompetencyId"
-        :accept="'.pdf,.doc,.docx,.txt,.zip'"
-        :disable="loading"
-      />
-
-      <!-- Status (for editing existing projects) -->
-      <div v-if="project?.id && isEducatorOrAdmin" class="q-mb-md">
-        <label>{{ $t('projects.form.status') }}</label>
-        <q-option-group v-model="form.status" :options="statusOptions" inline :disable="loading" />
-      </div>
-    </q-form>
+    <project-form
+      v-model="form"
+      :loading="loading"
+      :show-status="Boolean(project?.id) && isEducatorOrAdmin"
+      @submit="handleSubmit"
+      @update:valid="onValidationChange"
+    />
   </base-dialog>
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
-import FileUploaderField from 'src/components/common/FileUploaderField.vue';
 import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import { useAuth } from 'src/composables/useAuth';
-import { type Project, type ProjectStatus } from 'src/models/Project';
+import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
-import { SubCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
-import { type SubCompetency } from 'src/models/SubCompetency';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
+import ProjectForm, { type ProjectFormValues } from './ProjectForm.vue';
 
 // Props
 interface Props {
@@ -110,23 +55,17 @@ const { t } = useI18n();
 const $q = useQuasar();
 const { userId, hasAnyRole } = useAuth();
 
-// Repositories
 const projectRepository = new ProjectRepository();
-const subCompetencyRepository = new SubCompetencyRepository();
 
-// State
 const loading = ref(false);
-const loadingSubCompetencies = ref(false);
-const subCompetencies = ref<SubCompetency[]>([]);
-
-// Form data
-const form = ref({
+const form = ref<ProjectFormValues>({
   name: '',
   description: '',
   subCompetencyId: '',
-  status: 'Draft' as ProjectStatus,
-  fileKey: null as string | null,
+  status: 'Draft',
+  fileKey: null,
 });
+const isFormValid = ref(false);
 
 // Computed
 const isVisible = computed({
@@ -142,42 +81,7 @@ const dialogTitle = computed(() =>
 
 const isEducatorOrAdmin = computed(() => hasAnyRole(['Educator', 'Admin']));
 
-const subCompetencyOptions = computed(() =>
-  subCompetencies.value.map((sc) => ({
-    label: sc.name,
-    value: sc.id,
-  })),
-);
-
-const statusOptions = computed(() => [
-  { label: t('projects.status.draft'), value: 'Draft' },
-  { label: t('projects.status.submitted'), value: 'Submitted' },
-  { label: t('projects.status.approved'), value: 'Approved' },
-  { label: t('projects.status.rejected'), value: 'Rejected' },
-]);
-
-const isFormValid = computed(() => {
-  return form.value.name.trim() !== '' && form.value.subCompetencyId !== '';
-});
-
-const subCompetencyRules = [(val: string): string | boolean => !!val || t('validation.required')];
-
 // Methods
-const loadSubCompetencies = async (): Promise<void> => {
-  loadingSubCompetencies.value = true;
-  try {
-    subCompetencies.value = await subCompetencyRepository.findAll();
-  } catch (error) {
-    console.error('Failed to load sub-competencies:', error);
-    $q.notify({
-      type: 'negative',
-      message: t('projects.form.errorLoadingSubCompetencies'),
-    });
-  } finally {
-    loadingSubCompetencies.value = false;
-  }
-};
-
 const resetForm = (): void => {
   form.value = {
     name: '',
@@ -253,6 +157,10 @@ const handleCancel = (): void => {
   isVisible.value = false;
 };
 
+const onValidationChange = (valid: boolean): void => {
+  isFormValid.value = valid;
+};
+
 // Watchers
 watch(
   () => props.modelValue,
@@ -266,11 +174,6 @@ watch(
     }
   },
 );
-
-// Lifecycle
-onMounted(async () => {
-  await loadSubCompetencies();
-});
 </script>
 
 <script lang="ts">
@@ -280,9 +183,3 @@ export default defineComponent({
   name: 'ProjectFormDialog',
 });
 </script>
-
-<style scoped>
-.q-form {
-  min-width: 300px;
-}
-</style>

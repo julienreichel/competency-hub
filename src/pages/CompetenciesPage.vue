@@ -36,7 +36,7 @@
     />
 
     <div class="row q-col-gutter-md">
-      <div v-for="sub in filteredSubCompetencies" :key="sub.id" class="col-12 col-md-6 col-lg-4">
+      <div v-for="sub in filteredSubCompetencies" :key="sub.id" class="col-12 col-md-6">
         <sub-competency-card
           class="full-height"
           :sub="sub"

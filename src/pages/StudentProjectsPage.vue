@@ -64,18 +64,19 @@
         <p class="text-body2 text-grey-6">{{ t('projects.filters.clearHint') }}</p>
       </div>
       <div v-else class="row q-col-gutter-md">
-        <div v-for="project in filteredProjects" :key="project.id" class="col-12 col-md-6 col-lg-4">
+        <div v-for="project in filteredProjects" :key="project.id" class="col-12 col-md-6">
           <project-card
             :project="project"
             :show-open="true"
-            :show-submit="true"
-            :show-delete="true"
+            :show-submit="Boolean(project.fileKey)"
+            class="full-height"
             @view="viewProject"
             @edit="editProject"
             @submit="submitProject"
             @approve="approveProject"
             @reject="rejectProject"
             @delete="deleteProject"
+            @download="downloadProjectFile"
           />
         </div>
       </div>
@@ -304,6 +305,21 @@ const deleteProject = async (project: Project): Promise<void> => {
     }
   } catch (error) {
     console.error('Failed to delete project:', error);
+  }
+};
+
+const downloadProjectFile = async (project: Project): Promise<void> => {
+  if (!project.fileKey) {
+    return;
+  }
+
+  try {
+    const url = await project.resolveFileUrl();
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+    }
+  } catch (error) {
+    console.error('Failed to download project file:', error);
   }
 };
 
