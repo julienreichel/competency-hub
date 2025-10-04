@@ -67,6 +67,9 @@
         <div v-for="project in filteredProjects" :key="project.id" class="col-12 col-md-6 col-lg-4">
           <project-card
             :project="project"
+            :show-open="true"
+            :show-submit="true"
+            :show-delete="true"
             @view="viewProject"
             @edit="editProject"
             @submit="submitProject"
