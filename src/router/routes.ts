@@ -58,7 +58,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'me/projects',
         name: 'my-projects',
-        component: () => import('pages/StudentProjectsPage.vue'),
+        component: () => import('src/pages/ProjectsPage.vue'),
         meta: { roles: ['Student'] },
       },
       {

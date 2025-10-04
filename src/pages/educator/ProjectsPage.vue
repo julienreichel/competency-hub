@@ -159,18 +159,13 @@
               @click="rejectProject(props.row)"
               :loading="actionLoading.has(props.row.id)"
             />
-            <q-btn dense flat round icon="more_vert" :aria-label="$t('common.actions')">
-              <q-menu anchor="top right" self="top right">
-                <q-list dense style="min-width: 180px">
-                  <q-item clickable v-close-popup @click="viewProject(props.row)">
-                    <q-item-section avatar>
-                      <q-icon name="visibility" />
-                    </q-item-section>
-                    <q-item-section>{{ $t('common.view') }}</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
+            <q-btn
+              flat
+              dense
+              color="primary"
+              icon="arrow_forward"
+              @click="viewProject(props.row)"
+            />
           </div>
         </q-td>
       </template>

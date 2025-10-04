@@ -11,30 +11,49 @@
     </div>
 
     <div v-else-if="project" class="project-detail">
-      <div class="row items-center justify-between q-mb-lg">
-        <div class="row items-center q-gutter-sm text-h4">
-          <q-icon name="assignment" />
-          <span>{{ project.name }}</span>
-        </div>
-        <div class="row q-gutter-sm">
-          <q-btn
-            v-if="canSubmit"
-            color="positive"
-            icon="send"
-            flat
-            :label="t('projects.actions.submit')"
-            @click="submitProject(project)"
-          />
-          <q-btn
-            v-if="canDelete"
-            color="negative"
-            icon="delete"
-            flat
-            :label="t('common.delete')"
-            @click="confirmDelete"
-          />
-        </div>
-      </div>
+      <breadcrumb-header
+        :breadcrumbs="projectBreadcrumbs"
+        :title="project?.name ?? t('common.loading')"
+        :loading="loading"
+        :back-target="projectBackTarget"
+      >
+        <template #default>
+          <div class="row q-gutter-sm">
+            <q-btn
+              v-if="canApprove"
+              color="positive"
+              icon="check"
+              flat
+              :label="t('projects.actions.approve')"
+              @click="approveProject(project)"
+            />
+            <q-btn
+              v-if="canReject"
+              color="negative"
+              icon="cancel"
+              flat
+              :label="t('projects.actions.reject')"
+              @click="rejectProject(project)"
+            />
+            <q-btn
+              v-if="canSubmit"
+              color="positive"
+              icon="send"
+              flat
+              :label="t('projects.actions.submit')"
+              @click="submitProject(project)"
+            />
+            <q-btn
+              v-if="canDelete"
+              color="negative"
+              icon="delete"
+              flat
+              :label="t('common.delete')"
+              @click="confirmDelete"
+            />
+          </div>
+        </template>
+      </breadcrumb-header>
 
       <div class="column q-gutter-md">
         <project-card
@@ -89,6 +108,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
 import ProjectForm, { type ProjectFormValues } from 'src/components/project/ProjectForm.vue';
 import { useAuth } from 'src/composables/useAuth';
@@ -122,6 +142,16 @@ const projectRepository = new ProjectRepository();
 
 const projectId = computed(() => route.params.projectId as string);
 const isEducatorOrAdmin = computed(() => hasAnyRole(['Educator', 'Admin']));
+const projectBackTarget = computed(() =>
+  hasAnyRole(['Educator']) ? { name: 'educator-projects' } : { name: 'my-projects' },
+);
+const projectBreadcrumbs = computed(() => [
+  {
+    label: hasAnyRole(['Educator']) ? t('projects.title') : t('projects.myProjects'),
+    to: projectBackTarget.value,
+  },
+  { label: project.value?.name ?? t('common.loading') },
+]);
 
 const canEdit = computed(() => {
   if (!project.value) return false;

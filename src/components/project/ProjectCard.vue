@@ -46,7 +46,7 @@
             <q-tooltip>{{ $t('common.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="canSubmit && showSubmitAction"
+            v-if="canSubmit && showActions"
             flat
             dense
             round
@@ -57,7 +57,7 @@
             <q-tooltip>{{ $t('projects.actions.submit') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="canApprove"
+            v-if="canApprove && showActions"
             flat
             dense
             round
@@ -68,7 +68,7 @@
             <q-tooltip>{{ $t('projects.actions.approve') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="canReject"
+            v-if="canReject && showActions"
             flat
             dense
             round
@@ -95,7 +95,7 @@
             dense
             round
             color="primary"
-            icon="download"
+            icon="open_in_new"
             @click.stop="$emit('download', project)"
           >
             <q-tooltip>{{ $t('common.download') }}</q-tooltip>
@@ -127,7 +127,7 @@ const props = defineProps<{
   project: Project;
   showOpen?: boolean;
   showEdit?: boolean;
-  showSubmit?: boolean;
+  showActions?: boolean;
   showDelete?: boolean;
   showDownload?: boolean;
 }>();
@@ -181,7 +181,6 @@ const subCompetencyName = computed(() => props.project.subCompetency?.name ?? nu
 
 const allowOpen = computed(() => props.showOpen !== false);
 const showEditAction = computed(() => props.showEdit !== false);
-const showSubmitAction = computed(() => props.showSubmit !== false);
 const showDeleteAction = computed(() => props.showDelete !== false);
 const showDownloadAction = computed(
   () => props.showDownload !== false && Boolean(props.project.fileKey),

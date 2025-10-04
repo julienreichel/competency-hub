@@ -509,6 +509,7 @@ export default {
   // Projects
   projects: {
     myProjects: 'My Projects',
+    title: 'Projects',
     manageDescription: 'Create and manage your project submissions',
     newProject: 'New Project',
     createFirst: 'Create Your First Project',

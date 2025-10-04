@@ -68,7 +68,7 @@
           <project-card
             :project="project"
             :show-open="true"
-            :show-submit="Boolean(project.fileKey)"
+            :show-actions="Boolean(project.fileKey)"
             class="full-height"
             @view="viewProject"
             @edit="editProject"
