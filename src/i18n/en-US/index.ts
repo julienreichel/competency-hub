@@ -518,12 +518,26 @@ export default {
       title: 'No Projects Yet',
       description: 'Start your learning journey by creating your first project submission.',
     },
+    loadError: 'Failed to load projects',
     status: {
       draft: 'Draft',
       submitted: 'Submitted',
       approved: 'Approved',
       rejected: 'Rejected',
     },
+    summary: {
+      total: 'Total Projects',
+      draft: 'Draft Projects',
+      submitted: 'Submitted Projects',
+      approved: 'Approved Projects',
+    },
+    filters: {
+      searchPlaceholder: 'Search by project, description, or competency...',
+      status: 'Status',
+      competency: 'Competency',
+      clearHint: 'Try adjusting or clearing your filters to see more projects.',
+    },
+    emptyFiltered: 'No projects match the selected filters.',
     form: {
       createTitle: 'Create New Project',
       editTitle: 'Edit Project',
