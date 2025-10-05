@@ -16,8 +16,7 @@
     "activityPercent": "{percent}% complete",
     "activityDefaultSubtitle": "Keep up the great work!",
     "labels": {
-      "unknownSub": "Sub-competency",
-      "unknownActor": "Learner"
+      "unknownSub": "Sub-competency"
     },
     "cards": {
       "totalCompetencies": "Total competencies",
@@ -52,26 +51,17 @@
     "edit": "Edit",
     "delete": "Delete",
     "cancel": "Cancel",
-    "submit": "Submit",
     "save": "Save",
     "user": "User",
-    "users": "Users",
     "profile": "Profile",
     "role": "Role",
     "status": "Status",
     "email": "Email",
     "name": "Name",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "username": "Username",
-    "close": "Close",
     "actions": "Actions",
     "refresh": "Refresh",
     "create": "Create",
     "clear": "Clear",
-    "clearSelection": "Clear Selection",
-    "yes": "Yes",
-    "no": "No",
     "loading": "Loading...",
     "download": "Download",
     "unknown": "Unknown"
@@ -81,20 +71,13 @@
   },
   "admin": {
     "userManagement": "User Management",
-    "addUser": "Add User",
-    "addNewUser": "Add New User",
-    "bulkImport": "Bulk Import",
     "searchUsers": "Search users...",
-    "resetPassword": "Reset Password",
-    "activate": "Activate",
-    "deactivate": "Deactivate",
     "changeRole": "Change Role",
     "changeRolePrompt": "Select the new role for the selected users ({count}).",
     "bulkRoleSuccess": "Updated role for {count} user(s).",
     "bulkRolePartial": "Updated {success} user(s); {failed} failed.",
     "bulkRoleNoChanges": "All selected users already have this role.",
     "bulkRoleError": "Could not update the selected users. Please try again.",
-    "usernameHint": "Leave blank to auto-generate",
     "contactInfo": "Contact Information",
     "userName": "Full Name",
     "avatar": {
@@ -118,7 +101,6 @@
   "profile": {
     "uploadPhoto": "Upload Photo",
     "picture": "Profile Photo",
-    "uploadInstructions": "Drag and Drop an image to replace your profile picture.",
     "uploadError": "Could not upload the photo. Please try again."
   },
   "educator": {
@@ -161,8 +143,6 @@
     "educatorSelectPlaceholder": "Select an educator",
     "noEducatorsAssigned": "No educators assigned yet.",
     "noParentsAssigned": "No parents assigned yet.",
-    "assignSelf": "Assign myself",
-    "unassignSelf": "Unassign myself",
     "assessments": {
       "title": "Pending validations",
       "searchPlaceholder": "Search students or competencies...",
@@ -172,7 +152,6 @@
       "table": {
         "student": "Student",
         "evaluationStatus": "Evaluations status",
-        "markValidated": "Mark validated",
         "menu": {
           "openCompetencies": "Open all competencies",
           "openAssessments": "Open all assessments",
@@ -187,14 +166,12 @@
       "subCompetencyFilterLabel": "Competency",
       "emptyState": "No submitted projects to review.",
       "loadError": "Failed to load student projects",
-      "selectedCount": "{count} project(s) selected",
       "tableTitle": "Submitted Projects",
       "tableHint": "Review and approve or reject student project submissions",
       "columns": {
         "student": "Student",
         "name": "Project",
         "subCompetency": "Competency",
-        "status": "Status",
         "submittedAt": "Submitted"
       }
     }
@@ -218,10 +195,7 @@
       "name": "Domain name",
       "color": "Color (optional)"
     },
-    "actions": {
-      "create": "Create",
-      "save": "Save changes"
-    },
+    "actions": {},
     "competencyCount": "None | 1 competency | {count} competencies"
   },
   "resources": {
@@ -230,10 +204,7 @@
     "addTitle": "Add Resource",
     "editTitle": "Edit Resource",
     "emptyState": "No resources found",
-    "actions": {
-      "create": "Create resource",
-      "save": "Save changes"
-    },
+    "actions": {},
     "fields": {
       "type": "Type",
       "title": "Title",
@@ -258,7 +229,6 @@
     "emptyState": "No evaluations yet.",
     "minutesShort": "min",
     "noDuration": "No duration specified",
-    "noDescription": "No description provided.",
     "createSuccess": "Evaluation added.",
     "createError": "Could not add the evaluation. Please try again.",
     "updateSuccess": "Evaluation updated.",
@@ -266,7 +236,6 @@
     "deleteSuccess": "Evaluation deleted.",
     "deleteError": "Could not delete the evaluation. Please try again.",
     "deleteConfirm": "Delete the evaluation \"{name}\"? This action cannot be undone.",
-    "openError": "Unable to open the evaluation file. Please try again.",
     "deliveryRequired": "Provide a URL or upload a file before saving.",
     "actions": {
       "start": "Start",
@@ -282,7 +251,6 @@
       "mode": "Mode",
       "format": "Format",
       "duration": "Duration (minutes)",
-      "durationShort": "Duration",
       "delivery": "Delivery",
       "url": "URL",
       "upload": "Upload file"
@@ -325,16 +293,12 @@
     "addSubCompetency": "Add sub-competency",
     "createTitle": "Create Competency",
     "newSubCompetency": "New sub-competency",
-    "name": "Competency name",
     "fields": {
       "name": "Competency name",
       "description": "Description",
       "objectives": "Objectives"
     },
-    "actions": {
-      "create": "Create",
-      "save": "Save changes"
-    },
+    "actions": {},
     "loading": "Loading competencies...",
     "emptyState": "No competencies in this domain yet.",
     "noDescription": "No description provided.",
@@ -349,19 +313,8 @@
       "notStarted": "Not started"
     },
     "editor": {
-      "breadcrumb": "Competency editor",
-      "loading": "Loading competency...",
-      "tabs": {
-        "details": "Details",
-        "stages": "Stages",
-        "resources": "Resources"
-      },
-      "messages": {
-        "notFound": "Competency not found.",
-        "loadError": "Could not load the competency. Please try again.",
-        "saveError": "Could not save the competency. Please try again.",
-        "saved": "Competency updated successfully."
-      }
+      "tabs": {},
+      "messages": {}
     },
     "messages": {
       "created": "Competency created successfully.",
@@ -375,9 +328,7 @@
   "subCompetencies": {
     "title": "Sub-Competencies",
     "loading": "Loading sub-competency...",
-    "newSubCompetency": "New sub-competency",
     "name": "Sub-competency name",
-    "level": "Level",
     "description": "Description",
     "objectives": "Objectives",
     "emptyState": "No sub-competencies found",
@@ -388,14 +339,10 @@
     "studentProgress": "Student Progress",
     "studentProgressHint": "Manage student progress.",
     "status": "Status",
-    "percent": "Percent",
-    "locked": "Locked",
     "recommended": "Recommended",
     "unlockAction": "Unlock",
     "recommendAction": "Recommend",
-    "lockAction": "Lock",
     "validateAction": "Validate",
-    "pendingValidationAction": "I think I acquired this",
     "progressSteps": {
       "remember": "I can remember",
       "explain": "I understand and can explain",
@@ -412,14 +359,10 @@
   },
   "progressStatus": {
     "NotStarted": "Not started",
-    "InProgress": "In progress",
-    "PendingValidation": "Pending validation",
-    "Validated": "Validated",
     "Locked": "Locked"
   },
   "reports": {
     "title": "Student Reports",
-    "studentReport": "Student Report",
     "emptyState": {
       "title": "No report generated",
       "subtitle": "Select a time period and generate a report to view student progress"
@@ -475,13 +418,8 @@
   },
   "validation": {
     "required": "This field is required",
-    "emailRequired": "Email is required",
-    "emailInvalid": "Please enter a valid email address",
     "nameRequired": "Name is required",
-    "firstNameRequired": "First name is required",
-    "lastNameRequired": "Last name is required",
-    "roleRequired": "Role is required",
-    "maxLength": "Maximum {max} characters allowed"
+    "roleRequired": "Role is required"
   },
   "login": {
     "welcomeBack": "Welcome Back",
@@ -497,7 +435,6 @@
   "projects": {
     "myProjects": "My Projects",
     "title": "Projects",
-    "manageDescription": "Create and manage your project submissions",
     "newProject": "New Project",
     "createFirst": "Create Your First Project",
     "subCompetency": "Sub-Competency",
@@ -533,13 +470,7 @@
       "description": "Description",
       "subCompetency": "Sub-Competency",
       "noSubCompetencies": "No sub-competencies available",
-      "currentFile": "Current File",
-      "fileUploaded": "File uploaded",
       "uploadFile": "Upload File",
-      "selectFile": "Choose file or drag here",
-      "fileHint": "Supported formats: PDF, DOC, DOCX, TXT, ZIP (max 10MB)",
-      "fileTooLarge": "File is too large (max 10MB)",
-      "fileRejected": "File type not supported",
       "status": "Status",
       "createSuccess": "Project created successfully",
       "updateSuccess": "Project updated successfully",
@@ -550,32 +481,16 @@
     "actions": {
       "submit": "Submit",
       "approve": "Approve",
-      "reject": "Reject",
-      "submitSuccess": "Project submitted successfully",
-      "approveSuccess": "Project approved successfully",
-      "rejectSuccess": "Project rejected successfully",
-      "submitError": "Failed to submit project",
-      "approveError": "Failed to approve project",
-      "rejectError": "Failed to reject project"
+      "reject": "Reject"
     },
     "delete": {
       "confirmTitle": "Delete Project",
-      "confirmMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
-      "success": "Project deleted successfully",
-      "error": "Failed to delete project"
+      "confirmMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
     },
     "detail": {
       "errorTitle": "Project Not Found",
       "notFound": "The requested project could not be found",
       "loadError": "Failed to load project details",
-      "information": "Project Information",
-      "metadata": "Details",
-      "subCompetency": "Sub-Competency",
-      "noDescription": "No description provided",
-      "attachment": "File Attachment",
-      "fileUploaded": "Uploaded file",
-      "student": "Student",
-      "created": "Created",
       "updated": "Last Updated"
     }
   }
