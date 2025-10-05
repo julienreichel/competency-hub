@@ -70,6 +70,43 @@ describe('StudentProgressRepository', () => {
       expect(result.id).toBe('progress-1');
     });
 
+    it('passes provided values through to the GraphQL client', async () => {
+      // Arrange
+      const customProgress = {
+        ...mockProgress,
+        status: 'InProgress',
+        percent: 45,
+        lockOverride: 'Locked' as const,
+        recommended: true,
+      };
+      mockClient.createStudentProgress.mockResolvedValue(customProgress);
+
+      // Act
+      const result = await StudentProgressRepository.createProgress({
+        id: customProgress.id,
+        studentId: customProgress.studentId,
+        subCompetencyId: customProgress.subCompetencyId,
+        status: customProgress.status,
+        percent: customProgress.percent,
+        lockOverride: customProgress.lockOverride,
+        recommended: customProgress.recommended,
+        updatedAt: null,
+      });
+
+      // Assert
+      expect(mockClient.createStudentProgress).toHaveBeenCalledWith({
+        studentId: customProgress.studentId,
+        subCompetencyId: customProgress.subCompetencyId,
+        status: customProgress.status,
+        percent: customProgress.percent,
+        lockOverride: customProgress.lockOverride,
+        recommended: customProgress.recommended,
+        updatedAt: new Date().toISOString(),
+      });
+      expect(result.status).toBe('InProgress');
+      expect(result.percent).toBe(45);
+    });
+
     it('throws when GraphQL client returns null', async () => {
       // Arrange
       mockClient.createStudentProgress.mockResolvedValue(null);
@@ -111,6 +148,43 @@ describe('StudentProgressRepository', () => {
       });
       expect(result).toBeInstanceOf(StudentSubCompetencyProgress);
       expect(result.status).toBe('Validated');
+    });
+
+    it('only sends modified fields to the GraphQL client', async () => {
+      // Arrange
+      const updatedMock = { ...mockProgress, lockOverride: 'Locked' as const };
+      mockClient.updateStudentProgress.mockResolvedValue(updatedMock);
+
+      // Act
+      await StudentProgressRepository.updateProgress('progress-1', {
+        lockOverride: 'Locked',
+      });
+
+      // Assert
+      expect(mockClient.updateStudentProgress).toHaveBeenCalledWith({
+        id: 'progress-1',
+        lockOverride: 'Locked',
+        updatedAt: new Date().toISOString(),
+      });
+    });
+
+    it('passes recommended flag changes through the GraphQL client', async () => {
+      // Arrange
+      const updatedMock = { ...mockProgress, recommended: true };
+      mockClient.updateStudentProgress.mockResolvedValue(updatedMock);
+
+      // Act
+      const result = await StudentProgressRepository.updateProgress('progress-1', {
+        recommended: true,
+      });
+
+      // Assert
+      expect(mockClient.updateStudentProgress).toHaveBeenCalledWith({
+        id: 'progress-1',
+        recommended: true,
+        updatedAt: new Date().toISOString(),
+      });
+      expect(result.recommended).toBe(true);
     });
 
     it('throws when GraphQL client returns null', async () => {

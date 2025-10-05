@@ -1,116 +1,351 @@
-import { useReportData } from 'src/composables/useReportData';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock dependencies
+const mocks = vi.hoisted(() => {
+  const findById = vi.fn();
+  const getUserById = vi.fn();
+  const getCurrentUser = vi.fn();
+  return {
+    findById,
+    getUserById,
+    getCurrentUser,
+  };
+});
+
 vi.mock('src/models/repositories/SubCompetencyRepository', () => ({
   subCompetencyRepository: {
-    findById: vi.fn(),
+    findById: mocks.findById,
   },
 }));
 
 vi.mock('src/composables/useUsers', () => ({
-  useUsers: vi.fn(() => ({
-    getUserById: vi.fn(),
-    getCurrentUser: vi.fn(),
-  })),
+  useUsers: (): unknown => ({
+    getUserById: mocks.getUserById,
+    getCurrentUser: mocks.getCurrentUser,
+  }),
 }));
 
-describe('useReportData - Composable Behavior', () => {
+import { useReportData } from 'src/composables/useReportData';
+import { Competency } from 'src/models/Competency';
+import { Domain } from 'src/models/Domain';
+import { StudentSubCompetencyProgress } from 'src/models/StudentSubCompetencyProgress';
+import { SubCompetency } from 'src/models/SubCompetency';
+import { User, UserRole } from 'src/models/User';
+
+describe('useReportData', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('When initialized', () => {
-    it('should provide reactive loading, error, and reportData refs', () => {
-      const { loading, error, reportData, generateReport } = useReportData();
+  const period = {
+    startDate: new Date('2024-02-01T00:00:00.000Z'),
+    endDate: new Date('2024-02-28T23:59:59.999Z'),
+  };
 
-      expect(loading.value).toBe(false);
-      expect(error.value).toBe(null);
-      expect(reportData.value).toBe(null);
-      expect(typeof generateReport).toBe('function');
+  function createStudentProgress(
+    id: string,
+    subCompetencyId: string,
+    percent: number,
+    status: 'NotStarted' | 'InProgress' | 'PendingValidation' | 'Validated',
+    updatedAt: string,
+  ): StudentSubCompetencyProgress {
+    return new StudentSubCompetencyProgress({
+      id,
+      studentId: 'student-1',
+      subCompetencyId,
+      status,
+      percent,
+      lockOverride: 'Unlocked',
+      recommended: null,
+      updatedAt,
     });
+  }
+
+  interface DomainHierarchy {
+    domain1: Domain;
+    domain2: Domain;
+    competency1: Competency;
+    competency2: Competency;
+    sub1: SubCompetency;
+    sub2: SubCompetency;
+  }
+
+  function createDomainHierarchy(): DomainHierarchy {
+    const domain1 = new Domain({ id: 'dom-1', name: 'Domain One', colorCode: '#336699' });
+    const competency1 = new Competency({
+      id: 'comp-1',
+      name: 'Competency A',
+      domainId: domain1.id,
+      domain: domain1,
+      subCompetencies: [],
+    });
+
+    const domain2 = new Domain({ id: 'dom-2', name: 'Domain Two', colorCode: '#884477' });
+    const competency2 = new Competency({
+      id: 'comp-2',
+      name: 'Competency B',
+      domainId: domain2.id,
+      domain: domain2,
+      subCompetencies: [],
+    });
+
+    const sub1 = new SubCompetency({
+      id: 'sub-1',
+      competencyId: competency1.id,
+      competency: competency1,
+      name: 'Sub One',
+      resources: [],
+    });
+
+    const sub2 = new SubCompetency({
+      id: 'sub-2',
+      competencyId: competency2.id,
+      competency: competency2,
+      name: 'Sub Two',
+      resources: [],
+    });
+
+    return { domain1, domain2, competency1, competency2, sub1, sub2 };
+  }
+
+  it('generates report data with grouped domains and summary metrics', async () => {
+    const { sub1, sub2 } = createDomainHierarchy();
+
+    const progress1 = createStudentProgress(
+      'progress-1',
+      'sub-1',
+      80,
+      'Validated',
+      '2024-02-15T10:00:00.000Z',
+    );
+    const progress2 = createStudentProgress(
+      'progress-2',
+      'sub-2',
+      30,
+      'InProgress',
+      '2024-02-18T10:00:00.000Z',
+    );
+
+    const student = new User({
+      id: 'student-1',
+      name: 'Student One',
+      role: UserRole.STUDENT,
+      email: 'student@example.com',
+      studentProgress: [progress1, progress2],
+      educators: [],
+      parents: [],
+      students: [],
+      children: [],
+      evaluationAttempts: [],
+      projects: [],
+    });
+
+    const educator = new User({
+      id: 'educator-1',
+      name: 'Educator',
+      role: UserRole.EDUCATOR,
+      email: 'educator@example.com',
+      studentProgress: [],
+      educators: [],
+      parents: [],
+      students: [],
+      children: [],
+      evaluationAttempts: [],
+      projects: [],
+    });
+
+    mocks.getUserById.mockResolvedValue(student);
+    mocks.getCurrentUser.mockResolvedValue(educator);
+    mocks.findById.mockImplementation((id: string): Promise<SubCompetency | null> => {
+      if (id === 'sub-1') return Promise.resolve(sub1);
+      if (id === 'sub-2') return Promise.resolve(sub2);
+      return Promise.resolve(null);
+    });
+
+    const { generateReport, reportData } = useReportData();
+
+    const report = await generateReport('student-1', period, {
+      domainFilter: null,
+      includeDetails: true,
+    });
+
+    expect(report).not.toBeNull();
+    expect(reportData.value).not.toBeNull();
+    expect(report?.domains).toHaveLength(2);
+
+    const [domainOne, domainTwo] = report!.domains;
+
+    expect(domainOne?.domainName).toBe('Domain One');
+    expect(domainOne?.competencies?.[0]?.subCompetencies?.[0]?.newlyAcquired).toBe(true);
+    expect(domainTwo?.domainName).toBe('Domain Two');
+    expect(domainTwo?.competencies?.[0]?.progressDelta).toBeGreaterThan(0);
+
+    expect(report?.summary.totalDomainsCovered).toBe(2);
+    expect(report?.summary.competenciesAdvanced).toBe(2);
+    expect(report?.summary.competenciesAcquired).toBe(1);
+    expect(report?.summary.totalActivity).toBe(2);
+    expect(report?.generatedBy?.id).toBe('educator-1');
   });
 
-  describe('Progress delta calculation', () => {
-    it('should calculate progress delta correctly with baseline', () => {
-      // This test would verify the progress delta calculation logic
-      // For now, we'll create a simple test structure
-      const { generateReport } = useReportData();
+  it('applies domain filter when generating report', async () => {
+    const { sub1, sub2 } = createDomainHierarchy();
+    const progress1 = createStudentProgress(
+      'progress-1',
+      'sub-1',
+      50,
+      'Validated',
+      '2024-02-10T00:00:00.000Z',
+    );
+    const progress2 = createStudentProgress(
+      'progress-2',
+      'sub-2',
+      40,
+      'InProgress',
+      '2024-02-20T00:00:00.000Z',
+    );
 
-      expect(generateReport).toBeDefined();
-      // TODO: Add more detailed tests once we have proper progress history data
+    const student = new User({
+      id: 'student-1',
+      name: 'Student One',
+      role: UserRole.STUDENT,
+      email: 'student@example.com',
+      studentProgress: [progress1, progress2],
+      educators: [],
+      parents: [],
+      students: [],
+      children: [],
+      evaluationAttempts: [],
+      projects: [],
     });
 
-    it('should handle missing baseline gracefully', () => {
-      // Test behavior when no baseline progress exists
-      const { generateReport } = useReportData();
-
-      expect(generateReport).toBeDefined();
-      // TODO: Implement test logic
+    mocks.getUserById.mockResolvedValue(student);
+    mocks.getCurrentUser.mockResolvedValue(null);
+    mocks.findById.mockImplementation((id: string): Promise<SubCompetency | null> => {
+      if (id === 'sub-1') return Promise.resolve(sub1);
+      if (id === 'sub-2') return Promise.resolve(sub2);
+      return Promise.resolve(null);
     });
 
-    it('should identify newly acquired competencies in period', () => {
-      // Test logic for detecting newly acquired status changes
-      const { generateReport } = useReportData();
+    const { generateReport } = useReportData();
 
-      expect(generateReport).toBeDefined();
-      // TODO: Implement test logic
+    const report = await generateReport('student-1', period, {
+      domainFilter: 'Domain One',
+      includeDetails: true,
     });
+
+    expect(report?.domains).toHaveLength(1);
+    expect(report?.domains?.[0]?.domainName).toBe('Domain One');
   });
 
-  describe('Domain grouping and rollups', () => {
-    it('should group sub-competencies by domain correctly', () => {
-      // Test domain grouping logic
-      const { generateReport } = useReportData();
+  it('reports error when student not found', async () => {
+    mocks.getUserById.mockResolvedValue(null);
+    mocks.getCurrentUser.mockResolvedValue(null);
 
-      expect(generateReport).toBeDefined();
-      // TODO: Implement test logic
+    const { generateReport, error } = useReportData();
+
+    const result = await generateReport('missing', period, {
+      domainFilter: null,
+      includeDetails: true,
     });
 
-    it('should calculate domain rollup statistics', () => {
-      // Test rollup calculations (averages, counts, etc.)
-      const { generateReport } = useReportData();
-
-      expect(generateReport).toBeDefined();
-      // TODO: Implement test logic
-    });
-
-    it('should apply domain filters correctly', () => {
-      // Test filtering by domain
-      const { generateReport } = useReportData();
-
-      expect(generateReport).toBeDefined();
-      // TODO: Implement test logic
-    });
+    expect(result).toBeNull();
+    expect(error.value).toBe('Student not found');
   });
 
-  describe('Error handling', () => {
-    it('should handle student not found error', async () => {
-      const { generateReport, error } = useReportData();
-
-      const result = await generateReport(
-        'nonexistent-student',
-        {
-          startDate: new Date('2024-01-01'),
-          endDate: new Date('2024-01-31'),
-        },
-        {
-          domainFilter: null,
-          includeDetails: true,
-        },
-      );
-
-      expect(result).toBe(null);
-      expect(error.value).toBeTruthy();
+  it('reports error when student has no progress', async () => {
+    const student = new User({
+      id: 'student-1',
+      name: 'Student One',
+      role: UserRole.STUDENT,
+      email: 'student@example.com',
+      studentProgress: [],
+      educators: [],
+      parents: [],
+      students: [],
+      children: [],
+      evaluationAttempts: [],
+      projects: [],
     });
 
-    it('should handle no progress data gracefully', () => {
-      const { generateReport, error } = useReportData();
+    mocks.getUserById.mockResolvedValue(student);
+    mocks.getCurrentUser.mockResolvedValue(null);
 
-      // This would test the case where student exists but has no progress
-      expect(generateReport).toBeDefined();
-      expect(error.value).toBe(null);
-      // TODO: Mock student with no progress and test
+    const { generateReport, error } = useReportData();
+
+    const result = await generateReport('student-1', period, {
+      domainFilter: null,
+      includeDetails: true,
     });
+
+    expect(result).toBeNull();
+    expect(error.value).toBe('No progress data found for student');
+  });
+
+  it('generates domain summary for a student', async () => {
+    const { sub1, sub2 } = createDomainHierarchy();
+
+    const progress1 = createStudentProgress(
+      'progress-1',
+      'sub-1',
+      60,
+      'InProgress',
+      '2024-02-12T00:00:00.000Z',
+    );
+    const progress2 = createStudentProgress(
+      'progress-2',
+      'sub-2',
+      90,
+      'Validated',
+      '2024-02-18T00:00:00.000Z',
+    );
+
+    const student = new User({
+      id: 'student-1',
+      name: 'Student One',
+      role: UserRole.STUDENT,
+      email: 'student@example.com',
+      studentProgress: [progress1, progress2],
+      educators: [],
+      parents: [],
+      students: [],
+      children: [],
+      evaluationAttempts: [],
+      projects: [],
+    });
+
+    mocks.findById.mockImplementation((id: string): Promise<SubCompetency | null> => {
+      if (id === 'sub-1') return Promise.resolve(sub1);
+      if (id === 'sub-2') return Promise.resolve(sub2);
+      return Promise.resolve(null);
+    });
+
+    const { generateDomainSummary } = useReportData();
+
+    const summary = await generateDomainSummary(student);
+
+    expect(summary).toHaveLength(2);
+    expect(summary[0]).toMatchObject({ name: 'Domain One', color: '#336699', progress: 60 });
+    expect(summary[1]).toMatchObject({ name: 'Domain Two', color: '#884477', progress: 90 });
+  });
+
+  it('returns empty summary when student has no progress', async () => {
+    const student = new User({
+      id: 'student-1',
+      name: 'Student One',
+      role: UserRole.STUDENT,
+      email: 'student@example.com',
+      studentProgress: [],
+      educators: [],
+      parents: [],
+      students: [],
+      children: [],
+      evaluationAttempts: [],
+      projects: [],
+    });
+
+    const { generateDomainSummary } = useReportData();
+
+    const summary = await generateDomainSummary(student);
+
+    expect(summary).toEqual([]);
   });
 });
