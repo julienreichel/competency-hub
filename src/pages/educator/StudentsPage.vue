@@ -8,13 +8,7 @@
     <q-card flat bordered>
       <q-card-section class="row items-center q-col-gutter-md">
         <div class="col-12 col-md-6">
-          <q-input
-            v-model="searchTerm"
-            :label="$t('educator.searchStudents')"
-            filled
-            dense
-            clearable
-          >
+          <q-input v-model="searchTerm" :label="$t('educator.searchStudents')" outlined clearable>
             <template #append>
               <q-icon name="search" />
             </template>

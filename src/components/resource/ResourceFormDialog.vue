@@ -17,16 +17,14 @@
             v-model="form.type"
             :options="['Link', 'Document', 'Human', 'Location']"
             :label="$t('resources.fields.type')"
-            dense
-            filled
+            outlined
           />
         </div>
         <div class="col-12 col-md-8">
           <q-input
             v-model="form.name"
             :label="$t('resources.fields.title')"
-            dense
-            filled
+            outlined
             :rules="[(v) => !!v || $t('validation.required')]"
           />
         </div>
@@ -36,20 +34,14 @@
             v-model="form.description"
             :label="$t('resources.fields.description')"
             type="textarea"
-            filled
+            outlined
             autogrow
           />
         </div>
 
         <!-- Digital specific -->
         <template v-if="form.type === 'Link'">
-          <q-input
-            v-model="form.url"
-            :label="$t('resources.fields.url')"
-            dense
-            filled
-            class="col-12"
-          />
+          <q-input v-model="form.url" :label="$t('resources.fields.url')" outlined class="col-12" />
         </template>
 
         <template v-else-if="form.type === 'Document'">
@@ -69,8 +61,7 @@
               :model-value="form.personUserId ?? null"
               @update:model-value="(val) => (form.personUserId = val)"
               :label="$t('resources.fields.helperUser')"
-              dense
-              filled
+              outlined
             />
           </div>
         </template>

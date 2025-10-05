@@ -20,7 +20,7 @@
       <div class="col-12 col-md-3">
         <q-select
           v-model="subjectFilter"
-          filled
+          outlined
           :options="subjectOptions"
           label="Subject"
           clearable

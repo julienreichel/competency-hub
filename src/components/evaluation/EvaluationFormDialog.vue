@@ -13,8 +13,7 @@
       <q-input
         v-model="form.name"
         :label="$t('evaluations.fields.name')"
-        dense
-        filled
+        outlined
         :rules="[(v) => !!v || $t('validation.required')]"
       />
 
@@ -22,7 +21,7 @@
         v-model="form.description"
         :label="$t('evaluations.fields.description')"
         type="textarea"
-        filled
+        outlined
         autogrow
       />
 
@@ -32,8 +31,7 @@
             v-model="form.mode"
             :options="modes"
             :label="$t('evaluations.fields.mode')"
-            dense
-            filled
+            outlined
             emit-value
             map-options
           />
@@ -43,8 +41,7 @@
             v-model="form.format"
             :options="formats"
             :label="$t('evaluations.fields.format')"
-            dense
-            filled
+            outlined
             emit-value
             map-options
           />
@@ -55,8 +52,7 @@
         v-model.number="form.durationMin"
         type="number"
         :label="$t('evaluations.fields.duration')"
-        dense
-        filled
+        outlined
         :min="0"
         @update:model-value="normalizeDuration"
       />
@@ -76,8 +72,7 @@
         v-if="deliveryType === 'url'"
         v-model="form.url"
         :label="$t('evaluations.fields.url')"
-        dense
-        filled
+        outlined
         @update:model-value="handleUrlUpdate"
       />
 

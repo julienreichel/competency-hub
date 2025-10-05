@@ -4,7 +4,7 @@
       data-testid="user-search-input"
       :model-value="search"
       @update:model-value="handleSearchUpdate"
-      filled
+      outlined
       :placeholder="$t('admin.searchUsers')"
       debounce="300"
       style="width: 300px"
@@ -17,7 +17,7 @@
       data-testid="user-role-select"
       :model-value="roleFilter"
       @update:model-value="$emit('update:roleFilter', $event)"
-      filled
+      outlined
       :options="roleOptions"
       :label="$t('common.role')"
       clearable

@@ -1,7 +1,7 @@
 <template>
   <div class="q-gutter-sm">
     <div class="row q-col-gutter-sm">
-      <div v-for="seed in seeds" :key="seed" class="col-2">
+      <div v-for="seed in seeds" :key="seed" class="col-1">
         <q-card
           flat
           bordered
@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
 
-const SEED_COUNT = 16;
+const SEED_COUNT = 24;
 const DICEBEAR_BASE_URL = 'https://api.dicebear.com/9.x/adventurer/svg?seed=';
 const RADIX = 36;
 const SEED_START_INDEX = 2;

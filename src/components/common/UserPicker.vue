@@ -10,8 +10,7 @@
     emit-value
     map-options
     clearable
-    dense
-    filled
+    outlined
   />
 </template>
 

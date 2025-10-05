@@ -55,14 +55,14 @@
           <q-form @submit="addChild" class="q-gutter-md">
             <q-input
               v-model="newChild.name"
-              filled
+              outlined
               label="Full Name *"
               :rules="[(val) => !!val || 'Name is required']"
             />
 
             <q-input
               v-model.number="newChild.age"
-              filled
+              outlined
               type="number"
               label="Age *"
               :rules="[(val) => !!val || 'Age is required']"
@@ -70,7 +70,7 @@
 
             <q-select
               v-model="newChild.grade"
-              filled
+              outlined
               :options="gradeOptions"
               label="Grade Level *"
               :rules="[(val) => !!val || 'Grade is required']"
@@ -80,7 +80,7 @@
 
             <q-input
               v-model="newChild.studentId"
-              filled
+              outlined
               label="Student ID"
               hint="If your child is already registered in the system"
             />

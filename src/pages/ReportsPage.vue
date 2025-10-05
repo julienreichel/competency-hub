@@ -13,7 +13,7 @@
           <div class="col-12 col-md-3">
             <q-select
               v-model="selectedReportType"
-              filled
+              outlined
               :options="reportTypes"
               label="Report Type"
               emit-value
@@ -23,7 +23,7 @@
           <div class="col-12 col-md-3">
             <q-select
               v-model="selectedTimeRange"
-              filled
+              outlined
               :options="timeRanges"
               label="Time Range"
               emit-value
@@ -33,7 +33,7 @@
           <div class="col-12 col-md-3">
             <q-select
               v-model="selectedSubject"
-              filled
+              outlined
               :options="subjects"
               label="Subject"
               clearable
