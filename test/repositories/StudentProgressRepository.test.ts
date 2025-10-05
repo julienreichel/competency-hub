@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { StudentProgressRepository } from '../../src/models/repositories/StudentProgressRepository';
+import type { ProgressStatus } from '../../src/models/StudentSubCompetencyProgress';
 import { StudentSubCompetencyProgress } from '../../src/models/StudentSubCompetencyProgress';
 
 type MockGraphQLClient = {
@@ -86,7 +87,7 @@ describe('StudentProgressRepository', () => {
         id: customProgress.id,
         studentId: customProgress.studentId,
         subCompetencyId: customProgress.subCompetencyId,
-        status: customProgress.status,
+        status: customProgress.status as ProgressStatus,
         percent: customProgress.percent,
         lockOverride: customProgress.lockOverride,
         recommended: customProgress.recommended,
