@@ -3,6 +3,7 @@
     flat
     bordered
     :class="['base-card', cardClass, { 'cursor-pointer': clickableCard }]"
+    :style="cardStyle"
     @click="handleCardClick"
   >
     <q-card-section :class="['row items-start justify-between q-gutter-sm', sectionClass]">
@@ -89,6 +90,7 @@ const props = withDefaults(
     cardClass?: string | Record<string, boolean> | string[];
     contentClass?: string | Record<string, boolean> | string[];
     sectionClass?: string | Record<string, boolean> | string[];
+    backgroundColor?: string;
   }>(),
   {
     clickable: false,
@@ -108,6 +110,7 @@ const props = withDefaults(
     cardClass: '',
     contentClass: '',
     sectionClass: '',
+    backgroundColor: '',
   },
 );
 
@@ -146,6 +149,10 @@ const clickableCard = computed(() => props.clickable || props.showOpenAction);
 const openLabelText = computed(() => computedOpenLabel.value);
 const editLabelText = computed(() => computedEditLabel.value || '');
 const deleteLabelText = computed(() => computedDeleteLabel.value || '');
+
+const cardStyle = computed(() =>
+  props.backgroundColor ? { backgroundColor: props.backgroundColor } : undefined,
+);
 
 function handleCardClick(): void {
   if (!clickableCard.value) return;

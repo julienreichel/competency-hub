@@ -76,6 +76,7 @@ export default {
     no: 'No',
     loading: 'Loading...',
     download: 'Download',
+    unknown: 'Unknown',
   },
 
   resource: {

@@ -386,17 +386,15 @@ export class GraphQLClient {
 
   async listDomains(filter?: Record<string, unknown>): Promise<Schema['Domain']['type'][]> {
     try {
-      const options: { authMode: 'userPool'; filter?: Record<string, unknown> } = {
+      const result = await this.client.models.Domain.list({
         authMode: 'userPool',
-      };
-      if (filter) {
-        options.filter = filter;
-      }
-      const result = await this.client.models.Domain.list(options);
+        selectionSet: ['id', 'name', 'colorCode', 'createdAt', 'updatedAt', 'competencies.*'],
+        filter,
+      });
       if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
-      return result.data;
+      return result.data as unknown as Schema['Domain']['type'][];
     } catch (error) {
       console.error('Error listing Domains:', error);
       throw error;

@@ -29,33 +29,29 @@
       </template>
     </breadcrumb-header>
 
-    <q-card flat bordered>
-      <q-input
-        v-model="search"
-        dense
-        outlined
-        debounce="200"
-        class="q-ma-md"
-        :placeholder="$t('competencies.searchPlaceholder')"
-        clearable
-        prefix-icon="search"
+    <q-input
+      v-model="search"
+      outlined
+      debounce="200"
+      :placeholder="$t('competencies.searchPlaceholder')"
+      clearable
+      prefix-icon="search"
+    />
+
+    <q-separator />
+
+    <div v-if="loading" class="q-pa-lg column items-center justify-center">
+      <q-spinner color="primary" size="32px" />
+      <div class="text-caption text-grey-7 q-mt-sm">{{ $t('competencies.loading') }}</div>
+    </div>
+
+    <div v-else>
+      <competency-list
+        :competencies="filteredCompetencies"
+        @open="openEditor"
+        :show-progress="hasRole('Student')"
       />
-
-      <q-separator />
-
-      <div v-if="loading" class="q-pa-lg column items-center justify-center">
-        <q-spinner color="primary" size="32px" />
-        <div class="text-caption text-grey-7 q-mt-sm">{{ $t('competencies.loading') }}</div>
-      </div>
-
-      <div v-else class="q-pa-md">
-        <competency-list
-          :competencies="filteredCompetencies"
-          @open="openEditor"
-          :show-progress="hasRole('Student')"
-        />
-      </div>
-    </q-card>
+    </div>
 
     <create-competency-dialog
       v-model="dialog.open"

@@ -3,15 +3,15 @@
     <div v-if="competencies.length === 0" class="text-grey-6 text-center q-mt-lg">
       {{ $t('competencies.emptyState') }}
     </div>
-    <div v-else class="column q-gutter-md">
-      <competency-card
-        v-for="competency in competencies"
-        :key="competency.id"
-        :competency="competency"
-        show-open
-        :show-progress="showProgress || false"
-        @open="$emit('open', $event)"
-      />
+    <div v-else class="row q-col-gutter-md">
+      <div v-for="competency in competencies" :key="competency.id" class="col-12">
+        <competency-card
+          :competency="competency"
+          show-open
+          :show-progress="showProgress || false"
+          @open="$emit('open', $event)"
+        />
+      </div>
     </div>
   </div>
 </template>
