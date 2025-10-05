@@ -1,5 +1,6 @@
 <template>
   <base-card
+    :background-color="sub.competency?.domain?.colorCode"
     :clickable="allowOpen"
     :show-open-action="allowOpen"
     :show-edit-action="showEdit"
@@ -36,11 +37,11 @@
 </template>
 
 <script setup lang="ts">
+import BaseCard from 'src/components/common/BaseCard.vue';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import StudentProgressBadge from './StudentProgressBadge.vue';
-import BaseCard from 'src/components/common/BaseCard.vue';
 
 const props = defineProps<{
   sub: SubCompetency;

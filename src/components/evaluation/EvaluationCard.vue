@@ -1,5 +1,6 @@
 <template>
   <base-card
+    :background-color="subCompetency?.competency?.domain?.colorCode"
     :clickable="!isStudentVariant && canOpen"
     :show-open-action="!isStudentVariant && canOpen"
     :show-edit-action="!isStudentVariant && showActions"
@@ -90,11 +91,11 @@
 </template>
 
 <script setup lang="ts">
+import BaseCard from 'src/components/common/BaseCard.vue';
 import type { Evaluation } from 'src/models/Evaluation';
 import { EvaluationAttempt } from 'src/models/EvaluationAttempt';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
-import BaseCard from 'src/components/common/BaseCard.vue';
 
 const props = defineProps<{
   evaluation: Evaluation;

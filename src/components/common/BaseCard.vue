@@ -90,7 +90,7 @@ const props = withDefaults(
     cardClass?: string | Record<string, boolean> | string[];
     contentClass?: string | Record<string, boolean> | string[];
     sectionClass?: string | Record<string, boolean> | string[];
-    backgroundColor?: string;
+    backgroundColor?: string | null;
   }>(),
   {
     clickable: false,
@@ -110,7 +110,7 @@ const props = withDefaults(
     cardClass: '',
     contentClass: '',
     sectionClass: '',
-    backgroundColor: '',
+    backgroundColor: null,
   },
 );
 
@@ -151,7 +151,7 @@ const editLabelText = computed(() => computedEditLabel.value || '');
 const deleteLabelText = computed(() => computedDeleteLabel.value || '');
 
 const cardStyle = computed(() =>
-  props.backgroundColor ? { backgroundColor: props.backgroundColor } : undefined,
+  props.backgroundColor ? { backgroundColor: props.backgroundColor + '20' } : undefined,
 );
 
 function handleCardClick(): void {

@@ -1,6 +1,6 @@
 <template>
   <base-card
-    :background-color="backgroundColor"
+    :background-color="domain.colorCode"
     :clickable="clickable"
     :show-open-action="clickable"
     :show-edit-action="showEdit"
@@ -26,9 +26,8 @@
 <script setup lang="ts">
 import BaseCard from 'src/components/common/BaseCard.vue';
 import type { Domain } from 'src/models/Domain';
-import { computed } from 'vue';
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     domain: Domain;
     clickable?: boolean;
@@ -39,8 +38,6 @@ const props = withDefaults(
     clickable: true,
     showEdit: false,
     showDelete: false,
-    cardClass: '',
-    sectionClass: '',
   },
 );
 
@@ -49,10 +46,6 @@ defineEmits<{
   (e: 'edit', domain: Domain): void;
   (e: 'delete', id: string): void;
 }>();
-
-const backgroundColor = computed(() => {
-  return (props.domain.colorCode || '#607D8B') + '40';
-});
 </script>
 
 <script lang="ts">
