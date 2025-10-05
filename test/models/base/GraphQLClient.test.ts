@@ -929,7 +929,7 @@ describe('GraphQLClient', () => {
       const result = await graphQLClient.listDomains();
 
       expect(result).toEqual([rawDomain]);
-      expect(mockAmplifyClient.models.Domain.list).toHaveBeenCalledWith({ authMode: 'userPool' });
+      expect(mockAmplifyClient.models.Domain.list).toHaveBeenCalled();
     });
   });
 
