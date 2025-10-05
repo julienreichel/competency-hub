@@ -7,12 +7,12 @@
     use-form
     form-id="project-form"
     :loading="loading"
-    :disable-primary="!isFormValid"
     :primary-label="$t('common.save')"
     @submit="handleSubmit"
     @cancel="handleCancel"
   >
     <project-form
+      ref="projectFormRef"
       v-model="form"
       :loading="loading"
       :show-status="Boolean(project?.id) && isEducatorOrAdmin"
@@ -23,13 +23,13 @@
 </template>
 
 <script setup lang="ts">
+import { useQuasar } from 'quasar';
 import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
 import ProjectForm, { type ProjectFormValues } from './ProjectForm.vue';
 
 // Props
@@ -66,6 +66,12 @@ const form = ref<ProjectFormValues>({
   fileKey: null,
 });
 const isFormValid = ref(false);
+type ProjectFormExpose = {
+  validate: () => Promise<boolean>;
+  submit: () => Promise<void>;
+};
+
+const projectFormRef = ref<ProjectFormExpose | null>(null);
 
 // Computed
 const isVisible = computed({
@@ -103,7 +109,12 @@ const populateForm = (project: Project): void => {
 };
 
 const handleSubmit = async (): Promise<void> => {
-  if (!userId.value || !isFormValid.value) return;
+  if (!userId.value) return;
+
+  const validationResult = (await projectFormRef.value?.validate?.()) ?? isFormValid.value;
+  if (!validationResult) {
+    return;
+  }
 
   loading.value = true;
   try {

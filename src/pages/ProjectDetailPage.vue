@@ -318,7 +318,7 @@ const deleteProject = async (): Promise<void> => {
   actionLoading.value = true;
   try {
     await projectRepository.delete(project.value.id);
-    await router.push({ name: 'student-projects' });
+    await router.push(projectBackTarget.value);
   } catch (err) {
     console.error('Failed to delete project:', err);
   } finally {

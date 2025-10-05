@@ -27,7 +27,7 @@
       v-model="formState.name"
       :label="t('projects.form.name')"
       outlined
-      required
+      :rules="nameRules"
       :disable="loading"
       autofocus
     />
@@ -64,8 +64,9 @@
 </template>
 
 <script setup lang="ts">
-import { useQuasar } from 'quasar';
+import { useQuasar, type QForm } from 'quasar';
 import FileUploaderField from 'src/components/common/FileUploaderField.vue';
+import { useUsers } from 'src/composables/useUsers';
 import { type ProjectStatus } from 'src/models/Project';
 import { SubCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import { type SubCompetency } from 'src/models/SubCompetency';
@@ -110,8 +111,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const $q = useQuasar();
+const { getCurrentUser } = useUsers();
 
-const formRef = ref();
+const formRef = ref<QForm | null>(null);
 const loadingSubCompetencies = ref(false);
 const subCompetencies = ref<SubCompetency[]>([]);
 const formState = ref<ProjectFormValues>({ ...defaultForm(), ...props.modelValue });
@@ -133,6 +135,7 @@ const statusOptions = computed(() => [
 ]);
 
 const subCompetencyRules = [(val: string): string | boolean => !!val || t('validation.required')];
+const nameRules = [(val: string): string | boolean => !!val?.trim() || t('validation.required')];
 
 const showStatus = computed(() => props.showStatus);
 
@@ -166,9 +169,43 @@ watch(
 const loadSubCompetencies = async (): Promise<void> => {
   loadingSubCompetencies.value = true;
   try {
-    subCompetencies.value = await subCompetencyRepository.findAll();
+    const user = await getCurrentUser();
+    const progressEntries = Array.isArray(user?.studentProgress) ? user?.studentProgress : [];
+    const ids = new Set<string>();
+
+    progressEntries?.forEach((entry) => {
+      if (entry?.status === 'InProgress' && entry?.subCompetencyId) {
+        ids.add(entry.subCompetencyId);
+      }
+    });
+
+    if (formState.value.subCompetencyId) {
+      ids.add(formState.value.subCompetencyId);
+    }
+
+    if (ids.size === 0) {
+      subCompetencies.value = [];
+      return;
+    }
+
+    const fetched = await Promise.all(
+      Array.from(ids).map(async (id) => {
+        try {
+          const result = await subCompetencyRepository.findById(id);
+          return result;
+        } catch (error) {
+          console.error(`Failed to load sub-competency ${id}`, error);
+          return null;
+        }
+      }),
+    );
+
+    subCompetencies.value = fetched
+      .filter((item): item is SubCompetency => item !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Failed to load sub-competencies:', error);
+    subCompetencies.value = [];
     $q.notify({
       type: 'negative',
       message: t('projects.form.errorLoadingSubCompetencies'),
@@ -178,7 +215,23 @@ const loadSubCompetencies = async (): Promise<void> => {
   }
 };
 
-const handleSubmit = (): void => {
+const validateForm = async (): Promise<boolean> => {
+  const form = formRef.value;
+  if (form && typeof form.validate === 'function') {
+    const result = await form.validate();
+    syncValidity(formState.value);
+    return result;
+  }
+  const result = isValid(formState.value);
+  syncValidity(formState.value);
+  return result;
+};
+
+const handleSubmit = async (): Promise<void> => {
+  const valid = await validateForm();
+  if (!valid) {
+    return;
+  }
   emit('submit', { ...formState.value });
 };
 
@@ -186,13 +239,14 @@ onMounted(async () => {
   await loadSubCompetencies();
 });
 
-defineExpose({
-  validate: (): boolean => isValid(formState.value),
+defineExpose<{
+  validate: () => Promise<boolean>;
+  submit: () => Promise<void>;
+}>({
+  validate: validateForm,
   submit: handleSubmit,
-  formRef,
 });
 </script>
-
 <script lang="ts">
 import { defineComponent } from 'vue';
 
