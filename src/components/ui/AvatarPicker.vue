@@ -1,7 +1,7 @@
 <template>
   <div class="q-gutter-sm">
     <div class="row q-col-gutter-sm">
-      <div v-for="seed in seeds" :key="seed" class="col-3">
+      <div v-for="seed in seeds" :key="seed" class="col-2">
         <q-card
           flat
           bordered

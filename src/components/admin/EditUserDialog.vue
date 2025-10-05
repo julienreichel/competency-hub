@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
+import BaseDialog from 'src/components/common/BaseDialog.vue';
 import UserProfileForm, {
   type UserProfileFormModel,
 } from 'src/components/user/UserProfileForm.vue';

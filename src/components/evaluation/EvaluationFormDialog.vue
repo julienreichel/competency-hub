@@ -97,8 +97,8 @@
 <script setup lang="ts">
 import type { QForm } from 'quasar';
 import { useQuasar } from 'quasar';
+import BaseDialog from 'src/components/common/BaseDialog.vue';
 import FileUploaderField from 'src/components/common/FileUploaderField.vue';
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import { type Evaluation, EvaluationFormat, EvaluationMode } from 'src/models/Evaluation';
 import {
   type CreateEvaluationInput,

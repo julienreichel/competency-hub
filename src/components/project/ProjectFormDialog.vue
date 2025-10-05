@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
+import BaseDialog from 'src/components/common/BaseDialog.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';

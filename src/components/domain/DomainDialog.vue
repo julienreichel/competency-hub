@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
+import BaseDialog from 'src/components/common/BaseDialog.vue';
 import { reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();

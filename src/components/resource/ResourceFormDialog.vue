@@ -80,9 +80,9 @@
 </template>
 
 <script setup lang="ts">
+import BaseDialog from 'src/components/common/BaseDialog.vue';
 import FileUploaderField from 'src/components/common/FileUploaderField.vue';
 import UserPicker from 'src/components/common/UserPicker.vue';
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
 import {
   ResourceType,
   type CompetencyResource,

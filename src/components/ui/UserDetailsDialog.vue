@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
+import BaseDialog from 'src/components/common/BaseDialog.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { useUserFormatters } from 'src/composables/useUserFormatters';
 import type { User } from 'src/models/User';
