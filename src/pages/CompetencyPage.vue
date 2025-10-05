@@ -63,8 +63,7 @@
 
     <quick-add-sub-competency-dialog
       v-model="dialog"
-      v-model:addName="addName"
-      @submit="closeDialog"
+      @submit="handleQuickAddSubCompetency"
       @cancel="dialog = false"
     />
   </q-page>
@@ -101,7 +100,6 @@ const loading = ref(false);
 const competency = ref<Competency | null>(null);
 const editing = ref(false);
 const subs = ref<SubCompetency[]>([]);
-const addName = ref<string>('');
 const dialog = ref<boolean>(false);
 
 async function load(): Promise<void> {
@@ -164,12 +162,12 @@ async function openSubCompetency(id: string): Promise<void> {
 }
 
 function openDialog(): void {
-  addName.value = '';
   dialog.value = true;
 }
 
-async function closeDialog(): Promise<void> {
-  await addSubCompetency(addName.value || 'New sub-competency');
+async function handleQuickAddSubCompetency(name: string): Promise<void> {
+  const trimmed = name.trim();
+  await addSubCompetency(trimmed.length > 0 ? trimmed : t('subCompetencies.name'));
   dialog.value = false;
 }
 

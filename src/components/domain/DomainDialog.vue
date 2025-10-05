@@ -12,6 +12,7 @@
   >
     <q-input
       v-model="localForm.name"
+      outlined
       :label="$t('domains.fields.name')"
       :rules="[requiredRule]"
       autofocus
@@ -23,11 +24,22 @@
         :default-value="DEFAULT_COLOR"
         format="hex"
         default-view="palette"
-        class="domain-color-picker"
+        no-header
+        no-footer
+        :palette="[
+          '#1976D2', // Blue (primary, calm)
+          '#E53935', // Red (energy, alert)
+          '#43A047', // Green (success, nature)
+          '#FB8C00', // Orange (warm, accent)
+          '#8E24AA', // Purple (creative, accent)
+          '#00ACC1', // Teal (fresh, modern)
+          '#FDD835', // Yellow (highlight, cheerful)
+          '#546E7A', // Blue-grey (neutral, balance)
+          '#5D4037', // Brown (earthy, grounding)
+          '#C0CA33', // Lime (vivid, playful)
+        ]"
+        class="full-width domain-color-picker"
       />
-      <div class="text-caption text-grey-7">
-        {{ localForm.colorCode ?? DEFAULT_COLOR }}
-      </div>
     </div>
   </base-dialog>
 </template>

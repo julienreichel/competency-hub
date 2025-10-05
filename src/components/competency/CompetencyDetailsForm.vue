@@ -1,20 +1,14 @@
 <template>
   <q-form @submit.prevent="onSave">
     <div class="row q-col-gutter-md">
-      <div class="col-12 col-md-6">
-        <q-input
-          v-model="form.name"
-          label="Title"
-          dense
-          filled
-          :rules="[(v) => !!v || 'Required']"
-        />
-      </div>
-      <div class="col-12">
-        <q-input v-model="form.description" type="textarea" autogrow label="Description" filled />
+      <div class="col-12 col-md-8">
+        <q-input v-model="form.name" label="Title" outlined :rules="[(v) => !!v || 'Required']" />
       </div>
       <div class="col-12 col-md-8">
-        <q-input v-model="form.objectives" label="Objectives" type="textarea" autogrow filled />
+        <q-input v-model="form.description" type="textarea" autogrow label="Description" outlined />
+      </div>
+      <div class="col-12 col-md-8">
+        <q-input v-model="form.objectives" label="Objectives" type="textarea" autogrow outlined />
       </div>
     </div>
 

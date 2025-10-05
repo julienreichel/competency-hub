@@ -10,17 +10,23 @@
   >
     <q-input
       v-model="localForm.name"
+      outlined
       :label="t('competencies.fields.name')"
       :rules="[requiredRule]"
       autofocus
     />
     <q-input
       v-model="localForm.description"
+      outlined
+      autogrow
       type="textarea"
       :label="t('competencies.fields.description')"
     />
     <q-input
       v-model="localForm.objectives"
+      class="q-pt-md"
+      outlined
+      autogrow
       type="textarea"
       :label="t('competencies.fields.objectives')"
     />

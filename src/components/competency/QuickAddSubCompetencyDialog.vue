@@ -2,26 +2,28 @@
   <base-dialog
     v-model="open"
     :title="t('competencies.newSubCompetency')"
-    @submit="handleSubmit"
-    @cancel="handleCancel"
     :use-form="true"
     :persistent="false"
+    @submit="handleSubmit"
+    @cancel="handleCancel"
   >
-    <q-input
-      v-model="addName"
-      :label="t('competencies.name')"
-      autofocus
-      @keyup.enter="handleSubmit"
+    <sub-competency-form
+      ref="formRef"
+      :model-value="formModel"
+      :show-level="false"
+      :show-actions="false"
+      @save="handleSave"
     />
   </base-dialog>
 </template>
 
 <script setup lang="ts">
+import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
 import BaseDialog from 'src/components/ui/BaseDialog.vue';
+import { reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const open = defineModel<boolean>({ default: false });
-const addName = defineModel<string>('addName');
 
 const emit = defineEmits<{
   (e: 'submit', name: string): void;
@@ -30,9 +32,26 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
-function handleSubmit(): void {
-  if (!addName.value?.trim()) return;
-  emit('submit', addName.value.trim());
+const formRef = ref<{ submit: () => Promise<void> } | null>(null);
+const formModel = reactive<{ name?: string }>({ name: '' });
+
+watch(open, (value) => {
+  if (value) {
+    formModel.name = '';
+  }
+});
+
+async function handleSubmit(): Promise<void> {
+  await formRef.value?.submit();
+}
+
+function handleSave(payload: { name?: string | null }): void {
+  const name = payload.name?.trim();
+  if (!name) {
+    return;
+  }
+  emit('submit', name);
+  formModel.name = '';
   open.value = false;
 }
 
@@ -44,6 +63,7 @@ function handleCancel(): void {
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+
 export default defineComponent({
   name: 'QuickAddSubCompetencyDialog',
 });
