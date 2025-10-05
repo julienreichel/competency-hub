@@ -3,48 +3,33 @@
     v-model="open"
     :title="t('competencies.createTitle')"
     :loading="loading"
-    @submit="handleSubmit"
-    @cancel="handleCancel"
     :use-form="true"
     :persistent="false"
+    @submit="handleSubmit"
+    @cancel="handleCancel"
   >
-    <q-input
-      v-model="localForm.name"
-      outlined
-      :label="t('competencies.fields.name')"
-      :rules="[requiredRule]"
-      autofocus
-    />
-    <q-input
-      v-model="localForm.description"
-      outlined
-      autogrow
-      type="textarea"
-      :label="t('competencies.fields.description')"
-    />
-    <q-input
-      v-model="localForm.objectives"
-      class="q-pt-md"
-      outlined
-      autogrow
-      type="textarea"
-      :label="t('competencies.fields.objectives')"
+    <competency-details-form
+      ref="formRef"
+      :model-value="localForm"
+      :show-actions="false"
+      @save="handleSave"
     />
   </base-dialog>
 </template>
 
 <script setup lang="ts">
-import BaseDialog from 'src/components/ui/BaseDialog.vue';
+import BaseDialog from 'src/components/common/BaseDialog.vue';
+import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
 import type { PropType } from 'vue';
-import { reactive, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const open = defineModel<boolean>({ default: false });
 
 type FormType = {
   name: string;
-  description?: string;
-  objectives?: string;
+  description?: string | null;
+  objectives?: string | null;
 };
 
 const props = defineProps({
@@ -72,6 +57,8 @@ const localForm = reactive({
   objectives: props.form.objectives || '',
 });
 
+const formRef = ref<{ submit: () => Promise<void> } | null>(null);
+
 watch(
   () => props.form,
   (newForm) => {
@@ -82,16 +69,22 @@ watch(
   { deep: true },
 );
 
-const requiredRule = (value: string): true | string =>
-  value?.trim() ? true : t('validation.required');
-
-function handleSubmit(): void {
-  emit('submit', { ...localForm });
-  open.value = false;
+async function handleSubmit(): Promise<void> {
+  await formRef.value?.submit();
 }
 
 function handleCancel(): void {
   emit('cancel');
+  open.value = false;
+}
+
+function handleSave(values: Partial<FormType>): void {
+  const payload: FormType = {
+    name: values.name?.trim() ?? '',
+    description: values.description ?? '',
+    objectives: values.objectives ?? '',
+  };
+  emit('submit', payload);
   open.value = false;
 }
 </script>

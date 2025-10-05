@@ -99,8 +99,8 @@ const search = ref('');
 
 type FormType = {
   name: string;
-  description?: string;
-  objectives?: string;
+  description?: string | null;
+  objectives?: string | null;
 };
 
 const dialog = reactive({
