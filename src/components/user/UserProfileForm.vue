@@ -210,7 +210,6 @@ function handleFailed(): void {
   $q.notify({
     type: 'negative',
     message: t('profile.uploadError'),
-    position: 'top',
   });
   showUploadSection.value = true;
   resetUploader();

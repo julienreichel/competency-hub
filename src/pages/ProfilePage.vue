@@ -257,7 +257,6 @@ async function handleSave(): Promise<void> {
     $q.notify({
       type: 'warning',
       message: 'Please wait for the image upload to finish before saving.',
-      position: 'top',
     });
     return;
   }
@@ -267,7 +266,6 @@ async function handleSave(): Promise<void> {
     $q.notify({
       type: 'negative',
       message: t('validation.nameRequired'),
-      position: 'top',
     });
     return;
   }
@@ -294,14 +292,12 @@ async function handleSave(): Promise<void> {
     $q.notify({
       type: 'positive',
       message: 'Profile updated successfully!',
-      position: 'top',
     });
   } catch (error) {
     console.error('Failed to update profile', error);
     $q.notify({
       type: 'negative',
       message: 'Failed to update profile. Please try again.',
-      position: 'top',
     });
   } finally {
     saving.value = false;

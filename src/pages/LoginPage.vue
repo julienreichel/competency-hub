@@ -219,7 +219,6 @@ async function handleAuthenticated(): Promise<void> {
       $q.notify({
         type: 'negative',
         message: 'User not found. Please contact support.',
-        position: 'top',
       });
       return;
     }
@@ -236,7 +235,6 @@ async function handleAuthenticated(): Promise<void> {
     $q.notify({
       type: 'negative',
       message: 'Authentication failed. Please try again.',
-      position: 'top',
     });
   }
 }
@@ -258,13 +256,11 @@ async function handleRoleConfirm(): Promise<void> {
     $q.notify({
       type: 'positive',
       message: `Welcome! You've been assigned the ${selectedRole.value} role.`,
-      position: 'top',
     });
   } catch {
     $q.notify({
       type: 'negative',
       message: 'Failed to assign role. Please try again.',
-      position: 'top',
     });
   }
 }

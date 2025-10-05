@@ -202,9 +202,9 @@ async function refreshUsers(): Promise<void> {
   await loadUsers();
   await loadCurrentEducator();
   if (error.value) {
-    $q.notify({ type: 'negative', message: error.value, position: 'top' });
+    $q.notify({ type: 'negative', message: error.value });
   } else {
-    $q.notify({ type: 'positive', message: t('educator.refreshSuccess'), position: 'top' });
+    $q.notify({ type: 'positive', message: t('educator.refreshSuccess') });
   }
 }
 
@@ -249,25 +249,25 @@ function updateDialogUser(updated: User | null): void {
 
 async function handleAssign(studentId: string): Promise<void> {
   if (!currentEducatorId.value) {
-    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId') });
     return;
   }
   const { student, educator } = await assignEducatorToStudent(studentId, currentEducatorId.value);
   if (!student) {
     if (error.value) {
-      $q.notify({ type: 'negative', message: error.value, position: 'top' });
+      $q.notify({ type: 'negative', message: error.value });
     }
     return;
   }
   updateUserInState(student);
   updateUserInState(educator);
   updateDialogUser(student);
-  $q.notify({ type: 'positive', message: t('educator.assignSuccess'), position: 'top' });
+  $q.notify({ type: 'positive', message: t('educator.assignSuccess') });
 }
 
 async function handleUnassign(studentId: string): Promise<void> {
   if (!currentEducatorId.value) {
-    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId') });
     return;
   }
   const { student, educator } = await unassignEducatorFromStudent(
@@ -276,14 +276,14 @@ async function handleUnassign(studentId: string): Promise<void> {
   );
   if (!student) {
     if (error.value) {
-      $q.notify({ type: 'negative', message: error.value, position: 'top' });
+      $q.notify({ type: 'negative', message: error.value });
     }
     return;
   }
   updateUserInState(student);
   updateUserInState(educator);
   updateDialogUser(student);
-  $q.notify({ type: 'positive', message: t('educator.unassignSuccess'), position: 'top' });
+  $q.notify({ type: 'positive', message: t('educator.unassignSuccess') });
 }
 
 function openStudentDialog(studentId: string): void {

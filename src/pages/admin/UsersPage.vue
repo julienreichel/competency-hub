@@ -229,7 +229,6 @@ async function viewUser(user: User): Promise<void> {
       $q.notify({
         type: 'warning',
         message: t('admin.userDetailsLoadFailed'),
-        position: 'top',
       });
     }
   } catch (err) {
@@ -237,7 +236,6 @@ async function viewUser(user: User): Promise<void> {
     $q.notify({
       type: 'negative',
       message: t('admin.userDetailsLoadFailed'),
-      position: 'top',
     });
   } finally {
     dialogLoading.value = false;
@@ -294,7 +292,6 @@ async function handleAssignParent(payload: { studentId: string; parentId: string
     $q.notify({
       type: 'negative',
       message: error.value ?? t('educator.assignParentError'),
-      position: 'top',
     });
     return;
   }
@@ -306,7 +303,6 @@ async function handleAssignParent(payload: { studentId: string; parentId: string
   $q.notify({
     type: 'positive',
     message: t('educator.parentAssignSuccess'),
-    position: 'top',
   });
 }
 
@@ -323,7 +319,6 @@ async function handleAddEducator(payload: {
     $q.notify({
       type: 'negative',
       message: error.value ?? t('educator.assignEducatorError'),
-      position: 'top',
     });
     return;
   }
@@ -335,7 +330,6 @@ async function handleAddEducator(payload: {
   $q.notify({
     type: 'positive',
     message: t('educator.assignEducatorSuccess'),
-    position: 'top',
   });
 }
 
@@ -346,7 +340,6 @@ async function handleRemoveParent(payload: { studentId: string; parentId: string
     $q.notify({
       type: 'negative',
       message: error.value ?? t('educator.removeParentError'),
-      position: 'top',
     });
     return;
   }
@@ -358,7 +351,6 @@ async function handleRemoveParent(payload: { studentId: string; parentId: string
   $q.notify({
     type: 'positive',
     message: t('educator.parentRemoveSuccess'),
-    position: 'top',
   });
 }
 
@@ -375,7 +367,6 @@ async function handleRemoveEducator(payload: {
     $q.notify({
       type: 'negative',
       message: error.value ?? t('educator.removeEducatorError'),
-      position: 'top',
     });
     return;
   }
@@ -387,13 +378,12 @@ async function handleRemoveEducator(payload: {
   $q.notify({
     type: 'positive',
     message: t('educator.removeEducatorSuccess'),
-    position: 'top',
   });
 }
 
 async function handleAssignEducatorFromDialog(studentId: string): Promise<void> {
   if (!currentEducatorId.value) {
-    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId') });
     return;
   }
 
@@ -403,7 +393,6 @@ async function handleAssignEducatorFromDialog(studentId: string): Promise<void> 
     $q.notify({
       type: 'negative',
       message: error.value ?? t('educator.assignError'),
-      position: 'top',
     });
     return;
   }
@@ -412,12 +401,12 @@ async function handleAssignEducatorFromDialog(studentId: string): Promise<void> 
   updateUserInState(educator);
   updateDialogUser(student);
 
-  $q.notify({ type: 'positive', message: t('educator.assignSuccess'), position: 'top' });
+  $q.notify({ type: 'positive', message: t('educator.assignSuccess') });
 }
 
 async function handleUnassignEducatorFromDialog(studentId: string): Promise<void> {
   if (!currentEducatorId.value) {
-    $q.notify({ type: 'warning', message: t('educator.missingEducatorId'), position: 'top' });
+    $q.notify({ type: 'warning', message: t('educator.missingEducatorId') });
     return;
   }
 
@@ -430,7 +419,6 @@ async function handleUnassignEducatorFromDialog(studentId: string): Promise<void
     $q.notify({
       type: 'negative',
       message: error.value ?? t('educator.unassignError'),
-      position: 'top',
     });
     return;
   }
@@ -439,7 +427,7 @@ async function handleUnassignEducatorFromDialog(studentId: string): Promise<void
   updateUserInState(educator);
   updateDialogUser(student);
 
-  $q.notify({ type: 'positive', message: t('educator.unassignSuccess'), position: 'top' });
+  $q.notify({ type: 'positive', message: t('educator.unassignSuccess') });
 }
 
 async function performBulkRoleChange(targetRole: UserRole): Promise<void> {
@@ -449,7 +437,6 @@ async function performBulkRoleChange(targetRole: UserRole): Promise<void> {
     $q.notify({
       type: 'info',
       message: t('admin.bulkRoleNoChanges'),
-      position: 'top',
     });
     return;
   }
@@ -491,7 +478,6 @@ async function performBulkRoleChange(targetRole: UserRole): Promise<void> {
     $q.notify({
       type: 'positive',
       message: t('admin.bulkRoleSuccess', { count: updatedUsers.length }),
-      position: 'top',
     });
     return;
   }
@@ -506,13 +492,11 @@ async function performBulkRoleChange(targetRole: UserRole): Promise<void> {
         failed: failedIds.size,
       }),
       caption: Array.from(failedNames).join(', '),
-      position: 'top',
     });
   } else {
     $q.notify({
       type: 'negative',
       message: t('admin.bulkRoleError'),
-      position: 'top',
     });
   }
 }
@@ -549,7 +533,6 @@ function bulkChangeRole(): void {
       $q.notify({
         type: 'negative',
         message: t('admin.bulkRoleError'),
-        position: 'top',
       });
     });
   });

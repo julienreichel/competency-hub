@@ -254,7 +254,6 @@ async function handleSignOut(): Promise<void> {
     $q.notify({
       type: 'positive',
       message: 'Successfully signed out',
-      position: 'top',
     });
 
     await router.push('/login');
@@ -262,7 +261,6 @@ async function handleSignOut(): Promise<void> {
     $q.notify({
       type: 'negative',
       message: 'Sign out failed. Please try again.',
-      position: 'top',
     });
   }
 }

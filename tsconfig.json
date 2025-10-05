@@ -1,4 +1,7 @@
 {
   "extends": "./.quasar/tsconfig.json",
-  "exclude": ["amplify", "amplify/**"]
+  "exclude": ["amplify", "amplify/**"],
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false
+  }
 }
