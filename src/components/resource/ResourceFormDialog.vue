@@ -92,7 +92,7 @@ const props = withDefaults(
   },
 );
 const emit = defineEmits<{
-  (e: 'create', payload: CreateResourceInput): void;
+  (e: 'create', payload: CreateResourceInput, reset: () => void): void;
   (e: 'update', payload: UpdateResourceInput): void;
 }>();
 
@@ -128,6 +128,19 @@ watch(
 );
 
 function onSubmit(): void {
+  const emitReset = (): void => {
+    Object.assign(form, {
+      id: '',
+      subCompetencyId: props.subCompetencyId ?? '',
+      type: ResourceType.LINK,
+      name: '',
+      description: '',
+      url: null,
+      personUserId: null,
+      fileKey: null,
+    });
+  };
+
   if (isEdit.value && form.id) {
     emit('update', {
       id: form.id,
@@ -139,15 +152,19 @@ function onSubmit(): void {
       fileKey: form.fileKey || null,
     });
   } else {
-    emit('create', {
-      subCompetencyId: form.subCompetencyId || '',
-      type: form.type,
-      name: form.name,
-      description: form.description ?? '',
-      url: form.url ?? null,
-      personUserId: form.personUserId ?? null,
-      fileKey: form.fileKey ?? null,
-    });
+    emit(
+      'create',
+      {
+        subCompetencyId: form.subCompetencyId || '',
+        type: form.type,
+        name: form.name,
+        description: form.description ?? '',
+        url: form.url ?? null,
+        personUserId: form.personUserId ?? null,
+        fileKey: form.fileKey ?? null,
+      },
+      emitReset,
+    );
   }
   open.value = false;
 }

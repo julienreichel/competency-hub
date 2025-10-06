@@ -73,11 +73,15 @@ watch(
   { immediate: true },
 );
 
-async function handleCreateResource(payload: CreateResourceInput): Promise<void> {
+async function handleCreateResource(
+  payload: CreateResourceInput,
+  reset?: () => void,
+): Promise<void> {
   try {
     const created = await resourceRepository.create(payload);
     resources.value = [...resources.value, created];
     $q.notify({ type: 'positive', message: t('resources.messages.created') });
+    reset?.();
   } catch (error) {
     console.error('Failed to create resource', error);
     $q.notify({ type: 'negative', message: t('resources.messages.error') });
