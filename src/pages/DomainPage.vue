@@ -18,6 +18,12 @@
             :label="$t('competencies.addCompetency')"
             @click="openCreateDialog"
           />
+          <domain-json-manager
+            v-if="isAdmin"
+            :domain="domain"
+            :competencies="competencies"
+            @refresh="() => void loadData()"
+          />
           <q-btn
             v-if="hasRole('Admin') && competencies.length === 0 && !loading"
             color="negative"
@@ -78,6 +84,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 import CompetencyList from 'src/components/competency/CompetencyList.vue';
 import CreateCompetencyDialog from 'src/components/competency/CreateCompetencyDialog.vue';
+import DomainJsonManager from 'src/components/domain/DomainJsonManager.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -86,6 +93,7 @@ const { t } = useI18n();
 const { hasRole } = useAuth();
 const { getCurrentUser } = useUsers();
 const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
+const isAdmin = computed(() => hasRole('Admin'));
 
 const domainId = route.params.domainId as string;
 const domain = ref<Domain | null>(null);

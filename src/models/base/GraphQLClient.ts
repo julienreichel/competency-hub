@@ -371,6 +371,7 @@ export class GraphQLClient {
             'competencies.subCompetencies.*',
             'competencies.subCompetencies.resources.*',
             'competencies.subCompetencies.resources.person.*',
+            'competencies.subCompetencies.evaluations.*',
           ],
         },
       );

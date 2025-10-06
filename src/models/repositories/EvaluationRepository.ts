@@ -2,6 +2,7 @@ import { graphQLClient } from '../base/GraphQLClient';
 import { Evaluation, type EvaluationFormat, type EvaluationMode } from '../Evaluation';
 
 export interface CreateEvaluationInput {
+  id?: string;
   subCompetencyId: string;
   name: string;
   description?: string | null;

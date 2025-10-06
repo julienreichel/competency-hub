@@ -3,7 +3,7 @@
     v-model="open"
     :title="t('competencies.createTitle')"
     :loading="loading"
-    :use-form="true"
+    :use-form="false"
     :persistent="false"
     @submit="handleSubmit"
     @cancel="handleCancel"

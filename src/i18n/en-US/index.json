@@ -189,13 +189,30 @@
       "updated": "Domain updated successfully.",
       "deleted": "Domain deleted successfully.",
       "deleteConfirm": "Delete the domain \"{name}\"? This action cannot be undone.",
-      "error": "Something went wrong. Please try again."
+      "error": "Something went wrong. Please try again.",
+      "exportUnavailable": "Domain information is not available yet.",
+      "exportSuccess": "Domain exported as JSON.",
+      "exportError": "Failed to export domain JSON.",
+      "importSuccess": "Import complete: {competenciesCreated} created, {competenciesUpdated} updated competencies; {subCompetenciesCreated} created, {subCompetenciesUpdated} updated sub-competencies; {resourcesCreated} created, {resourcesUpdated} updated resources; {evaluationsCreated} created, {evaluationsUpdated} updated evaluations.",
+      "importError": "Failed to import domain JSON."
     },
     "fields": {
       "name": "Domain name",
       "color": "Color (optional)"
     },
-    "actions": {},
+    "actions": {
+      "exportJson": "Export JSON",
+      "importJson": "Import JSON"
+    },
+    "dialogs": {
+      "importSummary": {
+        "title": "Domain import summary",
+        "competencies": "Competencies: {created} created, {updated} updated",
+        "subCompetencies": "Sub-competencies: {created} created, {updated} updated",
+        "resources": "Resources: {created} created, {updated} updated",
+        "evaluations": "Evaluations: {created} created, {updated} updated"
+      }
+    },
     "competencyCount": "None | 1 competency | {count} competencies"
   },
   "resources": {

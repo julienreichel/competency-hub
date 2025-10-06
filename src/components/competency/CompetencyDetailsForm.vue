@@ -1,7 +1,7 @@
 <template>
-  <q-form ref="formRef" class="q-gutter-md" @submit.prevent="submit">
+  <q-form ref="formRef" @submit.prevent="submit">
     <div class="row q-col-gutter-md">
-      <div class="col-12 col-md-8">
+      <div class="col-12">
         <q-input
           v-model="formState.name"
           :label="t('competencies.fields.name')"
@@ -10,7 +10,7 @@
           autofocus
         />
       </div>
-      <div class="col-12 col-md-8">
+      <div class="col-12">
         <q-input
           v-model="formState.description"
           type="textarea"
@@ -19,7 +19,7 @@
           :label="t('competencies.fields.description')"
         />
       </div>
-      <div class="col-12 col-md-8">
+      <div class="col-12">
         <q-input
           v-model="formState.objectives"
           type="textarea"
@@ -37,8 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import { type CreateCompetencyInput } from 'src/models/Competency';
 import { useQuasar, type QForm } from 'quasar';
+import { type CreateCompetencyInput } from 'src/models/Competency';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
