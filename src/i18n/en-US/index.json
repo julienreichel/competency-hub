@@ -614,6 +614,13 @@
     "nameRequired": "Name is required",
     "roleRequired": "Role is required"
   },
+  "roles": {
+    "student": "Student",
+    "parent": "Parent",
+    "educator": "Educator",
+    "admin": "Admin",
+    "unknown": "Unknown"
+  },
   "login": {
     "headerSubtitle": "Sign in to access your learning dashboard",
     "welcomeBack": "Welcome Back",

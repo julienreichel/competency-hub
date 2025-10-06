@@ -614,6 +614,13 @@
     "nameRequired": "Le nom est obligatoire",
     "roleRequired": "Le rôle est obligatoire"
   },
+  "roles": {
+    "student": "Élève",
+    "parent": "Parent",
+    "educator": "Enseignant",
+    "admin": "Admin",
+    "unknown": "Inconnu"
+  },
   "login": {
     "headerSubtitle": "Connecte-toi pour accéder à ton tableau de bord",
     "welcomeBack": "Bon retour",

@@ -1,12 +1,13 @@
 <template>
   <q-chip :color="roleColor" text-color="white" :size="size" :dense="dense" class="role-chip">
     <q-icon v-if="showIcon" :name="roleIcon" size="16px" class="q-mr-xs" />
-    <slot>{{ role }}</slot>
+    <slot>{{ roleLabel }}</slot>
   </q-chip>
 </template>
 
 <script setup lang="ts">
 import { computed, withDefaults } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 export type RoleChipRole = 'Student' | 'Educator' | 'Parent' | 'Admin' | 'Unknown';
 
@@ -22,6 +23,8 @@ const props = withDefaults(defineProps<RoleChipProps>(), {
   size: 'sm',
   showIcon: true,
 });
+
+const { t } = useI18n();
 
 const roleColor = computed((): string => {
   switch (props.role) {
@@ -52,6 +55,8 @@ const roleIcon = computed((): string => {
       return 'person';
   }
 });
+
+const roleLabel = computed(() => t(`roles.${props.role.toLowerCase()}`));
 </script>
 
 <style scoped>
