@@ -1,3 +1,4 @@
+import { remove } from 'aws-amplify/storage';
 import { graphQLClient } from '../base/GraphQLClient';
 import { Project, type ProjectStatus } from '../Project';
 
@@ -42,6 +43,15 @@ export class ProjectRepository {
     if (!raw) {
       throw new Error(`Failed to delete project ${id}`);
     }
+
+    if (raw.fileKey) {
+      try {
+        await remove({ path: raw.fileKey });
+      } catch (error) {
+        console.error(`Failed to remove project file ${raw.fileKey}`, error);
+      }
+    }
+
     return Project.fromAmplify(raw);
   }
 

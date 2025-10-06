@@ -52,6 +52,24 @@ export class DomainRepository
   }
 
   async delete(id: string): Promise<Domain> {
+    const domainDetails = await graphQLClient.getDomainWithHierarchy(id);
+
+    if (Array.isArray(domainDetails?.competencies) && domainDetails?.competencies?.length) {
+      await Promise.all(
+        domainDetails.competencies
+          .filter((competency): competency is { id: string } & Record<string, unknown> =>
+            Boolean(competency && typeof competency === 'object' && 'id' in competency),
+          )
+          .map(async (competency) => {
+            try {
+              await graphQLClient.deleteCompetency(competency.id);
+            } catch (error) {
+              console.error(`Failed to delete competency ${competency.id} for domain ${id}`, error);
+            }
+          }),
+      );
+    }
+
     const raw = await graphQLClient.deleteDomain(id);
     if (!raw) {
       throw new Error(`Failed to delete domain ${id}`);

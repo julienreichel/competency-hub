@@ -1,3 +1,4 @@
+import { remove } from 'aws-amplify/storage';
 import type { Repository } from '../base/BaseModel';
 import { graphQLClient } from '../base/GraphQLClient';
 import {
@@ -53,6 +54,13 @@ export class ResourceRepository
     const raw = await graphQLClient.deleteResource(id);
     if (!raw) {
       throw new Error(`Failed to delete resource ${id}`);
+    }
+    if (raw.fileKey) {
+      try {
+        await remove({ path: raw.fileKey });
+      } catch (error) {
+        console.error(`Failed to remove resource file ${raw.fileKey}`, error);
+      }
     }
     return CompetencyResource.fromAmplify(raw);
   }

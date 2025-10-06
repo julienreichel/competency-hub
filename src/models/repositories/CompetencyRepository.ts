@@ -47,6 +47,30 @@ export class CompetencyRepository
   }
 
   async delete(id: string): Promise<Competency> {
+    const competencyDetails = await graphQLClient.getCompetencyWithDetails(id);
+
+    if (
+      Array.isArray(competencyDetails?.subCompetencies) &&
+      competencyDetails?.subCompetencies?.length
+    ) {
+      await Promise.all(
+        competencyDetails.subCompetencies
+          .filter((sub): sub is { id: string } & Record<string, unknown> =>
+            Boolean(sub && typeof sub === 'object' && 'id' in sub),
+          )
+          .map(async (sub) => {
+            try {
+              await graphQLClient.deleteSubCompetency(sub.id);
+            } catch (error) {
+              console.error(
+                `Failed to delete sub-competency ${sub.id} for competency ${id}`,
+                error,
+              );
+            }
+          }),
+      );
+    }
+
     const raw = await graphQLClient.deleteCompetency(id);
     if (!raw) {
       throw new Error(`Failed to delete competency ${id}`);
