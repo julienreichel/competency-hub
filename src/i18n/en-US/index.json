@@ -214,63 +214,16 @@
         "ageRequired": "Age is required",
         "gradeRequired": "Grade is required"
       },
-      "gradeOptions": {
-        "preK": "Pre-K",
-        "kindergarten": "Kindergarten",
-        "grade1": "1st Grade",
-        "grade2": "2nd Grade",
-        "grade3": "3rd Grade",
-        "grade4": "4th Grade",
-        "grade5": "5th Grade",
-        "grade6": "6th Grade",
-        "grade7": "7th Grade",
-        "grade8": "8th Grade",
-        "grade9": "9th Grade",
-        "grade10": "10th Grade",
-        "grade11": "11th Grade",
-        "grade12": "12th Grade"
-      }
+      "gradeOptions": {}
     }
   },
   "classes": {
-    "title": "My Classes",
-    "filters": {
-      "searchPlaceholder": "Search classes...",
-      "status": "Status",
-      "subject": "Subject"
-    },
-    "statusLabels": {
-      "active": "Active",
-      "completed": "Completed",
-      "upcoming": "Upcoming",
-      "dropped": "Dropped"
-    },
-    "subjects": {
-      "mathematics": "Mathematics",
-      "science": "Science",
-      "languageArts": "Language Arts",
-      "socialStudies": "Social Studies",
-      "art": "Art",
-      "music": "Music"
-    },
-    "progress": "{percent}% Complete",
-    "actions": {
-      "continue": "Continue",
-      "review": "Review",
-      "preview": "Preview",
-      "reenroll": "Re-enroll",
-      "view": "View",
-      "browseClasses": "Browse Available Classes"
-    },
-    "menu": {
-      "viewDetails": "View Details",
-      "viewGrades": "View Grades",
-      "dropClass": "Drop Class"
-    },
-    "empty": {
-      "title": "No classes found",
-      "description": "Try adjusting your search filters or enroll in new classes."
-    }
+    "filters": {},
+    "statusLabels": {},
+    "subjects": {},
+    "actions": {},
+    "menu": {},
+    "empty": {}
   },
   "errors": {
     "notFound": {
@@ -295,7 +248,6 @@
       "exportUnavailable": "Domain information is not available yet.",
       "exportSuccess": "Domain exported as JSON.",
       "exportError": "Failed to export domain JSON.",
-      "importSuccess": "Import complete: {competenciesCreated} created, {competenciesUpdated} updated competencies; {subCompetenciesCreated} created, {subCompetenciesUpdated} updated sub-competencies; {resourcesCreated} created, {resourcesUpdated} updated resources; {evaluationsCreated} created, {evaluationsUpdated} updated evaluations.",
       "importError": "Failed to import domain JSON."
     },
     "fields": {
@@ -566,12 +518,10 @@
         "description": "I want to monitor my child's progress"
       },
       "educator": {
-        "label": "Educator",
-        "description": "I support students in their learning journey"
+        "label": "Educator"
       },
       "admin": {
-        "label": "Admin",
-        "description": "I manage the platform"
+        "label": "Admin"
       },
       "unknown": "Unknown"
     },
@@ -597,68 +547,17 @@
     }
   },
   "reportsPage": {
-    "title": "Reports & Analytics",
-    "filters": {
-      "title": "Report Filters",
-      "reportType": "Report Type",
-      "timeRange": "Time Range",
-      "subject": "Subject"
-    },
-    "reportTypes": {
-      "progress": "Progress Report",
-      "assessments": "Assessment Results",
-      "competencies": "Competency Mastery",
-      "time": "Time Analytics"
-    },
-    "timeRanges": {
-      "last_week": "Last Week",
-      "last_month": "Last Month",
-      "last_quarter": "Last Quarter",
-      "last_year": "Last Year"
-    },
-    "subjects": {
-      "mathematics": "Mathematics",
-      "science": "Science",
-      "languageArts": "Language Arts",
-      "socialStudies": "Social Studies",
-      "art": "Art",
-      "music": "Music"
-    },
-    "summary": {
-      "completedAssessments": "Completed Assessments",
-      "averageScore": "Average Score",
-      "competenciesMastered": "Competencies Mastered",
-      "studyTime": "Study Time"
-    },
-    "charts": {
-      "progressOverTime": "Progress Over Time",
-      "placeholderPrimary": "Chart will be displayed here",
-      "placeholderSecondary": "Progress tracking chart showing performance trends",
-      "subjectPerformance": "Subject Performance"
-    },
-    "subjectAverage": "{score}% average",
+    "filters": {},
+    "reportTypes": {},
+    "timeRanges": {},
+    "subjects": {},
+    "summary": {},
+    "charts": {},
     "table": {
-      "title": "Detailed Report Data",
-      "columns": {
-        "assessment": "Assessment",
-        "subject": "Subject",
-        "date": "Date",
-        "score": "Score",
-        "status": "Status",
-        "timeSpent": "Time (min)"
-      }
+      "columns": {}
     },
-    "statusLabels": {
-      "completed": "Completed",
-      "inProgress": "In Progress",
-      "notStarted": "Not Started"
-    },
-    "actions": {
-      "update": "Update Report",
-      "exportPdf": "Export PDF",
-      "exportCsv": "Export CSV",
-      "share": "Share Report"
-    }
+    "statusLabels": {},
+    "actions": {}
   },
   "projects": {
     "myProjects": "My Projects",

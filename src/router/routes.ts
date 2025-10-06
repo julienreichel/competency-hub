@@ -68,12 +68,6 @@ const routes: RouteRecordRaw[] = [
         meta: { roles: ['Student', 'Educator', 'Admin'] },
       },
       {
-        path: 'classes',
-        name: 'classes',
-        component: () => import('pages/ClassesPage.vue'),
-        meta: { roles: ['Educator'] },
-      },
-      {
         path: 'domains',
         name: 'domains',
         component: () => import('pages/DomainsPage.vue'),
