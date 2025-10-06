@@ -35,7 +35,26 @@
                 <q-item-section avatar>
                   <q-icon name="person" />
                 </q-item-section>
-                <q-item-section>Profile</q-item-section>
+                <q-item-section>{{ t('common.profile') }}</q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item class="q-px-sm">
+                <q-item-section avatar>
+                  <q-icon name="language" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ t('language.label') }}</q-item-label>
+                  <q-option-group
+                    v-model="selectedLocale"
+                    :options="languageOptions"
+                    color="primary"
+                    dense
+                    type="radio"
+                    class="q-mt-xs"
+                  />
+                </q-item-section>
               </q-item>
 
               <q-separator />
@@ -44,7 +63,7 @@
                 <q-item-section avatar>
                   <q-icon name="logout" color="negative" />
                 </q-item-section>
-                <q-item-section>Sign Out</q-item-section>
+                <q-item-section>{{ t('login.actions.signOut') }}</q-item-section>
               </q-item>
             </q-list>
           </q-btn-dropdown>
@@ -184,13 +203,41 @@
 
 <script setup lang="ts">
 import EssentialLink from 'components/EssentialLink.vue';
+import type { MessageLanguages } from 'src/boot/i18n';
 import { useQuasar } from 'quasar';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 
 const router = useRouter();
 const $q = useQuasar();
+const { t, locale } = useI18n();
+
+const LANGUAGE_STORAGE_KEY = 'preferred-locale';
+const LANGUAGE_OPTIONS: Array<{ value: MessageLanguages; labelKey: string }> = [
+  { value: 'en-US', labelKey: 'language.options.enUS' },
+  { value: 'fr', labelKey: 'language.options.fr' },
+];
+
+const languageOptions = computed(() =>
+  LANGUAGE_OPTIONS.map(({ value, labelKey }) => ({
+    value,
+    label: t(labelKey),
+  })),
+);
+
+const selectedLocale = computed<MessageLanguages>({
+  get: () => locale.value as MessageLanguages,
+  set: (value) => {
+    if (locale.value !== value) {
+      locale.value = value;
+    }
+    if ($q.localStorage) {
+      $q.localStorage.set(LANGUAGE_STORAGE_KEY, value);
+    }
+  },
+});
 
 const {
   isAuthenticated,
@@ -253,14 +300,14 @@ async function handleSignOut(): Promise<void> {
 
     $q.notify({
       type: 'positive',
-      message: 'Successfully signed out',
+      message: t('login.notifications.signOutSuccess'),
     });
 
     await router.push('/login');
   } catch {
     $q.notify({
       type: 'negative',
-      message: 'Sign out failed. Please try again.',
+      message: t('login.notifications.signOutError'),
     });
   }
 }

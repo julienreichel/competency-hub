@@ -214,16 +214,70 @@
         "ageRequired": "Age is required",
         "gradeRequired": "Grade is required"
       },
-      "gradeOptions": {}
+      "gradeOptions": {
+        "preK": "Pre-K",
+        "kindergarten": "Kindergarten",
+        "grade1": "1st Grade",
+        "grade2": "2nd Grade",
+        "grade3": "3rd Grade",
+        "grade4": "4th Grade",
+        "grade5": "5th Grade",
+        "grade6": "6th Grade",
+        "grade7": "7th Grade",
+        "grade8": "8th Grade",
+        "grade9": "9th Grade",
+        "grade10": "10th Grade",
+        "grade11": "11th Grade",
+        "grade12": "12th Grade"
+      }
     }
   },
   "classes": {
-    "filters": {},
-    "statusLabels": {},
-    "subjects": {},
-    "actions": {},
-    "menu": {},
-    "empty": {}
+    "title": "My Classes",
+    "filters": {
+      "searchPlaceholder": "Search classes...",
+      "status": "Status",
+      "subject": "Subject"
+    },
+    "statusLabels": {
+      "active": "Active",
+      "completed": "Completed",
+      "upcoming": "Upcoming",
+      "dropped": "Dropped"
+    },
+    "subjects": {
+      "mathematics": "Mathematics",
+      "science": "Science",
+      "languageArts": "Language Arts",
+      "socialStudies": "Social Studies",
+      "art": "Art",
+      "music": "Music"
+    },
+    "progress": "{percent}% Complete",
+    "actions": {
+      "continue": "Continue",
+      "review": "Review",
+      "preview": "Preview",
+      "reenroll": "Re-enroll",
+      "view": "View",
+      "browseClasses": "Browse Available Classes"
+    },
+    "menu": {
+      "viewDetails": "View Details",
+      "viewGrades": "View Grades",
+      "dropClass": "Drop Class"
+    },
+    "empty": {
+      "title": "No classes found",
+      "description": "Try adjusting your search filters or enroll in new classes."
+    }
+  },
+  "language": {
+    "label": "Language",
+    "options": {
+      "enUS": "English",
+      "fr": "Français"
+    }
   },
   "errors": {
     "notFound": {
@@ -543,21 +597,77 @@
       "userNotFound": "User not found. Please contact support.",
       "authFailed": "Authentication failed. Please try again.",
       "assignSuccess": "Welcome! You've been assigned the {role} role.",
-      "assignError": "Failed to assign role. Please try again."
+      "assignError": "Failed to assign role. Please try again.",
+      "signOutSuccess": "Successfully signed out.",
+      "signOutError": "Sign out failed. Please try again."
+    },
+    "actions": {
+      "signOut": "Sign Out"
     }
   },
   "reportsPage": {
-    "filters": {},
-    "reportTypes": {},
-    "timeRanges": {},
-    "subjects": {},
-    "summary": {},
-    "charts": {},
-    "table": {
-      "columns": {}
+    "title": "Reports & Analytics",
+    "filters": {
+      "title": "Report Filters",
+      "reportType": "Report Type",
+      "timeRange": "Time Range",
+      "subject": "Subject"
     },
-    "statusLabels": {},
-    "actions": {}
+    "reportTypes": {
+      "progress": "Progress Report",
+      "assessments": "Assessment Results",
+      "competencies": "Competency Mastery",
+      "time": "Time Analytics"
+    },
+    "timeRanges": {
+      "last_week": "Last Week",
+      "last_month": "Last Month",
+      "last_quarter": "Last Quarter",
+      "last_year": "Last Year"
+    },
+    "subjects": {
+      "mathematics": "Mathematics",
+      "science": "Science",
+      "languageArts": "Language Arts",
+      "socialStudies": "Social Studies",
+      "art": "Art",
+      "music": "Music"
+    },
+    "summary": {
+      "completedAssessments": "Completed Assessments",
+      "averageScore": "Average Score",
+      "competenciesMastered": "Competencies Mastered",
+      "studyTime": "Study Time"
+    },
+    "charts": {
+      "progressOverTime": "Progress Over Time",
+      "placeholderPrimary": "Chart will be displayed here",
+      "placeholderSecondary": "Progress tracking chart showing performance trends",
+      "subjectPerformance": "Subject Performance"
+    },
+    "subjectAverage": "{score}% average",
+    "table": {
+      "title": "Detailed Report Data",
+      "columns": {
+        "assessment": "Assessment",
+        "subject": "Subject",
+        "date": "Date",
+        "score": "Score",
+        "status": "Status",
+        "timeSpent": "Time (min)"
+      }
+    },
+    "statusLabels": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "notStarted": "Not Started"
+    },
+    "actions": {
+      "update": "Update Report",
+      "exportPdf": "Export PDF",
+      "exportCsv": "Export CSV",
+      "share": "Share Report"
+    }
   },
   "projects": {
     "myProjects": "My Projects",

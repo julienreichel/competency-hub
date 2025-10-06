@@ -1,0 +1,734 @@
+{
+  "dashboard": {
+    "welcome": "Content de te revoir, {name} !",
+    "defaultName": "toi",
+    "subtitle": {
+      "student": "Voici un aperçu de ton apprentissage.",
+      "parent": "Suis facilement les progrès de ton enfant.",
+      "educator": "Suis l'avancée de ta classe.",
+      "admin": "Vue d'ensemble de la plateforme."
+    },
+    "recentActivity": "Activité récente",
+    "noRecentActivity": "Pas encore d'activité.",
+    "quickActions": "Actions rapides",
+    "updatedOn": "Mis à jour le {date}",
+    "updatedUnknown": "Dernière mise à jour inconnue",
+    "activityPercent": "{percent}% terminé",
+    "activityDefaultSubtitle": "Bravo, continue comme ça !",
+    "labels": {
+      "unknownSub": "Sous-compétence"
+    },
+    "cards": {
+      "totalCompetencies": "Total des compétences",
+      "validated": "Validées",
+      "inProgress": "En cours",
+      "pendingValidation": "En attente de validation",
+      "locked": "Verrouillées",
+      "recommended": "{count} recommandées",
+      "totalChildren": "Enfants",
+      "totalStudents": "Élèves",
+      "activeCompetencies": "Compétences actives",
+      "pendingReviews": "Revues en attente",
+      "totalUsers": "Utilisateurs",
+      "adminStudents": "Élèves",
+      "adminEducators": "Enseignants",
+      "adminParents": "Parents",
+      "adminAdmins": "{count} admins"
+    },
+    "actions": {
+      "myCompetencies": "Mes compétences",
+      "viewAssessments": "Voir les évaluations",
+      "myProjects": "Mes projets",
+      "viewReports": "Voir les rapports",
+      "viewChildren": "Voir les enfants",
+      "manageStudents": "Gérer les élèves",
+      "manageUsers": "Gérer les utilisateurs",
+      "manageDomains": "Gérer les domaines"
+    }
+  },
+  "common": {
+    "view": "Voir",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "user": "Utilisateur",
+    "profile": "Profil",
+    "role": "Rôle",
+    "status": "Statut",
+    "email": "Email",
+    "name": "Nom",
+    "actions": "Actions",
+    "refresh": "Rafraîchir",
+    "create": "Créer",
+    "clear": "Effacer",
+    "loading": "Chargement...",
+    "download": "Télécharger",
+    "unknown": "Inconnu"
+  },
+  "resource": {
+    "openFile": "Ouvrir le fichier"
+  },
+  "admin": {
+    "userManagement": "Gestion des utilisateurs",
+    "searchUsers": "Rechercher des utilisateurs...",
+    "changeRole": "Changer de rôle",
+    "changeRolePrompt": "Choisis le nouveau rôle pour les utilisateurs sélectionnés ({count}).",
+    "bulkRoleSuccess": "Rôle mis à jour pour {count} utilisateur(s).",
+    "bulkRolePartial": "{success} utilisateur(s) mis à jour ; {failed} échec(s).",
+    "bulkRoleNoChanges": "Tous les utilisateurs sélectionnés ont déjà ce rôle.",
+    "bulkRoleError": "Impossible de mettre à jour les utilisateurs sélectionnés. Réessaie.",
+    "contactInfo": "Infos de contact",
+    "userName": "Nom complet",
+    "avatar": {
+      "clear": "Effacer",
+      "regenerate": "Régénérer",
+      "random": "Aléatoire"
+    },
+    "editUser": "Modifier l'utilisateur",
+    "avatarPickerTitle": "Choisis un avatar",
+    "userDetails": "Détails de l'utilisateur",
+    "lastActive": "Dernière activité",
+    "memberSince": "Membre depuis",
+    "stats": {
+      "totalUsers": "Nombre total d'utilisateurs",
+      "students": "Élèves",
+      "newThisMonth": "Nouveaux ce mois",
+      "onlineNow": "En ligne maintenant"
+    },
+    "userDetailsLoadFailed": "Impossible de charger les détails de l'utilisateur. Réessaie."
+  },
+  "profile": {
+    "uploadPhoto": "Télécharger une photo",
+    "picture": "Photo de profil",
+    "uploadError": "Impossible de télécharger la photo. Réessaie.",
+    "title": "Profil utilisateur",
+    "loading": "Chargement du profil...",
+    "fallbackName": "Utilisateur",
+    "actions": {
+      "edit": "Modifier le profil",
+      "save": "Enregistrer les changements"
+    },
+    "messages": {
+      "waitForUpload": "Merci d'attendre la fin du téléchargement avant d'enregistrer.",
+      "updateSuccess": "Profil mis à jour avec succès !",
+      "updateError": "Échec de la mise à jour du profil. Réessaie."
+    }
+  },
+  "educator": {
+    "assignLabel": "Ajouter à mes élèves",
+    "unassignLabel": "Retirer de mes élèves",
+    "parents": "Parents",
+    "educators": "Enseignants",
+    "myStudentsTitle": "Mes élèves",
+    "searchStudents": "Rechercher des élèves...",
+    "myStudentsTab": "Mes élèves",
+    "allStudentsTab": "Tous les élèves",
+    "noMyStudents": "Tu n'as pas encore d'élèves assignés.",
+    "noStudentsFound": "Aucun élève trouvé.",
+    "missingEducatorId": "Impossible de reconnaître ton compte enseignant. Merci de te reconnecter.",
+    "assignSuccess": "Élève ajouté à ta liste.",
+    "unassignSuccess": "Élève retiré de ta liste.",
+    "refreshSuccess": "Liste des élèves actualisée.",
+    "viewCompetencies": "Voir les compétences",
+    "viewAssessments": "Voir les évaluations",
+    "viewReport": "Voir le rapport",
+    "assignError": "Impossible d'ajouter l'élève. Réessaie.",
+    "unassignError": "Impossible de retirer l'élève. Réessaie.",
+    "assignParent": "Associer un parent",
+    "parentAssignSuccess": "Parent lié à l'élève.",
+    "assignParentError": "Impossible d'associer le parent. Réessaie.",
+    "removeParentError": "Impossible de retirer le parent. Réessaie.",
+    "parentRemoveSuccess": "Parent retiré de l'élève.",
+    "parentSelectTitle": "Associer un parent",
+    "parentSelectDescription": "Choisis un parent à lier à cet élève.",
+    "parentSelectPlaceholder": "Sélectionne un parent",
+    "assignParentConfirm": "Lier le parent",
+    "assignEducator": "Associer un enseignant",
+    "assignEducatorConfirm": "Lier l'enseignant",
+    "assignEducatorSuccess": "Enseignant lié à l'élève.",
+    "assignEducatorError": "Impossible d'associer l'enseignant. Réessaie.",
+    "removeEducatorSuccess": "Enseignant retiré de l'élève.",
+    "removeEducatorError": "Impossible de retirer l'enseignant. Réessaie.",
+    "educatorSelectTitle": "Associer un enseignant",
+    "educatorSelectDescription": "Choisis un enseignant à lier à cet élève.",
+    "educatorSelectPlaceholder": "Sélectionne un enseignant",
+    "noEducatorsAssigned": "Aucun enseignant assigné.",
+    "noParentsAssigned": "Aucun parent assigné.",
+    "assessments": {
+      "title": "Validations en attente",
+      "searchPlaceholder": "Rechercher des élèves ou des compétences...",
+      "domainFilterLabel": "Domaine",
+      "studentFilterLabel": "Élève",
+      "emptyState": "Aucune validation en attente.",
+      "table": {
+        "student": "Élève",
+        "evaluationStatus": "Statut des évaluations",
+        "menu": {
+          "openCompetencies": "Ouvrir toutes les compétences",
+          "openAssessments": "Ouvrir toutes les évaluations",
+          "openSubCompetency": "Ouvrir la sous-compétence"
+        }
+      }
+    },
+    "projects": {
+      "title": "Projets des élèves",
+      "searchPlaceholder": "Rechercher des projets, élèves ou compétences...",
+      "studentFilterLabel": "Élève",
+      "subCompetencyFilterLabel": "Compétence",
+      "emptyState": "Aucun projet soumis à valider.",
+      "loadError": "Impossible de charger les projets des élèves",
+      "tableTitle": "Projets soumis",
+      "tableHint": "Vérifie et approuve ou rejette les projets des élèves",
+      "columns": {
+        "student": "Élève",
+        "name": "Projet",
+        "subCompetency": "Compétence",
+        "submittedAt": "Soumis le"
+      }
+    }
+  },
+  "parents": {
+    "children": {
+      "title": "Mes enfants",
+      "loading": "Chargement des enfants...",
+      "emptyTitle": "Aucun enfant ajouté",
+      "emptyDescription": "Ajoute tes enfants pour suivre leurs progrès.",
+      "dialog": {
+        "title": "Ajouter un enfant"
+      },
+      "actions": {
+        "addChild": "Ajouter un enfant",
+        "addFirstChild": "Ajoute ton premier enfant"
+      },
+      "fields": {
+        "fullName": "Nom complet *",
+        "age": "Âge *",
+        "grade": "Niveau scolaire *",
+        "school": "École",
+        "studentId": "Identifiant élève",
+        "studentIdHint": "Si ton enfant est déjà inscrit dans le système"
+      },
+      "validation": {
+        "nameRequired": "Le nom est requis",
+        "ageRequired": "L'âge est requis",
+        "gradeRequired": "Le niveau est requis"
+      },
+      "gradeOptions": {
+        "preK": "Pré-maternelle",
+        "kindergarten": "Maternelle",
+        "grade1": "1re année",
+        "grade2": "2e année",
+        "grade3": "3e année",
+        "grade4": "4e année",
+        "grade5": "5e année",
+        "grade6": "6e année",
+        "grade7": "7e année",
+        "grade8": "8e année",
+        "grade9": "9e année",
+        "grade10": "10e année",
+        "grade11": "11e année",
+        "grade12": "12e année"
+      }
+    }
+  },
+  "classes": {
+    "title": "Mes classes",
+    "filters": {
+      "searchPlaceholder": "Rechercher des classes...",
+      "status": "Statut",
+      "subject": "Matière"
+    },
+    "statusLabels": {
+      "active": "Active",
+      "completed": "Terminée",
+      "upcoming": "À venir",
+      "dropped": "Abandonnée"
+    },
+    "subjects": {
+      "mathematics": "Mathématiques",
+      "science": "Sciences",
+      "languageArts": "Lettres",
+      "socialStudies": "Sciences sociales",
+      "art": "Arts",
+      "music": "Musique"
+    },
+    "progress": "{percent}% complété",
+    "actions": {
+      "continue": "Continuer",
+      "review": "Réviser",
+      "preview": "Aperçu",
+      "reenroll": "Se réinscrire",
+      "view": "Voir",
+      "browseClasses": "Parcourir les classes disponibles"
+    },
+    "menu": {
+      "viewDetails": "Voir les détails",
+      "viewGrades": "Voir les notes",
+      "dropClass": "Abandonner la classe"
+    },
+    "empty": {
+      "title": "Aucune classe trouvée",
+      "description": "Essaie d'ajuster tes filtres ou inscris-toi à de nouvelles classes."
+    }
+  },
+  "language": {
+    "label": "Langue",
+    "options": {
+      "enUS": "Anglais",
+      "fr": "Français"
+    }
+  },
+  "errors": {
+    "notFound": {
+      "subtitle": "Oups. Rien ici...",
+      "action": "Retour à l’accueil"
+    }
+  },
+  "domains": {
+    "title": "Domaines",
+    "subtitle": "Organise les compétences par domaine",
+    "addDomain": "Ajouter un domaine",
+    "createTitle": "Créer un domaine",
+    "editTitle": "Modifier un domaine",
+    "loading": "Chargement des domaines...",
+    "emptyState": "Aucun domaine trouvé. Crée le premier pour commencer.",
+    "messages": {
+      "created": "Domaine créé avec succès.",
+      "updated": "Domaine mis à jour avec succès.",
+      "deleted": "Domaine supprimé avec succès.",
+      "deleteConfirm": "Supprimer le domaine « {name} » ? Cette action est irréversible.",
+      "error": "Un problème est survenu. Réessaie.",
+      "exportUnavailable": "Les infos du domaine ne sont pas encore disponibles.",
+      "exportSuccess": "Domaine exporté en JSON.",
+      "exportError": "Échec de l’export du domaine en JSON.",
+      "importError": "Échec de l’import du domaine en JSON."
+    },
+    "fields": {
+      "name": "Nom du domaine",
+      "color": "Couleur (optionnel)"
+    },
+    "actions": {
+      "exportJson": "Exporter en JSON",
+      "importJson": "Importer en JSON"
+    },
+    "dialogs": {
+      "importSummary": {
+        "title": "Résumé de l’import du domaine",
+        "competencies": "Compétences : {created} créées, {updated} mises à jour",
+        "subCompetencies": "Sous-compétences : {created} créées, {updated} mises à jour",
+        "resources": "Ressources : {created} créées, {updated} mises à jour",
+        "evaluations": "Évaluations : {created} créées, {updated} mises à jour"
+      }
+    },
+    "competencyCount": "Aucune | 1 compétence | {count} compétences"
+  },
+  "resources": {
+    "title": "Ressources",
+    "addResource": "Ajouter une ressource",
+    "addTitle": "Ajouter une ressource",
+    "editTitle": "Modifier une ressource",
+    "emptyState": "Aucune ressource trouvée",
+    "actions": {},
+    "fields": {
+      "type": "Type",
+      "title": "Titre",
+      "description": "Description",
+      "url": "URL",
+      "upload": "Importer un fichier",
+      "helperUser": "Utilisateur aidant"
+    },
+    "messages": {
+      "created": "Ressource créée.",
+      "updated": "Ressource mise à jour.",
+      "deleted": "Ressource supprimée.",
+      "error": "Impossible de mettre à jour la ressource. Réessaie.",
+      "deleteConfirm": "Supprimer cette ressource ? Cette action est irréversible."
+    }
+  },
+  "evaluations": {
+    "title": "Évaluations",
+    "addEvaluation": "Ajouter une évaluation",
+    "addTitle": "Ajouter une évaluation",
+    "editTitle": "Modifier une évaluation",
+    "emptyState": "Pas encore d’évaluations.",
+    "minutesShort": "min",
+    "noDuration": "Aucune durée indiquée",
+    "createSuccess": "Évaluation ajoutée.",
+    "createError": "Impossible d’ajouter l’évaluation. Réessaie.",
+    "updateSuccess": "Évaluation mise à jour.",
+    "updateError": "Impossible de mettre à jour l’évaluation. Réessaie.",
+    "deleteSuccess": "Évaluation supprimée.",
+    "deleteError": "Impossible de supprimer l’évaluation. Réessaie.",
+    "deleteConfirm": "Supprimer l’évaluation « {name} » ? Cette action est irréversible.",
+    "deliveryRequired": "Ajoute une URL ou un fichier avant d’enregistrer.",
+    "actions": {
+      "start": "Commencer",
+      "complete": "Terminée",
+      "startSuccess": "Évaluation commencée.",
+      "startError": "Impossible de commencer l’évaluation. Réessaie.",
+      "completeSuccess": "Évaluation marquée comme terminée.",
+      "completeError": "Impossible de marquer l’évaluation comme terminée. Réessaie."
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "mode": "Mode",
+      "format": "Format",
+      "duration": "Durée (minutes)",
+      "delivery": "Remise",
+      "url": "URL",
+      "upload": "Importer un fichier"
+    },
+    "delivery": {
+      "url": "URL",
+      "file": "Importer"
+    }
+  },
+  "assessments": {
+    "title": "Évaluations",
+    "viewingFor": "Évaluations de {name}",
+    "filters": {
+      "searchPlaceholder": "Rechercher des évaluations...",
+      "status": "Statut",
+      "domain": "Domaine"
+    },
+    "summary": {
+      "total": "Nombre total d’évaluations",
+      "notStarted": "Pas commencée",
+      "inProgress": "En cours",
+      "completed": "Terminée"
+    },
+    "status": {
+      "NotStarted": "Pas commencée",
+      "InProgress": "En cours",
+      "Completed": "Terminée"
+    },
+    "empty": "Aucune évaluation ne correspond aux filtres.",
+    "errors": {
+      "noUser": "Impossible de savoir quel utilisateur charger.",
+      "userNotFound": "L’utilisateur sélectionné est introuvable.",
+      "notStudent": "{name} n’est pas un élève.",
+      "generic": "Impossible de charger les évaluations. Réessaie."
+    }
+  },
+  "competencies": {
+    "title": "Compétences",
+    "addCompetency": "Ajouter une compétence",
+    "addSubCompetency": "Ajouter une sous-compétence",
+    "createTitle": "Créer une compétence",
+    "newSubCompetency": "Nouvelle sous-compétence",
+    "fields": {
+      "name": "Nom de la compétence",
+      "description": "Description",
+      "objectives": "Objectifs"
+    },
+    "actions": {},
+    "loading": "Chargement des compétences...",
+    "emptyState": "Aucune compétence dans ce domaine pour l’instant.",
+    "noDescription": "Aucune description fournie.",
+    "searchPlaceholder": "Rechercher des compétences...",
+    "viewingFor": "Compétences de {name}",
+    "summary": {
+      "total": "Total des sous-compétences",
+      "validated": "Validées",
+      "inProgress": "En cours",
+      "pending": "En attente de validation",
+      "locked": "Verrouillées",
+      "notStarted": "Pas commencées"
+    },
+    "editor": {
+      "tabs": {},
+      "messages": {}
+    },
+    "messages": {
+      "created": "Compétence créée avec succès.",
+      "deleted": "Compétence supprimée avec succès.",
+      "deleteConfirm": "Supprimer la compétence « {name} » ? Cette action est irréversible.",
+      "error": "Impossible d’enregistrer la compétence. Réessaie.",
+      "loadError": "Impossible de charger les détails du domaine. Réessaie."
+    },
+    "subCompetencies": "Sous-compétences"
+  },
+  "subCompetencies": {
+    "title": "Sous-compétences",
+    "loading": "Chargement de la sous-compétence...",
+    "name": "Nom de la sous-compétence",
+    "description": "Description",
+    "objectives": "Objectifs",
+    "emptyState": "Aucune sous-compétence trouvée",
+    "noDescription": "Pas de description fournie",
+    "deleted": "Sous-compétence supprimée avec succès.",
+    "deleteConfirm": "Supprimer la sous-compétence « {name} » ? Cette action est irréversible.",
+    "deleteError": "Impossible de supprimer la sous-compétence. Réessaie.",
+    "studentProgress": "Progrès de l’élève",
+    "studentProgressHint": "Gère l’avancement de l’élève.",
+    "status": "Statut",
+    "recommended": "Recommandée",
+    "unlockAction": "Déverrouiller",
+    "recommendAction": "Recommander",
+    "validateAction": "Valider",
+    "progressSteps": {
+      "remember": "Je peux m’en souvenir",
+      "explain": "Je comprends et je peux expliquer",
+      "apply": "Je peux appliquer",
+      "master": "J’ai acquis cette compétence"
+    },
+    "unlockSuccess": "Accès de l’élève déverrouillé.",
+    "recommendSuccess": "Sous-compétence recommandée aux élèves sélectionnés.",
+    "lockSuccess": "Accès de l’élève verrouillé.",
+    "validateSuccess": "Élève marqué comme validé.",
+    "pendingValidationSuccess": "Demande envoyée pour validation.",
+    "progressStepSuccess": "Progrès mis à jour.",
+    "progressUpdateError": "Impossible de mettre à jour le progrès de l’élève. Réessaie.",
+    "saveSuccess": "Sous-compétence enregistrée."
+  },
+  "progressStatus": {
+    "NotStarted": "Pas commencée",
+    "Locked": "Verrouillée"
+  },
+  "reports": {
+    "title": "Rapports des élèves",
+    "emptyState": {
+      "title": "Aucun rapport généré",
+      "subtitle": "Choisis une période et génère un rapport pour voir les progrès de l’élève"
+    },
+    "errors": {
+      "noStudentId": "Aucun identifiant élève fourni"
+    },
+    "messages": {
+      "generated": "Rapport généré avec succès"
+    },
+    "noEvidence": "Aucune preuve",
+    "noChange": "Aucun changement",
+    "filters": {
+      "title": "Filtres du rapport",
+      "period": "Période",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "domain": "Filtre par domaine",
+      "options": "Options",
+      "includeDetails": "Inclure les détails"
+    },
+    "summary": {
+      "title": "Résumé",
+      "domainsCovered": "Domaines",
+      "competenciesAdvanced": "Avancées",
+      "competenciesAcquired": "Acquises",
+      "totalActivity": "Activités",
+      "periodInfo": "Période du rapport : {start} à {end}"
+    },
+    "domain": {
+      "competenciesCount": "{count} compétences | {count} compétence | {count} compétences"
+    },
+    "table": {
+      "competency": "Compétence",
+      "subCompetency": "Sous-compétence",
+      "status": "Statut",
+      "progress": "Progrès",
+      "change": "Changement",
+      "lastEvidence": "Dernière preuve"
+    },
+    "actions": {
+      "title": "Actions",
+      "generate": "Générer un rapport",
+      "print": "Imprimer",
+      "exportPdf": "Exporter en PDF",
+      "regenerate": "Régénérer",
+      "pdfExportInfo": "Utilise la fonction d’impression de ton navigateur pour sauvegarder en PDF"
+    },
+    "info": {
+      "generatedAt": "Généré le {time}",
+      "generatedBy": "Généré par {name}"
+    }
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "nameRequired": "Le nom est obligatoire",
+    "roleRequired": "Le rôle est obligatoire"
+  },
+  "login": {
+    "headerSubtitle": "Connecte-toi pour accéder à ton tableau de bord",
+    "welcomeBack": "Bon retour",
+    "enterCredentials": "Entre tes identifiants pour continuer",
+    "signIn": "Se connecter",
+    "accessDashboard": "Accéder à ton tableau de compétences",
+    "createAccount": "Créer un compte",
+    "joinPlatform": "Rejoins la plateforme d’apprentissage par compétences",
+    "termsAndPrivacy": "En te connectant, tu acceptes nos Conditions d’utilisation et notre Politique de confidentialité",
+    "success": "Connexion réussie",
+    "signedIn": "Tu es connecté à Competency Hub.",
+    "roleSelection": {
+      "title": "Choisis ton rôle",
+      "subtitle": "Sélectionne le rôle qui te correspond le mieux"
+    },
+    "roles": {
+      "student": {
+        "label": "Élève",
+        "description": "Je suis ici pour apprendre et suivre mes progrès"
+      },
+      "parent": {
+        "label": "Parent",
+        "description": "Je veux suivre les progrès de mon enfant"
+      },
+      "educator": {
+        "label": "Enseignant"
+      },
+      "admin": {
+        "label": "Admin"
+      },
+      "unknown": "Inconnu"
+    },
+    "forms": {
+      "firstName": "Prénom",
+      "firstNamePlaceholder": "Entre ton prénom",
+      "lastName": "Nom de famille",
+      "lastNamePlaceholder": "Entre ton nom de famille",
+      "email": "Adresse email",
+      "emailPlaceholder": "Entre ton adresse email",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "Choisis un mot de passe sécurisé",
+      "confirmPassword": "Confirme le mot de passe",
+      "confirmPasswordPlaceholder": "Confirme ton mot de passe",
+      "signInEmailPlaceholder": "Entre ton adresse email pour te connecter",
+      "signInPasswordPlaceholder": "Entre ton mot de passe"
+    },
+    "notifications": {
+      "userNotFound": "Utilisateur introuvable. Contacte le support.",
+      "authFailed": "Échec de l’authentification. Réessaie.",
+      "assignSuccess": "Bienvenue ! Ton rôle {role} a été attribué.",
+      "assignError": "Impossible d’attribuer le rôle. Réessaie.",
+      "signOutSuccess": "Déconnexion réussie.",
+      "signOutError": "Échec de la déconnexion. Réessaie."
+    },
+    "actions": {
+      "signOut": "Se déconnecter"
+    }
+  },
+  "reportsPage": {
+    "title": "Rapports et analyses",
+    "filters": {
+      "title": "Filtres de rapport",
+      "reportType": "Type de rapport",
+      "timeRange": "Période",
+      "subject": "Discipline"
+    },
+    "reportTypes": {
+      "progress": "Rapport de progression",
+      "assessments": "Résultats d’évaluations",
+      "competencies": "Maîtrise des compétences",
+      "time": "Analyse du temps"
+    },
+    "timeRanges": {
+      "last_week": "Semaine dernière",
+      "last_month": "Mois dernier",
+      "last_quarter": "Trimestre dernier",
+      "last_year": "Année dernière"
+    },
+    "subjects": {
+      "mathematics": "Mathématiques",
+      "science": "Sciences",
+      "languageArts": "Lettres",
+      "socialStudies": "Sciences sociales",
+      "art": "Arts",
+      "music": "Musique"
+    },
+    "summary": {
+      "completedAssessments": "Évaluations terminées",
+      "averageScore": "Score moyen",
+      "competenciesMastered": "Compétences maîtrisées",
+      "studyTime": "Temps d’étude"
+    },
+    "charts": {
+      "progressOverTime": "Progression dans le temps",
+      "placeholderPrimary": "Le graphique s’affichera ici",
+      "placeholderSecondary": "Courbe de progression montrant l’évolution des performances",
+      "subjectPerformance": "Performance par discipline"
+    },
+    "subjectAverage": "Moyenne de {score}%",
+    "table": {
+      "title": "Données détaillées du rapport",
+      "columns": {
+        "assessment": "Évaluation",
+        "subject": "Discipline",
+        "date": "Date",
+        "score": "Score",
+        "status": "Statut",
+        "timeSpent": "Temps (min)"
+      }
+    },
+    "statusLabels": {
+      "completed": "Terminée",
+      "inProgress": "En cours",
+      "notStarted": "Non commencée"
+    },
+    "actions": {
+      "update": "Mettre à jour le rapport",
+      "exportPdf": "Exporter en PDF",
+      "exportCsv": "Exporter en CSV",
+      "share": "Partager le rapport"
+    }
+  },
+  "projects": {
+    "myProjects": "Mes projets",
+    "title": "Projets",
+    "newProject": "Nouveau projet",
+    "createFirst": "Crée ton premier projet",
+    "subCompetency": "Sous-compétence",
+    "noDescription": "Pas de description fournie",
+    "emptyState": {
+      "title": "Aucun projet pour l’instant",
+      "description": "Commence ton parcours d’apprentissage en créant ton premier projet."
+    },
+    "loadError": "Impossible de charger les projets",
+    "status": {
+      "draft": "Brouillon",
+      "submitted": "Soumis",
+      "approved": "Approuvé",
+      "rejected": "Rejeté"
+    },
+    "summary": {
+      "total": "Total des projets",
+      "draft": "Projets en brouillon",
+      "submitted": "Projets soumis",
+      "approved": "Projets approuvés"
+    },
+    "filters": {
+      "searchPlaceholder": "Rechercher par projet, description ou compétence...",
+      "status": "Statut",
+      "competency": "Compétence",
+      "clearHint": "Essaie de modifier ou réinitialiser tes filtres pour voir plus de projets."
+    },
+    "emptyFiltered": "Aucun projet ne correspond aux filtres.",
+    "form": {
+      "createTitle": "Créer un nouveau projet",
+      "editTitle": "Modifier le projet",
+      "name": "Nom du projet",
+      "description": "Description",
+      "subCompetency": "Sous-compétence",
+      "noSubCompetencies": "Aucune sous-compétence disponible",
+      "uploadFile": "Importer un fichier",
+      "status": "Statut",
+      "createSuccess": "Projet créé avec succès",
+      "updateSuccess": "Projet mis à jour avec succès",
+      "createError": "Échec de la création du projet",
+      "updateError": "Échec de la mise à jour du projet",
+      "errorLoadingSubCompetencies": "Impossible de charger les sous-compétences"
+    },
+    "actions": {
+      "submit": "Soumettre",
+      "approve": "Approuver",
+      "reject": "Rejeter"
+    },
+    "delete": {
+      "confirmTitle": "Supprimer le projet",
+      "confirmMessage": "Es-tu sûr de vouloir supprimer « {name} » ? Cette action est irréversible."
+    },
+    "detail": {
+      "errorTitle": "Projet introuvable",
+      "notFound": "Le projet demandé est introuvable",
+      "loadError": "Impossible de charger les détails du projet",
+      "updated": "Dernière mise à jour"
+    }
+  }
+}
