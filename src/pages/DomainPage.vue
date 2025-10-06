@@ -78,7 +78,7 @@ import type { Competency } from 'src/models/Competency';
 import type { Domain } from 'src/models/Domain';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import { domainRepository } from 'src/models/repositories/DomainRepository';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -215,6 +215,22 @@ async function deleteDomain(): Promise<void> {
     $q.notify({ type: 'negative', message: t('domains.messages.error') });
   }
 }
+
+const TITLE_PART_MAX_LENGTH = 20;
+function truncate(str: string, max: number): string {
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+watch(
+  domain,
+  (domainObj) => {
+    const parts = ['Competency Hub', truncate(domainObj?.name || '', TITLE_PART_MAX_LENGTH)].filter(
+      Boolean,
+    );
+    document.title = parts.join(' | ');
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
   void loadData();

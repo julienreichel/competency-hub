@@ -80,5 +80,10 @@ export default route((/* { store, ssrContext } */) => {
     next();
   });
 
+  // Reset document title to base on every route change
+  Router.afterEach(() => {
+    document.title = 'Competency Hub';
+  });
+
   return Router;
 });

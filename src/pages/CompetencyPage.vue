@@ -82,7 +82,7 @@ import { type Competency, type UpdateCompetencyInput } from 'src/models/Competen
 import { type SubCompetency } from 'src/models/SubCompetency';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -101,6 +101,8 @@ const competency = ref<Competency | null>(null);
 const editing = ref(false);
 const subs = ref<SubCompetency[]>([]);
 const dialog = ref<boolean>(false);
+
+const TITLE_PART_MAX_LENGTH = 20;
 
 async function load(): Promise<void> {
   loading.value = true;
@@ -194,6 +196,23 @@ async function deleteCompetency(): Promise<void> {
     $q.notify({ type: 'negative', message: t('competencies.messages.error') });
   }
 }
+
+function truncate(str: string, max: number): string {
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+watch(
+  [domainName, competency],
+  ([domain, comp]) => {
+    const parts = [
+      'Competency Hub',
+      truncate(domain || '', TITLE_PART_MAX_LENGTH),
+      truncate(comp?.name || '', TITLE_PART_MAX_LENGTH),
+    ].filter(Boolean);
+    document.title = parts.join(' | ');
+  },
+  { immediate: true },
+);
 
 onMounted(load);
 </script>

@@ -77,7 +77,7 @@ import {
 import { type SubCompetency, type UpdateSubCompetencyInput } from 'src/models/SubCompetency';
 import type { User } from 'src/models/User';
 import { UserRole } from 'src/models/User';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -352,6 +352,25 @@ async function onSaveSub(updated: UpdateSubCompetencyInput): Promise<void> {
   await load();
   editing.value = false;
 }
+
+const TITLE_PART_MAX_LENGTH = 20;
+function truncate(str: string, max: number): string {
+  return str.length > max ? str.slice(0, max) + '…' : str;
+}
+
+watch(
+  [domainName, competencyName, sub],
+  ([domain, competency, subObj]) => {
+    const parts = [
+      'Competency Hub',
+      truncate(domain || '', TITLE_PART_MAX_LENGTH),
+      truncate(competency || '', TITLE_PART_MAX_LENGTH),
+      truncate(subObj?.name || '', TITLE_PART_MAX_LENGTH),
+    ].filter(Boolean);
+    document.title = parts.join(' | ');
+  },
+  { immediate: true },
+);
 </script>
 
 <script lang="ts">
