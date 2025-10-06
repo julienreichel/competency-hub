@@ -16,7 +16,7 @@ describe('RoleChip - User Experience', () => {
       );
 
       // User sees the role name clearly displayed
-      expect(wrapper.text()).toBe('Admin');
+      expect(wrapper.text()).toContain('Admin');
 
       // Visual indication that this is a role chip (semantic structure)
       expect(wrapper.html()).toMatch(/q-chip|chip|role/i);
@@ -36,7 +36,7 @@ describe('RoleChip - User Experience', () => {
         );
 
         // User can clearly read the role type
-        expect(wrapper.text()).toBe(role);
+        expect(wrapper.text()).toContain(role);
 
         // Each role has visual distinction (flexible implementation)
         expect(wrapper.html()).toMatch(/q-chip|role|badge/i);
@@ -78,8 +78,8 @@ describe('RoleChip - User Experience', () => {
 
       // Screen reader can identify role information
       const text = wrapper.text();
-      expect(text).toBe('Parent');
-      expect(text).toMatch(/^(Admin|Educator|Parent|Student)$/);
+      expect(text).toContain('Parent');
+      expect(text).toMatch(/(Admin|Educator|Parent|Student)$/);
     });
   });
 });

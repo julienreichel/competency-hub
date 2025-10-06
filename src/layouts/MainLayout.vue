@@ -8,14 +8,7 @@
 
         <!-- User Menu -->
         <div v-if="isAuthenticated" class="q-gutter-sm row items-center no-wrap">
-          <q-chip
-            :color="getRoleColor(userRole)"
-            text-color="white"
-            :icon="getRoleIcon(userRole)"
-            dense
-          >
-            {{ userRole }}
-          </q-chip>
+          <role-chip :role="displayRole" size="md" class="user-role-chip" />
 
           <q-btn-dropdown
             flat
@@ -223,6 +216,7 @@
 import EssentialLink from 'components/EssentialLink.vue';
 import { useQuasar } from 'quasar';
 import type { MessageLanguages } from 'src/boot/i18n';
+import RoleChip, { type RoleChipRole } from 'src/components/ui/RoleChip.vue';
 import { useUsers } from 'src/composables/useUsers';
 import type { User } from 'src/models/User';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -274,11 +268,20 @@ const selectedLocale = computed<MessageLanguages>({
 
 const menuUser = ref<User | null>(null);
 
+const roleMapping: Record<string, RoleChipRole> = {
+  Admin: 'Admin',
+  Educator: 'Educator',
+  Parent: 'Parent',
+  Student: 'Student',
+};
+
+const displayRole = computed<RoleChipRole>(() => roleMapping[userRole.value] ?? 'Unknown');
+
 const userEmail = computed(
   () => userAttributes.value.email || userAttributes.value.preferred_username || '',
 );
 
-const menuAvatar = computed(() => menuUser.value?.avatar || menuUser.value?.picture || null);
+const menuAvatar = computed(() => menuUser.value?.avatar || null);
 
 const userInitials = computed(() => {
   const name = userFullName.value.trim();
@@ -310,26 +313,6 @@ const leftDrawerOpen = ref(false);
 
 function toggleLeftDrawer(): void {
   leftDrawerOpen.value = !leftDrawerOpen.value;
-}
-
-function getRoleColor(role: string): string {
-  const colors: Record<string, string> = {
-    Student: 'blue',
-    Educator: 'green',
-    Parent: 'orange',
-    Admin: 'purple',
-  };
-  return colors[role] || 'grey';
-}
-
-function getRoleIcon(role: string): string {
-  const icons: Record<string, string> = {
-    Student: 'school',
-    Educator: 'psychology',
-    Parent: 'family_restroom',
-    Admin: 'admin_panel_settings',
-  };
-  return icons[role] || 'person';
 }
 
 async function goToProfile(): Promise<void> {
@@ -384,3 +367,82 @@ onMounted(async () => {
   await loadMenuUser(false);
 });
 </script>
+
+<style scoped>
+.user-role-chip {
+  font-weight: 600;
+}
+
+.user-menu__trigger {
+  padding: 0 8px;
+}
+
+.user-menu__trigger-avatar {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  background-color: var(--q-primary);
+  color: #fff;
+}
+
+.user-menu__trigger-label {
+  font-weight: 500;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu__dropdown {
+  padding: 0;
+}
+
+.user-menu {
+  min-width: 260px;
+  padding: 4px 0 8px;
+}
+
+.user-menu__header {
+  padding: 12px 12px 6px;
+}
+
+.user-menu__header .q-item__section--avatar {
+  padding-right: 12px;
+}
+
+.user-menu__name {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.user-menu__email {
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  word-break: break-word;
+}
+
+.user-menu__separator {
+  margin: 4px 0;
+}
+
+.user-menu__item {
+  min-height: 44px;
+}
+
+.user-menu__item .q-item__section--avatar {
+  padding-right: 12px;
+}
+
+.user-menu__icon {
+  font-size: 20px;
+}
+
+.user-menu__language .q-item__section--avatar {
+  padding-top: 6px;
+}
+
+.user-menu__language-options {
+  margin-top: 6px;
+}
+</style>
