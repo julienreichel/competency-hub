@@ -57,7 +57,7 @@ function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     NotStarted: 'grey',
     InProgress: 'info',
-    PendingValidation: 'accent',
+    PendingValidation: 'warning',
     Validated: 'positive',
   };
   return colors[status] || 'grey';

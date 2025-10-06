@@ -26,7 +26,12 @@
             </q-card-section>
             <q-separator />
             <q-list v-if="recentActivities.length">
-              <q-item v-for="activity in recentActivities" :key="activity.id">
+              <q-item
+                v-for="activity in recentActivities"
+                :key="activity.id"
+                clickable
+                @click="openSubCompetency(activity)"
+              >
                 <q-item-section>
                   <div class="text-body1">{{ activity.title }}</div>
                   <div class="text-caption text-grey-6">{{ activity.subtitle }}</div>
@@ -73,6 +78,7 @@ import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import type { StudentSubCompetencyProgress } from 'src/models/StudentSubCompetencyProgress';
+import { type SubCompetency } from 'src/models/SubCompetency';
 import { UserRole, type User } from 'src/models/User';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -100,6 +106,8 @@ interface RecentActivity {
   statusLabel: string;
   statusColor: string;
   timestamp: string;
+  subId: string | undefined;
+  competencyId: string | undefined;
 }
 
 interface ProgressContext {
@@ -468,14 +476,14 @@ async function buildRecentActivities(user: User): Promise<RecentActivity[]> {
     ),
   );
 
-  const nameMap = await resolveSubNames(ids);
+  const subMap = await resolveSub(ids);
 
   return sorted.map((ctx) => {
     const status = getProgressStatus(ctx.progress);
     const statusLabel = t(`progressStatus.${status}`);
     const statusColor = mapStatusToColor(status);
-    const title =
-      nameMap.get(ctx.progress.subCompetencyId ?? '') ?? t('dashboard.labels.unknownSub');
+    const sub = subMap.get(ctx.progress.subCompetencyId ?? '');
+    const title = sub?.name ?? t('dashboard.labels.unknownSub');
 
     const details: string[] = [];
     if (ctx.actor && user.role !== UserRole.STUDENT) {
@@ -494,6 +502,9 @@ async function buildRecentActivities(user: User): Promise<RecentActivity[]> {
       statusLabel,
       statusColor,
       timestamp,
+      subId: sub?.id,
+      competencyId: sub?.competency?.id,
+      domainColor: sub?.competency?.domain?.colorCode,
     };
   });
 }
@@ -564,16 +575,17 @@ function getProgressTimestamp(progress: StudentSubCompetencyProgress): number {
   return source ? new Date(source).getTime() : 0;
 }
 
-async function resolveSubNames(ids: string[]): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+async function resolveSub(ids: string[]): Promise<Map<string, SubCompetency>> {
+  const map = new Map<string, SubCompetency>();
   await Promise.all(
     ids.map(async (id) => {
       try {
         const sub = await subCompetencyRepository.findById(id);
-        map.set(id, sub?.name ?? t('dashboard.labels.unknownSub'));
+        if (sub) {
+          map.set(id, sub);
+        }
       } catch (error) {
         console.error('Failed to resolve sub-competency name', error);
-        map.set(id, t('dashboard.labels.unknownSub'));
       }
     }),
   );
@@ -589,6 +601,15 @@ function formatTimestamp(progress: StudentSubCompetencyProgress): string {
 
 function handleQuickAction(action: QuickAction): void {
   void router.push(action.to);
+}
+
+function openSubCompetency(activity: RecentActivity): void {
+  const competencyId = activity.competencyId;
+  const subId = activity.subId;
+
+  if (activity && subId && competencyId) {
+    void router.push({ name: 'sub-competency', params: { competencyId, subId } });
+  }
 }
 </script>
 
