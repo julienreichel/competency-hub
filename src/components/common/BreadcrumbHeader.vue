@@ -2,7 +2,7 @@
   <div class="row items-center q-gutter-sm q-mb-md">
     <q-btn flat round icon="arrow_back" color="primary" @click="goBack" />
     <div class="column">
-      <q-breadcrumbs v-if="breadcrumbs?.length" class="text-grey-7">
+      <q-breadcrumbs v-if="breadcrumbs?.length" class="text-grey-7 breadcrumb-trail">
         <q-breadcrumbs-el
           v-for="(crumb, idx) in breadcrumbs"
           :key="idx"
@@ -54,4 +54,18 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.breadcrumb-trail {
+  max-width: 100%;
+}
+
+.breadcrumb-trail span,
+.breadcrumb-trail a {
+  max-width: 220px;
+  display: inline-block;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
