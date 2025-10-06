@@ -348,7 +348,7 @@ async function handleProgressStep(step: ProgressButton): Promise<void> {
 
 async function onSaveSub(updated: UpdateSubCompetencyInput): Promise<void> {
   await subCompetencyRepository.update(subId, updated);
-  $q.notify({ type: 'positive', message: 'Sub-competency saved' });
+  $q.notify({ type: 'positive', message: t('subCompetencies.saveSuccess') });
   await load();
   editing.value = false;
 }

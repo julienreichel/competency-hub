@@ -6,14 +6,14 @@
           <q-card-section>
             <div class="text-h5 q-mb-md">
               <q-icon name="person" class="q-mr-sm" />
-              User Profile
+              {{ t('profile.title') }}
             </div>
           </q-card-section>
 
           <q-card-section>
             <div v-if="isLoading" class="text-center">
               <q-spinner color="primary" size="3em" />
-              <div class="q-mt-md">Loading profile...</div>
+              <div class="q-mt-md">{{ t('profile.loading') }}</div>
             </div>
 
             <div v-else class="q-gutter-lg">
@@ -47,7 +47,7 @@
                   v-if="!editMode"
                   color="primary"
                   icon="edit"
-                  label="Edit Profile"
+                  :label="t('profile.actions.edit')"
                   class="col-auto"
                   :disable="saving"
                   @click="startEdit"
@@ -56,7 +56,7 @@
                   <q-btn
                     color="primary"
                     icon="save"
-                    label="Save Changes"
+                    :label="t('profile.actions.save')"
                     class="col-auto"
                     :loading="saving"
                     :disable="saving || uploadInProgress"
@@ -65,7 +65,7 @@
                   <q-btn
                     color="grey"
                     icon="cancel"
-                    label="Cancel"
+                    :label="t('common.cancel')"
                     class="col-auto"
                     flat
                     :disable="saving || uploadInProgress"
@@ -133,7 +133,7 @@ const resolvedUserId = computed(() => profileUser.value?.id ?? userId.value ?? '
 
 const displayName = computed(() => {
   const source = editMode.value ? profileForm.value.name : profileUser.value?.name;
-  return source?.trim() || 'User';
+  return source?.trim() || t('profile.fallbackName');
 });
 
 const displayRole = computed(() => profileUser.value?.role ?? 'Unknown');
@@ -256,7 +256,7 @@ async function handleSave(): Promise<void> {
   if (uploadInProgress.value) {
     $q.notify({
       type: 'warning',
-      message: 'Please wait for the image upload to finish before saving.',
+      message: t('profile.messages.waitForUpload'),
     });
     return;
   }
@@ -291,13 +291,13 @@ async function handleSave(): Promise<void> {
 
     $q.notify({
       type: 'positive',
-      message: 'Profile updated successfully!',
+      message: t('profile.messages.updateSuccess'),
     });
   } catch (error) {
     console.error('Failed to update profile', error);
     $q.notify({
       type: 'negative',
-      message: 'Failed to update profile. Please try again.',
+      message: t('profile.messages.updateError'),
     });
   } finally {
     saving.value = false;

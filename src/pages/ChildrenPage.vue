@@ -2,12 +2,17 @@
   <q-page class="q-pa-lg">
     <div class="text-h4 q-mb-lg">
       <q-icon name="family_restroom" class="q-mr-sm" />
-      My Children
+      {{ t('parents.children.title') }}
     </div>
 
     <!-- Add Child Button -->
     <div class="row justify-end q-mb-lg">
-      <q-btn color="primary" icon="add" label="Add Child" @click="showAddChildDialog = true" />
+      <q-btn
+        color="primary"
+        icon="add"
+        :label="t('parents.children.actions.addChild')"
+        @click="showAddChildDialog = true"
+      />
     </div>
 
     <!-- Children Cards -->
@@ -26,19 +31,19 @@
     </div>
     <div v-else class="q-mt-xl text-center">
       <q-spinner size="3em" color="primary" />
-      <div class="text-h6 q-mt-md text-grey-6">Loading children...</div>
+      <div class="text-h6 q-mt-md text-grey-6">{{ t('parents.children.loading') }}</div>
     </div>
 
     <!-- Empty State -->
     <div v-if="!isLoadingChildren && children.length === 0" class="text-center q-mt-xl">
       <q-icon name="family_restroom" size="4em" color="grey-5" />
-      <div class="text-h6 q-mt-md text-grey-6">No children added yet</div>
+      <div class="text-h6 q-mt-md text-grey-6">{{ t('parents.children.emptyTitle') }}</div>
       <div class="text-body2 text-grey-5">
-        Add your children to monitor their learning progress.
+        {{ t('parents.children.emptyDescription') }}
       </div>
       <q-btn
         color="primary"
-        label="Add Your First Child"
+        :label="t('parents.children.actions.addFirstChild')"
         class="q-mt-md"
         @click="showAddChildDialog = true"
       />
@@ -48,7 +53,7 @@
     <q-dialog v-model="showAddChildDialog">
       <q-card style="min-width: 400px">
         <q-card-section>
-          <div class="text-h6">Add Child</div>
+          <div class="text-h6">{{ t('parents.children.dialog.title') }}</div>
         </q-card-section>
 
         <q-card-section>
@@ -56,40 +61,53 @@
             <q-input
               v-model="newChild.name"
               outlined
-              label="Full Name *"
-              :rules="[(val) => !!val || 'Name is required']"
+              :label="t('parents.children.fields.fullName')"
+              :rules="[nameRequiredRule]"
             />
 
             <q-input
               v-model.number="newChild.age"
               outlined
               type="number"
-              label="Age *"
-              :rules="[(val) => !!val || 'Age is required']"
+              :label="t('parents.children.fields.age')"
+              :rules="[ageRequiredRule]"
             />
 
             <q-select
               v-model="newChild.grade"
               outlined
               :options="gradeOptions"
-              label="Grade Level *"
-              :rules="[(val) => !!val || 'Grade is required']"
+              option-label="label"
+              option-value="value"
+              emit-value
+              map-options
+              :label="t('parents.children.fields.grade')"
+              :rules="[gradeRequiredRule]"
             />
 
-            <q-input v-model="newChild.school" filled label="School" />
+            <q-input
+              v-model="newChild.school"
+              filled
+              :label="t('parents.children.fields.school')"
+            />
 
             <q-input
               v-model="newChild.studentId"
               outlined
-              label="Student ID"
-              hint="If your child is already registered in the system"
+              :label="t('parents.children.fields.studentId')"
+              :hint="t('parents.children.fields.studentIdHint')"
             />
           </q-form>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="showAddChildDialog = false" />
-          <q-btn color="primary" label="Add Child" @click="addChild" :disable="!isNewChildValid" />
+          <q-btn flat :label="t('common.cancel')" @click="showAddChildDialog = false" />
+          <q-btn
+            color="primary"
+            :label="t('parents.children.actions.addChild')"
+            @click="addChild"
+            :disable="!isNewChildValid"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -103,6 +121,7 @@ import { useUsers } from 'src/composables/useUsers';
 import type { User } from 'src/models/User';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 interface ChildDomainProgress {
   name: string;
@@ -131,13 +150,14 @@ type Child = ChildCardData & { user?: User | null };
 interface NewChild {
   name: string;
   age: number | null;
-  grade: string;
+  grade: GradeOptionKey | '';
   school: string;
   studentId: string;
 }
 
 const router = useRouter();
 const { getCurrentUser, getUserById } = useUsers();
+const { t } = useI18n();
 
 const showAddChildDialog = ref(false);
 
@@ -149,22 +169,58 @@ const newChild = ref<NewChild>({
   studentId: '',
 });
 
-const gradeOptions = [
-  'Pre-K',
-  'Kindergarten',
-  '1st Grade',
-  '2nd Grade',
-  '3rd Grade',
-  '4th Grade',
-  '5th Grade',
-  '6th Grade',
-  '7th Grade',
-  '8th Grade',
-  '9th Grade',
-  '10th Grade',
-  '11th Grade',
-  '12th Grade',
-];
+const gradeOptionKeys = [
+  'preK',
+  'kindergarten',
+  'grade1',
+  'grade2',
+  'grade3',
+  'grade4',
+  'grade5',
+  'grade6',
+  'grade7',
+  'grade8',
+  'grade9',
+  'grade10',
+  'grade11',
+  'grade12',
+] as const;
+
+type GradeOptionKey = (typeof gradeOptionKeys)[number];
+
+const gradeOptions = computed(() =>
+  gradeOptionKeys.map((key) => ({
+    value: key,
+    label: t(`parents.children.gradeOptions.${key}`),
+  })),
+);
+
+const nameRequiredRule = (val: unknown): boolean | string => {
+  if (typeof val === 'string' && val.trim().length > 0) {
+    return true;
+  }
+  return t('parents.children.validation.nameRequired');
+};
+
+const ageRequiredRule = (val: unknown): boolean | string => {
+  if (typeof val === 'number' && val > 0) {
+    return true;
+  }
+  if (typeof val === 'string') {
+    const numeric = Number.parseFloat(val);
+    if (!Number.isNaN(numeric) && numeric > 0) {
+      return true;
+    }
+  }
+  return t('parents.children.validation.ageRequired');
+};
+
+const gradeRequiredRule = (val: unknown): boolean | string => {
+  if (typeof val === 'string' && val.length > 0) {
+    return true;
+  }
+  return t('parents.children.validation.gradeRequired');
+};
 
 function generateStatsFromUser(user: User): ChildStats {
   const progress = user.studentProgress || [];

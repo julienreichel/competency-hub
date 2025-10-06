@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="text-center q-mb-lg">
         <h4 class="text-primary q-my-none">Competency Hub</h4>
-        <p class="text-grey-7">Sign in to access your learning dashboard</p>
+        <p class="text-grey-7">{{ t('login.headerSubtitle') }}</p>
       </div>
 
       <!-- Authentication Component -->
@@ -55,8 +55,10 @@
       <q-dialog v-model="showRoleSelection" persistent>
         <q-card style="min-width: 350px">
           <q-card-section>
-            <div class="text-h6">Select Your Role</div>
-            <div class="text-subtitle2 text-grey-7">Choose the role that best describes you</div>
+            <div class="text-h6">{{ t('login.roleSelection.title') }}</div>
+            <div class="text-subtitle2 text-grey-7">
+              {{ t('login.roleSelection.subtitle') }}
+            </div>
           </q-card-section>
 
           <q-card-section class="q-pt-none">
@@ -88,7 +90,7 @@ import { Hub } from 'aws-amplify/utils';
 import { useQuasar } from 'quasar';
 import { userRepository } from 'src/models/repositories/UserRepository';
 import { UserRole } from 'src/models/User';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
@@ -126,66 +128,81 @@ async function setSelectedRole(role: string): Promise<void> {
   await handleRoleConfirm();
 }
 
+const roleDisplayName = (role: UserRole): string => {
+  switch (role) {
+    case UserRole.STUDENT:
+      return t('login.roles.student.label');
+    case UserRole.PARENT:
+      return t('login.roles.parent.label');
+    case UserRole.EDUCATOR:
+      return t('login.roles.educator.label');
+    case UserRole.ADMIN:
+      return t('login.roles.admin.label');
+    default:
+      return t('login.roles.unknown');
+  }
+};
+
 // Available roles for new users
 // Only allow Student and Parent for self-selection
-const availableRoles: Role[] = [
+const availableRoles = computed<Role[]>(() => [
   {
     value: UserRole.STUDENT,
-    label: 'Student',
+    label: t('login.roles.student.label'),
     icon: 'school',
-    description: 'I am here to learn and track my progress',
+    description: t('login.roles.student.description'),
   },
   {
     value: UserRole.PARENT,
-    label: 'Parent',
+    label: t('login.roles.parent.label'),
     icon: 'family_restroom',
-    description: "I want to monitor my child's progress",
+    description: t('login.roles.parent.description'),
   },
-];
+]);
 
 // Sign up attributes configuration
 const signUpAttributes = ['given_name', 'family_name', 'email'];
 
 // Form fields configuration
-const formFields = {
+const formFields = computed(() => ({
   signUp: {
     given_name: {
-      label: 'First Name',
-      placeholder: 'Enter your first name',
+      label: t('login.forms.firstName'),
+      placeholder: t('login.forms.firstNamePlaceholder'),
       isRequired: true,
     },
     family_name: {
-      label: 'Last Name',
-      placeholder: 'Enter your last name',
+      label: t('login.forms.lastName'),
+      placeholder: t('login.forms.lastNamePlaceholder'),
       isRequired: true,
     },
     email: {
-      label: 'Email Address',
-      placeholder: 'Enter your email address',
+      label: t('login.forms.email'),
+      placeholder: t('login.forms.emailPlaceholder'),
       isRequired: true,
     },
     password: {
-      label: 'Password',
-      placeholder: 'Enter a secure password',
+      label: t('login.forms.password'),
+      placeholder: t('login.forms.passwordPlaceholder'),
       isRequired: true,
     },
     confirm_password: {
-      label: 'Confirm Password',
-      placeholder: 'Confirm your password',
+      label: t('login.forms.confirmPassword'),
+      placeholder: t('login.forms.confirmPasswordPlaceholder'),
       isRequired: true,
     },
   },
   signIn: {
     username: {
-      label: 'Email Address',
-      placeholder: 'Enter your email address to sign in',
+      label: t('login.forms.email'),
+      placeholder: t('login.forms.signInEmailPlaceholder'),
     },
     password: {
-      label: 'Password',
-      placeholder: 'Enter your password',
+      label: t('login.forms.password'),
+      placeholder: t('login.forms.signInPasswordPlaceholder'),
     },
   },
-};
+}));
 
 /**
  * Redirect user after successful authentication
@@ -218,7 +235,7 @@ async function handleAuthenticated(): Promise<void> {
     if (!user) {
       $q.notify({
         type: 'negative',
-        message: 'User not found. Please contact support.',
+        message: t('login.notifications.userNotFound'),
       });
       return;
     }
@@ -234,7 +251,7 @@ async function handleAuthenticated(): Promise<void> {
   } catch {
     $q.notify({
       type: 'negative',
-      message: 'Authentication failed. Please try again.',
+      message: t('login.notifications.authFailed'),
     });
   }
 }
@@ -255,12 +272,14 @@ async function handleRoleConfirm(): Promise<void> {
     redirectAfterLogin();
     $q.notify({
       type: 'positive',
-      message: `Welcome! You've been assigned the ${selectedRole.value} role.`,
+      message: t('login.notifications.assignSuccess', {
+        role: roleDisplayName(selectedRole.value),
+      }),
     });
   } catch {
     $q.notify({
       type: 'negative',
-      message: 'Failed to assign role. Please try again.',
+      message: t('login.notifications.assignError'),
     });
   }
 }

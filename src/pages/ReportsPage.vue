@@ -2,22 +2,24 @@
   <q-page class="q-pa-lg">
     <div class="text-h4 q-mb-lg">
       <q-icon name="analytics" class="q-mr-sm" />
-      Reports & Analytics
+      {{ t('reportsPage.title') }}
     </div>
 
     <!-- Report Filters -->
     <q-card class="q-mb-lg">
       <q-card-section>
-        <div class="text-h6 q-mb-md">Report Filters</div>
+        <div class="text-h6 q-mb-md">{{ t('reportsPage.filters.title') }}</div>
         <div class="row q-gutter-md">
           <div class="col-12 col-md-3">
             <q-select
               v-model="selectedReportType"
               outlined
               :options="reportTypes"
-              label="Report Type"
+              option-label="label"
+              option-value="value"
               emit-value
               map-options
+              :label="t('reportsPage.filters.reportType')"
             />
           </div>
           <div class="col-12 col-md-3">
@@ -25,9 +27,11 @@
               v-model="selectedTimeRange"
               outlined
               :options="timeRanges"
-              label="Time Range"
+              option-label="label"
+              option-value="value"
               emit-value
               map-options
+              :label="t('reportsPage.filters.timeRange')"
             />
           </div>
           <div class="col-12 col-md-3">
@@ -35,12 +39,21 @@
               v-model="selectedSubject"
               outlined
               :options="subjects"
-              label="Subject"
+              option-label="label"
+              option-value="value"
+              emit-value
+              map-options
+              :label="t('reportsPage.filters.subject')"
               clearable
             />
           </div>
           <div class="col-12 col-md-3">
-            <q-btn color="primary" icon="refresh" label="Update Report" @click="updateReport" />
+            <q-btn
+              color="primary"
+              icon="refresh"
+              :label="t('reportsPage.actions.update')"
+              @click="updateReport"
+            />
           </div>
         </div>
       </q-card-section>
@@ -53,7 +66,7 @@
           <q-card-section class="text-center">
             <q-icon name="assignment_turned_in" size="3em" color="green" />
             <div class="text-h4 q-mt-sm">{{ summaryStats.completedAssessments }}</div>
-            <div class="text-subtitle2">Completed Assessments</div>
+            <div class="text-subtitle2">{{ t('reportsPage.summary.completedAssessments') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -62,7 +75,7 @@
           <q-card-section class="text-center">
             <q-icon name="trending_up" size="3em" color="blue" />
             <div class="text-h4 q-mt-sm">{{ summaryStats.averageScore }}%</div>
-            <div class="text-subtitle2">Average Score</div>
+            <div class="text-subtitle2">{{ t('reportsPage.summary.averageScore') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -71,7 +84,7 @@
           <q-card-section class="text-center">
             <q-icon name="school" size="3em" color="purple" />
             <div class="text-h4 q-mt-sm">{{ summaryStats.competenciesMastered }}</div>
-            <div class="text-subtitle2">Competencies Mastered</div>
+            <div class="text-subtitle2">{{ t('reportsPage.summary.competenciesMastered') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -80,7 +93,7 @@
           <q-card-section class="text-center">
             <q-icon name="schedule" size="3em" color="orange" />
             <div class="text-h4 q-mt-sm">{{ summaryStats.studyTimeHours }}h</div>
-            <div class="text-subtitle2">Study Time</div>
+            <div class="text-subtitle2">{{ t('reportsPage.summary.studyTime') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -92,12 +105,14 @@
       <div class="col-12 col-lg-8">
         <q-card>
           <q-card-section>
-            <div class="text-h6 q-mb-md">Progress Over Time</div>
+            <div class="text-h6 q-mb-md">{{ t('reportsPage.charts.progressOverTime') }}</div>
             <div class="chart-placeholder">
               <q-icon name="show_chart" size="4em" color="grey-5" />
-              <div class="text-body2 text-grey-6 q-mt-sm">Chart will be displayed here</div>
+              <div class="text-body2 text-grey-6 q-mt-sm">
+                {{ t('reportsPage.charts.placeholderPrimary') }}
+              </div>
               <div class="text-caption text-grey-5">
-                Progress tracking chart showing performance trends
+                {{ t('reportsPage.charts.placeholderSecondary') }}
               </div>
             </div>
           </q-card-section>
@@ -108,12 +123,14 @@
       <div class="col-12 col-lg-4">
         <q-card>
           <q-card-section>
-            <div class="text-h6 q-mb-md">Subject Performance</div>
+            <div class="text-h6 q-mb-md">{{ t('reportsPage.charts.subjectPerformance') }}</div>
             <q-list>
               <q-item v-for="subject in subjectPerformance" :key="subject.name">
                 <q-item-section>
-                  <q-item-label>{{ subject.name }}</q-item-label>
-                  <q-item-label caption>{{ subject.score }}% average</q-item-label>
+                  <q-item-label>{{ subjectLabel(subject.name) }}</q-item-label>
+                  <q-item-label caption>{{
+                    t('reportsPage.subjectAverage', { score: subject.score })
+                  }}</q-item-label>
                   <q-linear-progress
                     :value="subject.score / 100"
                     :color="getPerformanceColor(subject.score)"
@@ -130,7 +147,7 @@
     <!-- Detailed Reports Table -->
     <q-card class="q-mt-lg">
       <q-card-section>
-        <div class="text-h6 q-mb-md">Detailed Report Data</div>
+        <div class="text-h6 q-mb-md">{{ t('reportsPage.table.title') }}</div>
         <q-table
           :rows="reportData"
           :columns="tableColumns"
@@ -153,7 +170,7 @@
                 :color="getStatusColor(props.value)"
                 size="sm"
               />
-              {{ props.value }}
+              {{ statusLabel(props.value) }}
             </q-td>
           </template>
         </q-table>
@@ -167,24 +184,31 @@
           outline
           color="primary"
           icon="file_download"
-          label="Export PDF"
+          :label="t('reportsPage.actions.exportPdf')"
           @click="exportReport('pdf')"
         />
         <q-btn
           outline
           color="primary"
           icon="file_download"
-          label="Export CSV"
+          :label="t('reportsPage.actions.exportCsv')"
           @click="exportReport('csv')"
         />
-        <q-btn outline color="primary" icon="share" label="Share Report" @click="shareReport" />
+        <q-btn
+          outline
+          color="primary"
+          icon="share"
+          :label="t('reportsPage.actions.share')"
+          @click="shareReport"
+        />
       </q-btn-group>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface ReportData {
   id: string;
@@ -196,25 +220,52 @@ interface ReportData {
   timeSpent: number;
 }
 
+const { t } = useI18n();
+
 const selectedReportType = ref('progress');
 const selectedTimeRange = ref('last_month');
 const selectedSubject = ref<string | null>(null);
 
-const reportTypes = [
-  { label: 'Progress Report', value: 'progress' },
-  { label: 'Assessment Results', value: 'assessments' },
-  { label: 'Competency Mastery', value: 'competencies' },
-  { label: 'Time Analytics', value: 'time' },
-];
+const REPORT_TYPE_VALUES = ['progress', 'assessments', 'competencies', 'time'] as const;
+const TIME_RANGE_VALUES = ['last_week', 'last_month', 'last_quarter', 'last_year'] as const;
+const SUBJECT_VALUES = [
+  'Mathematics',
+  'Science',
+  'Language Arts',
+  'Social Studies',
+  'Art',
+  'Music',
+] as const;
 
-const timeRanges = [
-  { label: 'Last Week', value: 'last_week' },
-  { label: 'Last Month', value: 'last_month' },
-  { label: 'Last Quarter', value: 'last_quarter' },
-  { label: 'Last Year', value: 'last_year' },
-];
+const reportTypes = computed(() =>
+  REPORT_TYPE_VALUES.map((value) => ({
+    value,
+    label: t(`reportsPage.reportTypes.${value}`),
+  })),
+);
 
-const subjects = ['Mathematics', 'Science', 'Language Arts', 'Social Studies', 'Art', 'Music'];
+const timeRanges = computed(() =>
+  TIME_RANGE_VALUES.map((value) => ({
+    value,
+    label: t(`reportsPage.timeRanges.${value}`),
+  })),
+);
+
+const SUBJECT_LABEL_KEYS: Record<(typeof SUBJECT_VALUES)[number], string> = {
+  Mathematics: 'mathematics',
+  Science: 'science',
+  'Language Arts': 'languageArts',
+  'Social Studies': 'socialStudies',
+  Art: 'art',
+  Music: 'music',
+};
+
+const subjects = computed(() =>
+  SUBJECT_VALUES.map((value) => ({
+    value,
+    label: t(`reportsPage.subjects.${SUBJECT_LABEL_KEYS[value]}`),
+  })),
+);
 
 const summaryStats = ref({
   completedAssessments: 24,
@@ -230,14 +281,50 @@ const subjectPerformance = ref([
   { name: 'Social Studies', score: 90 },
 ]);
 
-const tableColumns = [
-  { name: 'assessment', label: 'Assessment', field: 'assessment', align: 'left' as const },
-  { name: 'subject', label: 'Subject', field: 'subject', align: 'left' as const },
-  { name: 'date', label: 'Date', field: 'date', align: 'left' as const },
-  { name: 'score', label: 'Score', field: 'score', align: 'center' as const },
-  { name: 'status', label: 'Status', field: 'status', align: 'center' as const },
-  { name: 'timeSpent', label: 'Time (min)', field: 'timeSpent', align: 'center' as const },
-];
+const STATUS_LABEL_KEYS: Record<ReportData['status'], string> = {
+  Completed: 'completed',
+  'In Progress': 'inProgress',
+  'Not Started': 'notStarted',
+};
+
+const tableColumns = computed(() => [
+  {
+    name: 'assessment',
+    label: t('reportsPage.table.columns.assessment'),
+    field: 'assessment',
+    align: 'left' as const,
+  },
+  {
+    name: 'subject',
+    label: t('reportsPage.table.columns.subject'),
+    field: 'subject',
+    align: 'left' as const,
+  },
+  {
+    name: 'date',
+    label: t('reportsPage.table.columns.date'),
+    field: 'date',
+    align: 'left' as const,
+  },
+  {
+    name: 'score',
+    label: t('reportsPage.table.columns.score'),
+    field: 'score',
+    align: 'center' as const,
+  },
+  {
+    name: 'status',
+    label: t('reportsPage.table.columns.status'),
+    field: 'status',
+    align: 'center' as const,
+  },
+  {
+    name: 'timeSpent',
+    label: t('reportsPage.table.columns.timeSpent'),
+    field: 'timeSpent',
+    align: 'center' as const,
+  },
+]);
 
 const reportData = ref<ReportData[]>([
   {
@@ -315,6 +402,14 @@ function getStatusColor(status: string): string {
       return 'grey';
   }
 }
+
+const statusLabel = (status: ReportData['status']): string =>
+  t(`reportsPage.statusLabels.${STATUS_LABEL_KEYS[status]}`);
+
+const subjectLabel = (subject: string): string => {
+  const key = SUBJECT_LABEL_KEYS[subject as keyof typeof SUBJECT_LABEL_KEYS];
+  return key ? t(`reportsPage.subjects.${key}`) : subject;
+};
 
 function updateReport(): void {
   console.log('Updating report with filters:', {

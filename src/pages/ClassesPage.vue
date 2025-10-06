@@ -2,27 +2,46 @@
   <q-page class="q-pa-lg">
     <div class="text-h4 q-mb-lg">
       <q-icon name="school" class="q-mr-sm" />
-      My Classes
+      {{ t('classes.title') }}
     </div>
 
     <!-- Class Search and Filters -->
     <div class="row q-gutter-md q-mb-lg">
       <div class="col-12 col-md-6">
-        <q-input v-model="searchQuery" filled placeholder="Search classes..." debounce="300">
+        <q-input
+          v-model="searchQuery"
+          filled
+          :placeholder="t('classes.filters.searchPlaceholder')"
+          debounce="300"
+        >
           <template v-slot:append>
             <q-icon name="search" />
           </template>
         </q-input>
       </div>
       <div class="col-12 col-md-3">
-        <q-select v-model="statusFilter" filled :options="statusOptions" label="Status" clearable />
+        <q-select
+          v-model="statusFilter"
+          filled
+          :options="statusOptions"
+          option-label="label"
+          option-value="value"
+          emit-value
+          map-options
+          :label="t('classes.filters.status')"
+          clearable
+        />
       </div>
       <div class="col-12 col-md-3">
         <q-select
           v-model="subjectFilter"
           outlined
           :options="subjectOptions"
-          label="Subject"
+          option-label="label"
+          option-value="value"
+          emit-value
+          map-options
+          :label="t('classes.filters.subject')"
           clearable
         />
       </div>
@@ -40,11 +59,11 @@
             <div class="row items-center">
               <div class="col">
                 <div class="text-h6">{{ classItem.name }}</div>
-                <div class="text-subtitle2 text-grey-6">{{ classItem.subject }}</div>
+                <div class="text-subtitle2 text-grey-6">{{ subjectLabel(classItem.subject) }}</div>
               </div>
               <div class="col-auto">
                 <q-chip :color="getStatusColor(classItem.status)" text-color="white" size="sm">
-                  {{ classItem.status }}
+                  {{ statusLabel(classItem.status) }}
                 </q-chip>
               </div>
             </div>
@@ -66,7 +85,9 @@
 
           <q-card-section>
             <q-linear-progress :value="classItem.progress / 100" color="primary" class="q-mb-xs" />
-            <div class="text-caption text-right">{{ classItem.progress }}% Complete</div>
+            <div class="text-caption text-right">
+              {{ t('classes.progress', { percent: classItem.progress }) }}
+            </div>
           </q-card-section>
 
           <q-card-actions align="right">
@@ -80,14 +101,14 @@
               <q-menu>
                 <q-list>
                   <q-item clickable @click="viewDetails(classItem)">
-                    <q-item-section>View Details</q-item-section>
+                    <q-item-section>{{ t('classes.menu.viewDetails') }}</q-item-section>
                   </q-item>
                   <q-item clickable @click="viewGrades(classItem)">
-                    <q-item-section>View Grades</q-item-section>
+                    <q-item-section>{{ t('classes.menu.viewGrades') }}</q-item-section>
                   </q-item>
                   <q-separator />
                   <q-item clickable @click="dropClass(classItem)">
-                    <q-item-section>Drop Class</q-item-section>
+                    <q-item-section>{{ t('classes.menu.dropClass') }}</q-item-section>
                   </q-item>
                 </q-list>
               </q-menu>
@@ -100,13 +121,13 @@
     <!-- Empty State -->
     <div v-if="filteredClasses.length === 0" class="text-center q-mt-xl">
       <q-icon name="school" size="4em" color="grey-5" />
-      <div class="text-h6 q-mt-md text-grey-6">No classes found</div>
+      <div class="text-h6 q-mt-md text-grey-6">{{ t('classes.empty.title') }}</div>
       <div class="text-body2 text-grey-5">
-        Try adjusting your search filters or enroll in new classes.
+        {{ t('classes.empty.description') }}
       </div>
       <q-btn
         color="primary"
-        label="Browse Available Classes"
+        :label="t('classes.actions.browseClasses')"
         class="q-mt-md"
         @click="browseClasses"
       />
@@ -116,6 +137,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Class {
   id: string;
@@ -128,19 +150,45 @@ interface Class {
   progress: number;
 }
 
+const { t } = useI18n();
+
 const searchQuery = ref('');
-const statusFilter = ref<string | null>(null);
+const statusFilter = ref<Class['status'] | null>(null);
 const subjectFilter = ref<string | null>(null);
 
-const statusOptions = ['Active', 'Completed', 'Upcoming', 'Dropped'];
-const subjectOptions = [
+const STATUS_VALUES: Class['status'][] = ['Active', 'Completed', 'Upcoming', 'Dropped'];
+
+const SUBJECT_VALUES = [
   'Mathematics',
   'Science',
   'Language Arts',
   'Social Studies',
   'Art',
   'Music',
-];
+] as const;
+
+const SUBJECT_LABEL_KEYS: Record<(typeof SUBJECT_VALUES)[number], string> = {
+  Mathematics: 'mathematics',
+  Science: 'science',
+  'Language Arts': 'languageArts',
+  'Social Studies': 'socialStudies',
+  Art: 'art',
+  Music: 'music',
+};
+
+const statusOptions = computed(() =>
+  STATUS_VALUES.map((value) => ({
+    value,
+    label: t(`classes.statusLabels.${value.toLowerCase()}`),
+  })),
+);
+
+const subjectOptions = computed(() =>
+  SUBJECT_VALUES.map((value) => ({
+    value,
+    label: t(`classes.subjects.${SUBJECT_LABEL_KEYS[value]}`),
+  })),
+);
 
 // Mock data - replace with actual API call
 const classes = ref<Class[]>([
@@ -206,20 +254,28 @@ function getStatusColor(status: string): string {
   }
 }
 
-function getActionLabel(status: string): string {
+function getActionLabel(status: Class['status']): string {
   switch (status) {
     case 'Active':
-      return 'Continue';
+      return t('classes.actions.continue');
     case 'Completed':
-      return 'Review';
+      return t('classes.actions.review');
     case 'Upcoming':
-      return 'Preview';
+      return t('classes.actions.preview');
     case 'Dropped':
-      return 'Re-enroll';
+      return t('classes.actions.reenroll');
     default:
-      return 'View';
+      return t('classes.actions.view');
   }
 }
+
+const statusLabel = (status: Class['status']): string =>
+  t(`classes.statusLabels.${status.toLowerCase()}`);
+
+const subjectLabel = (subject: string): string => {
+  const key = SUBJECT_LABEL_KEYS[subject as keyof typeof SUBJECT_LABEL_KEYS];
+  return key ? t(`classes.subjects.${key}`) : subject;
+};
 
 function openClass(classItem: Class): void {
   console.log('Opening class:', classItem.name);

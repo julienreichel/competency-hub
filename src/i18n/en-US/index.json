@@ -101,7 +101,19 @@
   "profile": {
     "uploadPhoto": "Upload Photo",
     "picture": "Profile Photo",
-    "uploadError": "Could not upload the photo. Please try again."
+    "uploadError": "Could not upload the photo. Please try again.",
+    "title": "User Profile",
+    "loading": "Loading profile...",
+    "fallbackName": "User",
+    "actions": {
+      "edit": "Edit Profile",
+      "save": "Save Changes"
+    },
+    "messages": {
+      "waitForUpload": "Please wait for the image upload to finish before saving.",
+      "updateSuccess": "Profile updated successfully!",
+      "updateError": "Failed to update profile. Please try again."
+    }
   },
   "educator": {
     "assignLabel": "Add to my students",
@@ -174,6 +186,96 @@
         "subCompetency": "Competency",
         "submittedAt": "Submitted"
       }
+    }
+  },
+  "parents": {
+    "children": {
+      "title": "My Children",
+      "loading": "Loading children...",
+      "emptyTitle": "No children added yet",
+      "emptyDescription": "Add your children to monitor their learning progress.",
+      "dialog": {
+        "title": "Add Child"
+      },
+      "actions": {
+        "addChild": "Add Child",
+        "addFirstChild": "Add Your First Child"
+      },
+      "fields": {
+        "fullName": "Full Name *",
+        "age": "Age *",
+        "grade": "Grade Level *",
+        "school": "School",
+        "studentId": "Student ID",
+        "studentIdHint": "If your child is already registered in the system"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "ageRequired": "Age is required",
+        "gradeRequired": "Grade is required"
+      },
+      "gradeOptions": {
+        "preK": "Pre-K",
+        "kindergarten": "Kindergarten",
+        "grade1": "1st Grade",
+        "grade2": "2nd Grade",
+        "grade3": "3rd Grade",
+        "grade4": "4th Grade",
+        "grade5": "5th Grade",
+        "grade6": "6th Grade",
+        "grade7": "7th Grade",
+        "grade8": "8th Grade",
+        "grade9": "9th Grade",
+        "grade10": "10th Grade",
+        "grade11": "11th Grade",
+        "grade12": "12th Grade"
+      }
+    }
+  },
+  "classes": {
+    "title": "My Classes",
+    "filters": {
+      "searchPlaceholder": "Search classes...",
+      "status": "Status",
+      "subject": "Subject"
+    },
+    "statusLabels": {
+      "active": "Active",
+      "completed": "Completed",
+      "upcoming": "Upcoming",
+      "dropped": "Dropped"
+    },
+    "subjects": {
+      "mathematics": "Mathematics",
+      "science": "Science",
+      "languageArts": "Language Arts",
+      "socialStudies": "Social Studies",
+      "art": "Art",
+      "music": "Music"
+    },
+    "progress": "{percent}% Complete",
+    "actions": {
+      "continue": "Continue",
+      "review": "Review",
+      "preview": "Preview",
+      "reenroll": "Re-enroll",
+      "view": "View",
+      "browseClasses": "Browse Available Classes"
+    },
+    "menu": {
+      "viewDetails": "View Details",
+      "viewGrades": "View Grades",
+      "dropClass": "Drop Class"
+    },
+    "empty": {
+      "title": "No classes found",
+      "description": "Try adjusting your search filters or enroll in new classes."
+    }
+  },
+  "errors": {
+    "notFound": {
+      "subtitle": "Oops. Nothing here...",
+      "action": "Go Home"
     }
   },
   "domains": {
@@ -372,7 +474,8 @@
     "validateSuccess": "Student marked as validated.",
     "pendingValidationSuccess": "Request sent for validation.",
     "progressStepSuccess": "Progress updated.",
-    "progressUpdateError": "Could not update student progress. Please try again."
+    "progressUpdateError": "Could not update student progress. Please try again.",
+    "saveSuccess": "Sub-competency saved."
   },
   "progressStatus": {
     "NotStarted": "Not started",
@@ -439,6 +542,7 @@
     "roleRequired": "Role is required"
   },
   "login": {
+    "headerSubtitle": "Sign in to access your learning dashboard",
     "welcomeBack": "Welcome Back",
     "enterCredentials": "Enter your credentials to continue",
     "signIn": "Sign In",
@@ -447,7 +551,114 @@
     "joinPlatform": "Join the competency learning platform",
     "termsAndPrivacy": "By signing in, you agree to our Terms of Service and Privacy Policy",
     "success": "Login successful",
-    "signedIn": "You are now signed in to Competency Hub."
+    "signedIn": "You are now signed in to Competency Hub.",
+    "roleSelection": {
+      "title": "Select Your Role",
+      "subtitle": "Choose the role that best describes you"
+    },
+    "roles": {
+      "student": {
+        "label": "Student",
+        "description": "I am here to learn and track my progress"
+      },
+      "parent": {
+        "label": "Parent",
+        "description": "I want to monitor my child's progress"
+      },
+      "educator": {
+        "label": "Educator",
+        "description": "I support students in their learning journey"
+      },
+      "admin": {
+        "label": "Admin",
+        "description": "I manage the platform"
+      },
+      "unknown": "Unknown"
+    },
+    "forms": {
+      "firstName": "First Name",
+      "firstNamePlaceholder": "Enter your first name",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Enter your last name",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter your email address",
+      "password": "Password",
+      "passwordPlaceholder": "Enter a secure password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "signInEmailPlaceholder": "Enter your email address to sign in",
+      "signInPasswordPlaceholder": "Enter your password"
+    },
+    "notifications": {
+      "userNotFound": "User not found. Please contact support.",
+      "authFailed": "Authentication failed. Please try again.",
+      "assignSuccess": "Welcome! You've been assigned the {role} role.",
+      "assignError": "Failed to assign role. Please try again."
+    }
+  },
+  "reportsPage": {
+    "title": "Reports & Analytics",
+    "filters": {
+      "title": "Report Filters",
+      "reportType": "Report Type",
+      "timeRange": "Time Range",
+      "subject": "Subject"
+    },
+    "reportTypes": {
+      "progress": "Progress Report",
+      "assessments": "Assessment Results",
+      "competencies": "Competency Mastery",
+      "time": "Time Analytics"
+    },
+    "timeRanges": {
+      "last_week": "Last Week",
+      "last_month": "Last Month",
+      "last_quarter": "Last Quarter",
+      "last_year": "Last Year"
+    },
+    "subjects": {
+      "mathematics": "Mathematics",
+      "science": "Science",
+      "languageArts": "Language Arts",
+      "socialStudies": "Social Studies",
+      "art": "Art",
+      "music": "Music"
+    },
+    "summary": {
+      "completedAssessments": "Completed Assessments",
+      "averageScore": "Average Score",
+      "competenciesMastered": "Competencies Mastered",
+      "studyTime": "Study Time"
+    },
+    "charts": {
+      "progressOverTime": "Progress Over Time",
+      "placeholderPrimary": "Chart will be displayed here",
+      "placeholderSecondary": "Progress tracking chart showing performance trends",
+      "subjectPerformance": "Subject Performance"
+    },
+    "subjectAverage": "{score}% average",
+    "table": {
+      "title": "Detailed Report Data",
+      "columns": {
+        "assessment": "Assessment",
+        "subject": "Subject",
+        "date": "Date",
+        "score": "Score",
+        "status": "Status",
+        "timeSpent": "Time (min)"
+      }
+    },
+    "statusLabels": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "notStarted": "Not Started"
+    },
+    "actions": {
+      "update": "Update Report",
+      "exportPdf": "Export PDF",
+      "exportCsv": "Export CSV",
+      "share": "Share Report"
+    }
   },
   "projects": {
     "myProjects": "My Projects",
