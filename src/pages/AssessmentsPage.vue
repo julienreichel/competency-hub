@@ -278,7 +278,7 @@ async function loadData(): Promise<void> {
 async function buildEvaluationData(user: User): Promise<void> {
   const progress = Array.isArray(user.studentProgress) ? user.studentProgress : [];
   const unlockedSubIds = progress
-    .filter((entry) => entry.lockOverride !== 'Locked')
+    .filter((entry) => entry.status === 'PendingValidation')
     .map((entry) => entry.subCompetencyId);
 
   const attemptSubIds = (user.evaluationAttempts ?? [])
