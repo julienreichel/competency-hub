@@ -37,10 +37,10 @@
     },
     "actions": {
       "myCompetencies": "Mes compétences",
-      "viewAssessments": "Voir les évaluations",
+      "viewAssessments": "Mes évaluations",
       "myProjects": "Mes projets",
       "viewReports": "Voir les rapports",
-      "viewChildren": "Voir les enfants",
+      "viewChildren": "Mes enfants",
       "manageStudents": "Gérer les élèves",
       "manageUsers": "Gérer les utilisateurs",
       "manageDomains": "Gérer les domaines"
@@ -65,6 +65,9 @@
     "loading": "Chargement...",
     "download": "Télécharger",
     "unknown": "Inconnu"
+  },
+  "app": {
+    "title": "Competency Hub"
   },
   "resource": {
     "openFile": "Ouvrir le fichier"
@@ -185,6 +188,67 @@
         "name": "Projet",
         "subCompetency": "Compétence",
         "submittedAt": "Soumis le"
+      }
+    }
+  },
+  "navigation": {
+    "header": "Navigation",
+    "dashboard": {
+      "title": "Tableau de bord",
+      "description": "Vue d'ensemble et actions rapides"
+    },
+    "common": {
+      "domains": {
+        "title": "Domaines"
+      }
+    },
+    "student": {
+      "competencies": {
+        "title": "Mes compétences",
+        "description": "Suis ta progression d'apprentissage"
+      },
+      "assessments": {
+        "title": "Mes évaluations",
+        "description": "Consulte et réalise des évaluations"
+      },
+      "projects": {
+        "title": "Mes projets",
+        "description": "Gère tes projets soumis"
+      },
+      "domains": {
+        "description": "Parcourir les domaines"
+      }
+    },
+    "educator": {
+      "students": {
+        "title": "Mes élèves",
+        "description": "Gère les élèves qui te sont attribués"
+      },
+      "assessments": {
+        "title": "Évaluations",
+        "description": "Crée et corrige les évaluations"
+      },
+      "projects": {
+        "title": "Projets",
+        "description": "Révise les projets des élèves"
+      },
+      "domains": {
+        "description": "Gérer les domaines de compétences"
+      }
+    },
+    "parent": {
+      "children": {
+        "title": "Mes enfants",
+        "description": "Suis les progrès de tes enfants"
+      }
+    },
+    "admin": {
+      "users": {
+        "title": "Gestion des utilisateurs",
+        "description": "Gère les utilisateurs de la plateforme"
+      },
+      "domains": {
+        "description": "Gérer les compétences"
       }
     }
   },
@@ -485,7 +549,10 @@
   },
   "progressStatus": {
     "NotStarted": "Pas commencée",
-    "Locked": "Verrouillée"
+    "Locked": "Verrouillée",
+    "InProgress": "En cours",
+    "Validated": "Validée",
+    "PendingValidation": "En attente de validation"
   },
   "reports": {
     "title": "Rapports des élèves",

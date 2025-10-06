@@ -37,10 +37,10 @@
     },
     "actions": {
       "myCompetencies": "My competencies",
-      "viewAssessments": "View assessments",
+      "viewAssessments": "My assessments",
       "myProjects": "My projects",
       "viewReports": "View reports",
-      "viewChildren": "View children",
+      "viewChildren": "My children",
       "manageStudents": "Manage students",
       "manageUsers": "Manage users",
       "manageDomains": "Manage domains"
@@ -65,6 +65,9 @@
     "loading": "Loading...",
     "download": "Download",
     "unknown": "Unknown"
+  },
+  "app": {
+    "title": "Competency Hub"
   },
   "resource": {
     "openFile": "Open file"
@@ -185,6 +188,67 @@
         "name": "Project",
         "subCompetency": "Competency",
         "submittedAt": "Submitted"
+      }
+    }
+  },
+  "navigation": {
+    "header": "Navigation",
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Overview and quick actions"
+    },
+    "common": {
+      "domains": {
+        "title": "Domains"
+      }
+    },
+    "student": {
+      "competencies": {
+        "title": "My Competencies",
+        "description": "Track your learning progress"
+      },
+      "assessments": {
+        "title": "My Assessments",
+        "description": "View and take assessments"
+      },
+      "projects": {
+        "title": "My Projects",
+        "description": "Manage project submissions"
+      },
+      "domains": {
+        "description": "Browse domains"
+      }
+    },
+    "educator": {
+      "students": {
+        "title": "My Students",
+        "description": "Manage assigned students"
+      },
+      "assessments": {
+        "title": "Assessments",
+        "description": "Create and grade assessments"
+      },
+      "projects": {
+        "title": "Projects",
+        "description": "Review student projects"
+      },
+      "domains": {
+        "description": "Manage competency domains"
+      }
+    },
+    "parent": {
+      "children": {
+        "title": "My Children",
+        "description": "Monitor your children's progress"
+      }
+    },
+    "admin": {
+      "users": {
+        "title": "User Management",
+        "description": "Manage platform users"
+      },
+      "domains": {
+        "description": "Manage competencies"
       }
     }
   },
@@ -485,7 +549,10 @@
   },
   "progressStatus": {
     "NotStarted": "Not started",
-    "Locked": "Locked"
+    "Locked": "Locked",
+    "InProgress": "In Progress",
+    "Validated": "Validated",
+    "PendingValidation": "Pending validation"
   },
   "reports": {
     "title": "Student Reports",

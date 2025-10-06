@@ -4,7 +4,7 @@
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> Competency Hub </q-toolbar-title>
+        <q-toolbar-title>{{ t('app.title') }}</q-toolbar-title>
 
         <!-- User Menu -->
         <div v-if="isAuthenticated" class="q-gutter-sm row items-center no-wrap">
@@ -73,12 +73,12 @@
 
     <q-drawer v-if="isAuthenticated" v-model="leftDrawerOpen" show-if-above bordered>
       <q-list>
-        <q-item-label header> Navigation </q-item-label>
+        <q-item-label header>{{ t('navigation.header') }}</q-item-label>
 
         <!-- Dashboard -->
         <essential-link
-          title="Dashboard"
-          caption="Overview and quick actions"
+          :title="t('navigation.dashboard.title')"
+          :caption="t('navigation.dashboard.description')"
           icon="dashboard"
           link="/"
         />
@@ -86,8 +86,8 @@
         <!-- Role-specific menu items -->
         <template v-if="hasRole('Student')">
           <essential-link
-            title="My Competencies"
-            caption="Track your learning progress"
+            :title="t('navigation.student.competencies.title')"
+            :caption="t('navigation.student.competencies.description')"
             icon="psychology"
             link="/me/competencies"
           />
@@ -95,8 +95,8 @@
 
         <template v-if="hasRole('Student')">
           <essential-link
-            title="My Assessments"
-            caption="View and take assessments"
+            :title="t('navigation.student.assessments.title')"
+            :caption="t('navigation.student.assessments.description')"
             icon="quiz"
             link="/me/assessments"
           />
@@ -104,8 +104,8 @@
 
         <template v-if="hasRole('Student')">
           <essential-link
-            title="My Projects"
-            caption="Manage project submissions"
+            :title="t('navigation.student.projects.title')"
+            :caption="t('navigation.student.projects.description')"
             icon="assignment"
             link="/me/projects"
           />
@@ -113,8 +113,8 @@
 
         <template v-if="hasRole('Student')">
           <essential-link
-            title="Domains"
-            caption="Browse domains"
+            :title="t('navigation.common.domains.title')"
+            :caption="t('navigation.student.domains.description')"
             icon="category"
             link="/domains"
           />
@@ -122,8 +122,8 @@
 
         <template v-if="hasRole('Educator')">
           <essential-link
-            title="My Students"
-            caption="Manage assigned students"
+            :title="t('navigation.educator.students.title')"
+            :caption="t('navigation.educator.students.description')"
             icon="groups"
             link="/educator/students"
           />
@@ -136,15 +136,15 @@
           /-->
 
           <essential-link
-            title="Assessments"
-            caption="Create and grade assessments"
+            :title="t('navigation.educator.assessments.title')"
+            :caption="t('navigation.educator.assessments.description')"
             icon="assignment"
             link="/educator/assessments"
           />
 
           <essential-link
-            title="Projects"
-            caption="Review student projects"
+            :title="t('navigation.educator.projects.title')"
+            :caption="t('navigation.educator.projects.description')"
             icon="folder"
             link="/educator/projects"
           />
@@ -157,8 +157,8 @@
           /-->
 
           <essential-link
-            title="Domains"
-            caption="Manage competency domains"
+            :title="t('navigation.common.domains.title')"
+            :caption="t('navigation.educator.domains.description')"
             icon="category"
             link="/domains"
           />
@@ -166,8 +166,8 @@
 
         <template v-if="hasRole('Parent')">
           <essential-link
-            title="My Children"
-            caption="Monitor your children's progress"
+            :title="t('navigation.parent.children.title')"
+            :caption="t('navigation.parent.children.description')"
             icon="family_restroom"
             link="/children"
           />
@@ -175,15 +175,15 @@
 
         <template v-if="hasRole('Admin')">
           <essential-link
-            title="User Management"
-            caption="Manage platform users"
+            :title="t('navigation.admin.users.title')"
+            :caption="t('navigation.admin.users.description')"
             icon="people"
             link="/admin/users"
           />
 
           <essential-link
-            title="Domains"
-            caption="Manage competencies"
+            :title="t('navigation.common.domains.title')"
+            :caption="t('navigation.admin.domains.description')"
             icon="category"
             link="/domains"
           />
@@ -203,8 +203,8 @@
 
 <script setup lang="ts">
 import EssentialLink from 'components/EssentialLink.vue';
-import type { MessageLanguages } from 'src/boot/i18n';
 import { useQuasar } from 'quasar';
+import type { MessageLanguages } from 'src/boot/i18n';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -233,9 +233,9 @@ const selectedLocale = computed<MessageLanguages>({
     if (locale.value !== value) {
       locale.value = value;
     }
-    if ($q.localStorage) {
-      $q.localStorage.set(LANGUAGE_STORAGE_KEY, value);
-    }
+    console.log(value);
+
+    $q.localStorage.set(LANGUAGE_STORAGE_KEY, value);
   },
 });
 
