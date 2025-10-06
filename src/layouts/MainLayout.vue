@@ -19,17 +19,35 @@
 
           <q-btn-dropdown
             flat
-            round
             dense
-            :icon="'account_circle'"
-            :label="userFullName"
-            class="q-ml-sm"
+            class="q-ml-sm user-menu__trigger"
+            content-class="user-menu__dropdown"
           >
-            <q-list>
-              <q-item-label header>{{ userFullName }}</q-item-label>
-              <q-item-label caption>{{ userAttributes.email }}</q-item-label>
+            <template #label>
+              <div class="row items-center no-wrap q-gutter-xs">
+                <q-avatar size="28px" class="user-menu__trigger-avatar">
+                  <img v-if="menuAvatar" :src="menuAvatar" alt="" />
+                  <span v-else>{{ userInitials }}</span>
+                </q-avatar>
+                <span class="user-menu__trigger-label">{{ userFullName }}</span>
+              </div>
+            </template>
 
-              <q-separator />
+            <q-list class="user-menu q-pt-md">
+              <q-item class="q-">
+                <q-item-section avatar>
+                  <q-avatar size="lg">
+                    <img v-if="menuAvatar" :src="menuAvatar" alt="" />
+                    <span v-else>{{ userInitials }}</span>
+                  </q-avatar>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ userFullName }}</q-item-label>
+                  <q-item-label caption>{{ userEmail }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator spaced />
 
               <q-item clickable v-close-popup @click="goToProfile">
                 <q-item-section avatar>
@@ -38,9 +56,9 @@
                 <q-item-section>{{ t('common.profile') }}</q-item-section>
               </q-item>
 
-              <q-separator />
+              <q-separator class="user-menu__separator" spaced />
 
-              <q-item class="q-px-sm">
+              <q-item class="q-pt-md">
                 <q-item-section avatar>
                   <q-icon name="language" />
                 </q-item-section>
@@ -52,12 +70,12 @@
                     color="primary"
                     dense
                     type="radio"
-                    class="q-mt-xs"
+                    class="q-py-sm"
                   />
                 </q-item-section>
               </q-item>
 
-              <q-separator />
+              <q-separator spaced />
 
               <q-item clickable v-close-popup @click="handleSignOut">
                 <q-item-section avatar>
@@ -205,7 +223,9 @@
 import EssentialLink from 'components/EssentialLink.vue';
 import { useQuasar } from 'quasar';
 import type { MessageLanguages } from 'src/boot/i18n';
-import { computed, onMounted, ref } from 'vue';
+import { useUsers } from 'src/composables/useUsers';
+import type { User } from 'src/models/User';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
@@ -214,11 +234,24 @@ const router = useRouter();
 const $q = useQuasar();
 const { t, locale } = useI18n();
 
+const {
+  isAuthenticated,
+  userFullName,
+  userRole,
+  userAttributes,
+  userId,
+  handleSignOut: authSignOut,
+  initAuth,
+  hasRole,
+} = useAuth();
+const { getCurrentUser } = useUsers();
+
 const LANGUAGE_STORAGE_KEY = 'preferred-locale';
 const LANGUAGE_OPTIONS: Array<{ value: MessageLanguages; labelKey: string }> = [
   { value: 'en-US', labelKey: 'language.options.enUS' },
   { value: 'fr', labelKey: 'language.options.fr' },
 ];
+const MAX_INITIALS = 2;
 
 const languageOptions = computed(() =>
   LANGUAGE_OPTIONS.map(({ value, labelKey }) => ({
@@ -233,34 +266,52 @@ const selectedLocale = computed<MessageLanguages>({
     if (locale.value !== value) {
       locale.value = value;
     }
-    console.log(value);
-
-    $q.localStorage.set(LANGUAGE_STORAGE_KEY, value);
+    if ($q.localStorage) {
+      $q.localStorage.set(LANGUAGE_STORAGE_KEY, value);
+    }
   },
 });
 
-const {
-  isAuthenticated,
-  userFullName,
-  userRole,
-  userAttributes,
-  handleSignOut: authSignOut,
-  initAuth,
-  hasRole,
-} = useAuth();
+const menuUser = ref<User | null>(null);
+
+const userEmail = computed(
+  () => userAttributes.value.email || userAttributes.value.preferred_username || '',
+);
+
+const menuAvatar = computed(() => menuUser.value?.avatar || menuUser.value?.picture || null);
+
+const userInitials = computed(() => {
+  const name = userFullName.value.trim();
+  if (!name) {
+    return (userRole.value?.[0] ?? 'U').toUpperCase();
+  }
+  const parts = name.split(/\s+/).filter(Boolean);
+  const initials = parts
+    .slice(0, MAX_INITIALS)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+  return initials || (userRole.value?.[0] ?? 'U').toUpperCase();
+});
+
+const loadMenuUser = async (force = false): Promise<void> => {
+  if (!isAuthenticated.value) {
+    menuUser.value = null;
+    return;
+  }
+  try {
+    const user = await getCurrentUser(!force);
+    menuUser.value = user ?? null;
+  } catch {
+    menuUser.value = null;
+  }
+};
 
 const leftDrawerOpen = ref(false);
 
-/**
- * Toggle left drawer
- */
 function toggleLeftDrawer(): void {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 
-/**
- * Get role-specific color
- */
 function getRoleColor(role: string): string {
   const colors: Record<string, string> = {
     Student: 'blue',
@@ -271,9 +322,6 @@ function getRoleColor(role: string): string {
   return colors[role] || 'grey';
 }
 
-/**
- * Get role-specific icon
- */
 function getRoleIcon(role: string): string {
   const icons: Record<string, string> = {
     Student: 'school',
@@ -284,16 +332,10 @@ function getRoleIcon(role: string): string {
   return icons[role] || 'person';
 }
 
-/**
- * Navigate to profile page
- */
 async function goToProfile(): Promise<void> {
   await router.push('/profile');
 }
 
-/**
- * Handle user sign out
- */
 async function handleSignOut(): Promise<void> {
   try {
     await authSignOut();
@@ -303,6 +345,7 @@ async function handleSignOut(): Promise<void> {
       message: t('login.notifications.signOutSuccess'),
     });
 
+    menuUser.value = null;
     await router.push('/login');
   } catch {
     $q.notify({
@@ -312,11 +355,32 @@ async function handleSignOut(): Promise<void> {
   }
 }
 
-/**
- * Initialize layout
- */
+watch(
+  () => isAuthenticated.value,
+  async (auth) => {
+    if (!auth) {
+      menuUser.value = null;
+      return;
+    }
+    await loadMenuUser(true);
+  },
+);
+
+watch(
+  () => userId.value,
+  async (current, previous) => {
+    if (!current || current === 'undefined') {
+      menuUser.value = null;
+      return;
+    }
+    if (current !== previous) {
+      await loadMenuUser(true);
+    }
+  },
+);
+
 onMounted(async () => {
   await initAuth();
-  // Router guard already handles authentication redirects
+  await loadMenuUser(false);
 });
 </script>
