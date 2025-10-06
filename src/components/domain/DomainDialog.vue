@@ -19,27 +19,40 @@
     />
     <div class="column q-gutter-xs q-mt-md">
       <div class="text-subtitle2">{{ $t('domains.fields.color') }}</div>
-      <q-color
-        v-model="localForm.colorCode"
-        :default-value="DEFAULT_COLOR"
-        format="hex"
-        default-view="palette"
-        no-header
-        no-footer
-        :palette="[
-          '#1976D2', // Blue (primary, calm)
-          '#E53935', // Red (energy, alert)
-          '#43A047', // Green (success, nature)
-          '#FB8C00', // Orange (warm, accent)
-          '#8E24AA', // Purple (creative, accent)
-          '#00ACC1', // Teal (fresh, modern)
-          '#FDD835', // Yellow (highlight, cheerful)
-          '#546E7A', // Blue-grey (neutral, balance)
-          '#5D4037', // Brown (earthy, grounding)
-          '#C0CA33', // Lime (vivid, playful)
-        ]"
-        class="full-width domain-color-picker"
-      />
+      <div class="row items-center q-gutter-sm">
+        <q-color
+          v-model="localForm.colorCode"
+          :default-value="DEFAULT_COLOR"
+          format="hex"
+          default-view="palette"
+          no-header
+          no-footer
+          :palette="[
+            '#1976D2', // Blue (primary, calm)
+            '#E53935', // Red (energy, alert)
+            '#43A047', // Green (success, nature)
+            '#FB8C00', // Orange (warm, accent)
+            '#8E24AA', // Purple (creative, accent)
+            '#00ACC1', // Teal (fresh, modern)
+            '#FDD835', // Yellow (highlight, cheerful)
+            '#546E7A', // Blue-grey (neutral, balance)
+            '#5D4037', // Brown (earthy, grounding)
+            '#D733B4', // Pink
+          ]"
+          class="full-width domain-color-picker"
+        />
+        <div
+          :style="{
+            width: '32px',
+            height: '32px',
+            borderRadius: '6px',
+            border: '1px solid #ccc',
+            background: localForm.colorCode || DEFAULT_COLOR,
+            marginLeft: '8px',
+          }"
+          aria-label="Selected color preview"
+        />
+      </div>
     </div>
   </base-dialog>
 </template>
@@ -72,7 +85,16 @@ watch(
   () => props.form,
   (newForm) => {
     localForm.name = newForm.name;
-    localForm.colorCode = newForm.colorCode;
+    localForm.colorCode = newForm?.colorCode;
+  },
+  { deep: true },
+);
+
+watch(
+  open,
+  () => {
+    localForm.name = props.form.name ?? '';
+    localForm.colorCode = props.form.colorCode;
   },
   { deep: true },
 );

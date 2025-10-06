@@ -136,11 +136,3 @@ onMounted(() => {
   void loadDomains();
 });
 </script>
-
-<style scoped>
-.domain-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-}
-</style>
