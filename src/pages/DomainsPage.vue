@@ -1,9 +1,9 @@
 <template>
   <q-page class="q-pa-lg column q-gutter-lg">
     <div class="row items-center justify-between">
-      <div>
-        <div class="text-h5">{{ $t('domains.title') }}</div>
-        <div class="text-caption text-grey-7">{{ $t('domains.subtitle') }}</div>
+      <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
+        <q-icon name="category" />
+        <span>{{ t('domains.title') }}</span>
       </div>
       <q-btn
         v-if="hasRole('Admin')"
@@ -15,8 +15,20 @@
       />
     </div>
 
+    <q-input
+      v-model="search"
+      outlined
+      debounce="200"
+      :placeholder="t('domains.searchPlaceholder')"
+      clearable
+    >
+      <template #prepend>
+        <q-icon name="search" />
+      </template>
+    </q-input>
+
     <domain-list
-      :domains="domains"
+      :domains="filteredDomains"
       :loading="loading"
       @edit="openEditDialog"
       @select="goToDomain"
@@ -39,7 +51,7 @@ import DomainList from 'src/components/domain/DomainList.vue';
 import { useAuth } from 'src/composables/useAuth';
 import type { Domain } from 'src/models/Domain';
 import { domainRepository } from 'src/models/repositories/DomainRepository';
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -50,6 +62,26 @@ const { hasRole } = useAuth();
 
 const domains = ref<Domain[]>([]);
 const loading = ref(false);
+const search = ref('');
+
+const normalizedSearch = computed(() => search.value.trim().toLowerCase());
+
+const filteredDomains = computed(() => {
+  if (!normalizedSearch.value) {
+    return domains.value;
+  }
+
+  return domains.value.filter((domain) => {
+    const domainMatch = domain.name.toLowerCase().includes(normalizedSearch.value);
+    if (domainMatch) {
+      return true;
+    }
+
+    return (domain.competencies ?? []).some((competency) =>
+      competency.name.toLowerCase().includes(normalizedSearch.value),
+    );
+  });
+});
 
 const dialog = reactive({
   open: false,

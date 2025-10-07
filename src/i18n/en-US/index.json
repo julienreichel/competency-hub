@@ -368,6 +368,7 @@
       "exportError": "Failed to export domain JSON.",
       "importError": "Failed to import domain JSON."
     },
+    "searchPlaceholder": "Search domains or competencies...",
     "fields": {
       "name": "Domain name",
       "color": "Color (optional)"

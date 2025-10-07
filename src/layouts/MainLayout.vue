@@ -149,14 +149,14 @@
           <essential-link
             :title="t('navigation.educator.assessments.title')"
             :caption="t('navigation.educator.assessments.description')"
-            icon="assignment"
+            icon="assignment_turned_in"
             link="/educator/assessments"
           />
 
           <essential-link
             :title="t('navigation.educator.projects.title')"
             :caption="t('navigation.educator.projects.description')"
-            icon="folder"
+            icon="assignment"
             link="/educator/projects"
           />
 
@@ -367,82 +367,3 @@ onMounted(async () => {
   await loadMenuUser(false);
 });
 </script>
-
-<style scoped>
-.user-role-chip {
-  font-weight: 600;
-}
-
-.user-menu__trigger {
-  padding: 0 8px;
-}
-
-.user-menu__trigger-avatar {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-weight: 600;
-  background-color: var(--q-primary);
-  color: #fff;
-}
-
-.user-menu__trigger-label {
-  font-weight: 500;
-  max-width: 180px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.user-menu__dropdown {
-  padding: 0;
-}
-
-.user-menu {
-  min-width: 260px;
-  padding: 4px 0 8px;
-}
-
-.user-menu__header {
-  padding: 12px 12px 6px;
-}
-
-.user-menu__header .q-item__section--avatar {
-  padding-right: 12px;
-}
-
-.user-menu__name {
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.2;
-}
-
-.user-menu__email {
-  margin-top: 4px;
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.6);
-  word-break: break-word;
-}
-
-.user-menu__separator {
-  margin: 4px 0;
-}
-
-.user-menu__item {
-  min-height: 44px;
-}
-
-.user-menu__item .q-item__section--avatar {
-  padding-right: 12px;
-}
-
-.user-menu__icon {
-  font-size: 20px;
-}
-
-.user-menu__language .q-item__section--avatar {
-  padding-top: 6px;
-}
-
-.user-menu__language-options {
-  margin-top: 6px;
-}
-</style>

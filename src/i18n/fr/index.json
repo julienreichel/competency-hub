@@ -368,6 +368,7 @@
       "exportError": "Échec de l’export du domaine en JSON.",
       "importError": "Échec de l’import du domaine en JSON."
     },
+    "searchPlaceholder": "Rechercher des domaines ou des compétences...",
     "fields": {
       "name": "Nom du domaine",
       "color": "Couleur (optionnel)"
