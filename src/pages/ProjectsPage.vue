@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <project-form-dialog
+    <create-project-dialog
       v-model="showProjectDialog"
       :project="editingProject"
       @saved="onProjectSaved"
@@ -97,8 +97,8 @@
 <script setup lang="ts">
 import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
+import CreateProjectDialog from 'src/components/project/CreateProjectDialog.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
-import ProjectFormDialog from 'src/components/project/ProjectFormDialog.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';

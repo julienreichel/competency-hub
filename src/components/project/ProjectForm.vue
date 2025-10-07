@@ -174,7 +174,10 @@ const loadSubCompetencies = async (): Promise<void> => {
     const ids = new Set<string>();
 
     progressEntries?.forEach((entry) => {
-      if (entry?.status === 'InProgress' && entry?.subCompetencyId) {
+      if (
+        (entry?.status === 'InProgress' || entry?.status === 'PendingValidation') &&
+        entry?.subCompetencyId
+      ) {
         ids.add(entry.subCompetencyId);
       }
     });
