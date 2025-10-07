@@ -237,3 +237,27 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - Messaging, school life modules
 - Notifications, advanced scaling
 - Parent/educator collaboration tooling (meetings, shared notes)
+
+## 8. Application Pages & Feature Coverage
+
+| Page                             | Audience                 | Primary Features / Notes                                                                   |
+| -------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
+| `LoginPage.vue`                  | All roles                | Amplify authenticator entry point and role selection workflow.                             |
+| `IndexPage.vue`                  | Student                  | Dashboard summarising progress, shortcuts, and recent activity.                            |
+| `ProfilePage.vue`                | All roles                | User-facing profile editor, avatar upload, personal details.                               |
+| `DomainsPage.vue`                | Student, Educator, Admin | Domain catalogue with search across domains/competencies, domain creation (admin).         |
+| `DomainPage.vue`                 | Student, Educator, Admin | Domain detail view: competency listing, admin competency creation, delete cascade guarded. |
+| `CompetenciesPage.vue`           | Student                  | Competency browser highlighting status/filters.                                            |
+| `CompetencyPage.vue`             | Student, Educator        | Competency detail with sub-competency cards, educator actions.                             |
+| `SubCompetencyPage.vue`          | Student, Educator        | Deep dive: resource manager, evaluation manager, student progress and validation actions.  |
+| `ProjectsPage.vue` (student)     | Student                  | Student project portfolio (cards, creation dialog, submissions).                           |
+| `ProjectDetailPage.vue`          | Student, Educator        | Detailed project view with validation controls and file download.                          |
+| `AssessmentsPage.vue` (student)  | Student                  | Upcoming/past evaluations, filters, links to attempt evaluations.                          |
+| `ChildrenPage.vue`               | Parent                   | Parent dashboard listing children with quick progress links.                               |
+| `ReportPage.vue`                 | Educator, Parent         | Report generation with filters, summary metrics, print-friendly layout.                    |
+| `ProjectsPage.vue` (educator)    | Educator                 | ManagedTable view of student projects with bulk approve/reject, filters.                   |
+| `AssessmentsPage.vue` (educator) | Educator                 | Pending validation overview with ManagedTable, bulk student progress actions.              |
+| `StudentsPage.vue` (educator)    | Educator                 | Student roster, assignment management using ManagedTable bulk actions.                     |
+| `admin/UsersPage.vue`            | Admin                    | Admin user management, bulk role actions, stats, Modals.                                   |
+
+These screens consume the component/composable layers outlined earlier, ensuring the data model cascades (Domain → Competency → Sub-competency → Resource/Evaluation/Project) are reflected in the UX.
