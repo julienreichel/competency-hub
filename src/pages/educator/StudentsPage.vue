@@ -5,30 +5,28 @@
       <span>{{ $t('educator.myStudentsTitle') }}</span>
     </div>
 
+    <div class="row items-end q-col-gutter-md q-mb-lg">
+      <div class="col-12 col-md-10">
+        <q-input v-model="searchTerm" :label="$t('educator.searchStudents')" outlined clearable>
+          <template #append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
+
+      <div class="col-auto">
+        <q-btn
+          outline
+          color="primary"
+          icon="refresh"
+          :label="$t('common.refresh')"
+          :loading="loading"
+          @click="refreshUsers"
+        />
+      </div>
+    </div>
+
     <q-card flat bordered>
-      <q-card-section class="row items-center q-col-gutter-md">
-        <div class="col-12 col-md-6">
-          <q-input v-model="searchTerm" :label="$t('educator.searchStudents')" outlined clearable>
-            <template #append>
-              <q-icon name="search" />
-            </template>
-          </q-input>
-        </div>
-
-        <div class="col-auto">
-          <q-btn
-            outline
-            color="primary"
-            icon="refresh"
-            :label="$t('common.refresh')"
-            :loading="loading"
-            @click="refreshUsers"
-          />
-        </div>
-      </q-card-section>
-
-      <q-separator />
-
       <q-tabs v-model="activeTab" align="justify" class="text-primary">
         <q-tab name="my" icon="person" :label="$t('educator.myStudentsTab')" />
         <q-tab name="all" icon="diversity_3" :label="$t('educator.allStudentsTab')" />
