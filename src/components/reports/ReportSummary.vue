@@ -36,7 +36,7 @@
           <dashboard-stat-card
             :title="$t('reports.summary.totalActivity')"
             :value="summary.totalActivity"
-            icon="activity"
+            icon="psychology"
             icon-color="info"
           />
         </div>

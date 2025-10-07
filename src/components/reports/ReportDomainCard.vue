@@ -195,6 +195,8 @@ const tableColumns = computed(() => [
     field: 'progress',
     align: 'center' as const,
     sortable: true,
+    classes: 'no-print-cell',
+    headerClasses: 'no-print-cell',
   },
   {
     name: 'delta',
@@ -202,6 +204,8 @@ const tableColumns = computed(() => [
     field: 'delta',
     align: 'center' as const,
     sortable: true,
+    classes: 'no-print-cell',
+    headerClasses: 'no-print-cell',
   },
   {
     name: 'lastEvidence',
@@ -285,9 +289,12 @@ import { defineComponent } from 'vue';
 export default defineComponent({ name: 'ReportDomainCard' });
 </script>
 
-<style scoped>
-.competency-table :deep(.q-table__top) {
-  padding: 0;
+<style>
+.competency-table tbody td {
+  max-width: 225px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .progress-cell {
@@ -324,6 +331,12 @@ export default defineComponent({ name: 'ReportDomainCard' });
   .text-body1,
   .text-body2 {
     font-size: 11pt !important;
+  }
+  .no-print-cell {
+    display: none;
+  }
+  .q-chip {
+    color: black !important;
   }
 }
 </style>
