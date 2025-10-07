@@ -80,9 +80,10 @@ The platform provides a **learner-centered environment** with interactive dashbo
 
 ### **2.8 Project**
 
-- **Attributes:** ID, title, description, media, linked competencies, validation status.
+- **Attributes:** id, studentId, subCompetencyId, name (required), description, status (Draft, Submitted, Approved, Rejected), optional fileKey for attachments.
 - **Relations:**
-  - Created by Student
+  - Belongs to a Student
+  - Linked to a Sub-Competency (for validation context)
   - Validated by Educator
 
 ### **2.9 Learning Focus**
@@ -196,10 +197,11 @@ The platform provides a **learner-centered environment** with interactive dashbo
 
 ### **Phase 3: Collaboration & Tracking (Month 5-6)**
 
-- [ ] Student projects (add, document, link competencies)
+- [x] Student projects (add, document, link competencies, upload files)
 - [x] Evaluations (catalog, booking, self/peer/adult modes)
 - [ ] Learning focus definition & validation
 - [ ] Proof upload for competencies
+- [ ] Resource reservations (booking, availability rules)
 
 ### **Phase 4: Communication & Reporting (Month 7-8)**
 
@@ -231,7 +233,7 @@ The platform provides a **learner-centered environment** with interactive dashbo
 ## Planned
 
 - Reservation model
-- Project, Learning Focus, Report, Messaging, School Life models
-- Student project flow, learning focus, proof upload
-- Messaging, school life, reporting
+- Learning focus flow & competency proof upload
+- Messaging, school life modules
 - Notifications, advanced scaling
+- Parent/educator collaboration tooling (meetings, shared notes)
