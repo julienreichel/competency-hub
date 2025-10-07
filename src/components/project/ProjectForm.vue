@@ -45,7 +45,7 @@
       v-model="formState.fileKey"
       :label="t('projects.form.uploadFile')"
       :sub-competency-id="formState.subCompetencyId"
-      :accept="'.pdf,.doc,.docx,.txt,.zip'"
+      :accept="'.pdf,.doc,.docx,.txt,.zip,jpeg,jpg,png'"
       :disable="loading"
     />
 
