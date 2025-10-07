@@ -57,43 +57,21 @@
     </div>
 
     <!-- Projects Table -->
-    <q-table
-      flat
-      bordered
-      v-model:selected="selected"
+    <managed-table
+      row-key="id"
       :rows="filteredProjects"
       :columns="columns"
       :loading="pageLoading"
-      row-key="id"
-      selection="multiple"
       :no-data-label="$t('educator.projects.emptyState')"
       :pagination="pagination"
+      v-model:selected="selected"
+      :bulk-actions="bulkActions"
     >
-      <template #top>
-        <div class="row items-center justify-between full-width q-col-gutter-md">
-          <div class="col">
-            <div class="text-subtitle1">{{ $t('educator.projects.tableTitle') }}</div>
-            <div class="text-caption text-grey-7">
-              {{ $t('educator.projects.tableHint') }}
-            </div>
-          </div>
-          <div v-if="selected.length > 0" class="col-auto row q-gutter-sm">
-            <q-btn
-              color="positive"
-              icon="check_circle"
-              :label="$t('projects.actions.approve')"
-              :disable="selected.length === 0"
-              :loading="bulkActionLoading"
-              @click="bulkApprove"
-            />
-            <q-btn
-              color="negative"
-              icon="cancel"
-              :label="$t('projects.actions.reject')"
-              :disable="selected.length === 0"
-              :loading="bulkActionLoading"
-              @click="bulkReject"
-            />
+      <template #top-left>
+        <div>
+          <div class="text-subtitle1">{{ $t('educator.projects.tableTitle') }}</div>
+          <div class="text-caption text-grey-7">
+            {{ $t('educator.projects.tableHint') }}
           </div>
         </div>
       </template>
@@ -141,8 +119,7 @@
 
       <template #body-cell-actions="props">
         <q-td :props="props">
-          <div class="row q-gutter-xs">
-            <q-space />
+          <div class="managed-table__actions-row">
             <q-btn
               flat
               dense
@@ -169,7 +146,7 @@
           </div>
         </q-td>
       </template>
-    </q-table>
+    </managed-table>
 
     <q-inner-loading :showing="pageLoading">
       <q-spinner-tail color="primary" size="64px" />
@@ -178,6 +155,7 @@
 </template>
 
 <script setup lang="ts">
+import ManagedTable, { type ManagedTableBulkAction } from 'src/components/common/ManagedTable.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project } from 'src/models/Project';
@@ -220,7 +198,7 @@ const columns = computed(() => [
     field: 'student',
     align: 'left' as const,
     sortable: true,
-    style: 'width: 200px',
+    noMaxWidth: true,
   },
   {
     name: 'name',
@@ -228,7 +206,7 @@ const columns = computed(() => [
     field: 'name',
     align: 'left' as const,
     sortable: true,
-    style: 'width: 250px',
+    noMaxWidth: true,
   },
   {
     name: 'subCompetency',
@@ -236,7 +214,7 @@ const columns = computed(() => [
     field: 'subCompetency',
     align: 'left' as const,
     sortable: true,
-    style: 'width: 200px',
+    noMaxWidth: true,
   },
   {
     name: 'submittedAt',
@@ -244,14 +222,38 @@ const columns = computed(() => [
     field: 'updatedAt',
     align: 'center' as const,
     sortable: true,
-    style: 'width: 150px',
   },
   {
     name: 'actions',
     label: t('common.actions'),
     field: 'actions',
-    align: 'center' as const,
-    style: 'width: 200px',
+    align: 'right' as const,
+    isActionColumn: true,
+  },
+]);
+
+const bulkActions = computed<ManagedTableBulkAction[]>(() => [
+  {
+    key: 'approve',
+    label: t('projects.actions.approve'),
+    icon: 'check_circle',
+    color: 'positive',
+    handler: async (rows: unknown[]): Promise<void> => {
+      await bulkApproveRows(rows as Project[]);
+    },
+    loading: bulkActionLoading.value,
+    disabled: bulkActionLoading.value,
+  },
+  {
+    key: 'reject',
+    label: t('projects.actions.reject'),
+    icon: 'cancel',
+    color: 'negative',
+    handler: async (rows: unknown[]): Promise<void> => {
+      await bulkRejectRows(rows as Project[]);
+    },
+    loading: bulkActionLoading.value,
+    disabled: bulkActionLoading.value,
   },
 ]);
 
@@ -409,47 +411,39 @@ const rejectProject = async (project: Project): Promise<void> => {
   }
 };
 
-const bulkApprove = async (): Promise<void> => {
-  if (selected.value.length === 0) return;
+const bulkApproveRows = async (rows: Project[]): Promise<void> => {
+  if (!rows.length) return;
 
   bulkActionLoading.value = true;
   try {
     await Promise.all(
-      selected.value.map(async (project) => {
-        await projectRepository.update(project.id, { status: 'Approved' });
-      }),
+      rows.map((project) => projectRepository.update(project.id, { status: 'Approved' })),
     );
 
-    // Remove approved projects from the list
-    const approvedIds = new Set(selected.value.map((p) => p.id));
+    const approvedIds = new Set(rows.map((p) => p.id));
     projects.value = projects.value.filter((p) => !approvedIds.has(p.id));
-    selected.value = [];
+    selected.value = selected.value.filter((p) => !approvedIds.has(p.id));
   } catch (error) {
     console.error('Failed to bulk approve projects:', error);
-    // TODO: Show error notification
   } finally {
     bulkActionLoading.value = false;
   }
 };
 
-const bulkReject = async (): Promise<void> => {
-  if (selected.value.length === 0) return;
+const bulkRejectRows = async (rows: Project[]): Promise<void> => {
+  if (!rows.length) return;
 
   bulkActionLoading.value = true;
   try {
     await Promise.all(
-      selected.value.map(async (project) => {
-        await projectRepository.update(project.id, { status: 'Rejected' });
-      }),
+      rows.map((project) => projectRepository.update(project.id, { status: 'Rejected' })),
     );
 
-    // Remove rejected projects from the list
-    const rejectedIds = new Set(selected.value.map((p) => p.id));
+    const rejectedIds = new Set(rows.map((p) => p.id));
     projects.value = projects.value.filter((p) => !rejectedIds.has(p.id));
-    selected.value = [];
+    selected.value = selected.value.filter((p) => !rejectedIds.has(p.id));
   } catch (error) {
     console.error('Failed to bulk reject projects:', error);
-    // TODO: Show error notification
   } finally {
     bulkActionLoading.value = false;
   }

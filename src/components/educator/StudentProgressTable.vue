@@ -1,47 +1,19 @@
 <template>
-  <q-table
-    flat
-    bordered
+  <managed-table
     row-key="id"
     :rows="rows"
     :columns="columns"
     :loading="loading"
     :no-data-label="computedNoDataLabel"
-    selection="multiple"
+    :selection="'multiple'"
     v-model:selected="selectedRows"
+    :bulk-actions="bulkActions"
   >
-    <template #top>
-      <div class="row items-center justify-between full-width q-col-gutter-md">
-        <div class="col">
-          <div class="text-subtitle1">{{ t('subCompetencies.studentProgress') }}</div>
-          <div class="text-caption text-grey-7">
-            {{ t('subCompetencies.studentProgressHint') }}
-          </div>
-        </div>
-        <div class="col-auto row q-gutter-sm">
-          <q-btn
-            v-if="isManager"
-            color="primary"
-            icon="lock_open"
-            :label="t('subCompetencies.unlockAction')"
-            :disable="!canBulkUnlock"
-            @click="emitBulk('unlock')"
-          />
-          <q-btn
-            v-if="isManager"
-            color="secondary"
-            icon="thumb_up"
-            :label="t('subCompetencies.recommendAction')"
-            :disable="!canBulkRecommend"
-            @click="emitBulk('recommend')"
-          />
-          <q-btn
-            color="positive"
-            icon="check"
-            :label="t('subCompetencies.validateAction')"
-            :disable="!canBulkValidate"
-            @click="emitBulk('validate')"
-          />
+    <template #top-left>
+      <div>
+        <div class="text-subtitle1">{{ t('subCompetencies.studentProgress') }}</div>
+        <div class="text-caption text-grey-7">
+          {{ t('subCompetencies.studentProgressHint') }}
         </div>
       </div>
     </template>
@@ -169,10 +141,11 @@
         </div>
       </q-td>
     </template>
-  </q-table>
+  </managed-table>
 </template>
 
 <script setup lang="ts">
+import ManagedTable, { type ManagedTableBulkAction } from 'src/components/common/ManagedTable.vue';
 import StudentProgressBadge from 'src/components/competency/StudentProgressBadge.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import type { SubCompetency } from 'src/models/SubCompetency';
@@ -225,6 +198,7 @@ const managerColumns = computed(() => [
     label: t('common.name'),
     field: 'student',
     align: 'left' as const,
+    noMaxWidth: true,
   },
   {
     name: 'status',
@@ -238,7 +212,13 @@ const managerColumns = computed(() => [
     field: 'evaluationsStatusSummaries',
     align: 'left' as const,
   },
-  { name: 'actions', label: t('common.actions'), align: 'right' as const, field: 'actions' },
+  {
+    name: 'actions',
+    label: t('common.actions'),
+    align: 'right' as const,
+    field: 'actions',
+    isActionColumn: true,
+  },
 ]);
 
 const pendingColumns = computed(() => [
@@ -248,12 +228,14 @@ const pendingColumns = computed(() => [
     label: t('educator.assessments.table.student'),
     field: 'student',
     align: 'left' as const,
+    noMaxWidth: true,
   },
   {
     name: 'competency',
     label: t('competencies.title'),
     field: 'competencyName',
     align: 'left' as const,
+    noMaxWidth: true,
   },
   {
     name: 'evaluationsStatusSummaries',
@@ -261,12 +243,58 @@ const pendingColumns = computed(() => [
     field: 'evaluationsStatusSummaries',
     align: 'left' as const,
   },
-  { name: 'actions', label: t('common.actions'), field: 'actions', align: 'right' as const },
+  {
+    name: 'actions',
+    label: t('common.actions'),
+    field: 'actions',
+    align: 'right' as const,
+    isActionColumn: true,
+  },
 ]);
 
 const computedNoDataLabel = computed(() => props.noDataLabel ?? '');
 
 const rows = computed(() => props.rows);
+
+const bulkActions = computed<ManagedTableBulkAction[]>(() => {
+  const action: ManagedTableBulkAction[] = [];
+  if (isManager.value) {
+    action.push({
+      key: 'unlock',
+      label: t('subCompetencies.unlockAction'),
+      icon: 'lock_open',
+      color: 'primary',
+      handler: (): void => {
+        emitBulk('unlock');
+        selectedRows.value = [];
+      },
+      disabled: !canBulkUnlock.value,
+    });
+    action.push({
+      key: 'recommend',
+      label: t('subCompetencies.recommendAction'),
+      icon: 'thumb_up',
+      color: 'secondary',
+      handler: (): void => {
+        emitBulk('recommend');
+        selectedRows.value = [];
+      },
+      disabled: !canBulkRecommend.value,
+    });
+  }
+  action.push({
+    key: 'validate',
+    label: t('subCompetencies.validateAction'),
+    icon: 'check',
+    color: 'positive',
+    handler: (): void => {
+      emitBulk('validate');
+      selectedRows.value = [];
+    },
+    disabled: !canBulkValidate.value,
+  });
+  return action;
+});
 
 const canBulkUnlock = computed(() =>
   selectedRows.value.some((row) => row.progress?.lockOverride === 'Locked'),

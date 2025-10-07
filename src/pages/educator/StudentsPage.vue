@@ -45,6 +45,7 @@
             :current-educator-id="currentEducatorId"
             :assigned-student-ids="assignedStudentIds"
             :empty-label="$t('educator.noMyStudents')"
+            show-unassign
             @assign="handleAssign"
             @unassign="handleUnassign"
             @view="openStudentDialog"
@@ -62,6 +63,7 @@
             :current-educator-id="currentEducatorId"
             :assigned-student-ids="assignedStudentIds"
             :empty-label="$t('educator.noStudentsFound')"
+            show-assign
             @assign="handleAssign"
             @unassign="handleUnassign"
             @view="openStudentDialog"

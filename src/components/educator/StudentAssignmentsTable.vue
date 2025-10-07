@@ -1,12 +1,13 @@
 <template>
-  <q-table
-    flat
-    bordered
+  <managed-table
     row-key="id"
     :rows="rows"
     :columns="columns"
     :loading="loading"
     :no-data-label="emptyLabel"
+    :selection="'multiple'"
+    v-model:selected="selectedRows"
+    :bulk-actions="bulkActions"
   >
     <template #body-cell-name="props">
       <q-td :props="props">
@@ -38,14 +39,13 @@
 
     <template #body-cell-actions="props">
       <q-td :props="props">
-        <div class="row q-gutter-xs justify-end">
+        <div class="managed-table__actions-row">
           <q-btn
             v-if="currentEducatorId"
+            flat
+            dense
             :color="isAssigned(props.row) ? 'negative' : 'primary'"
             :icon="isAssigned(props.row) ? 'person_remove' : 'person_add'"
-            :label="
-              isAssigned(props.row) ? $t('educator.unassignLabel') : $t('educator.assignLabel')
-            "
             @click="
               isAssigned(props.row) ? emit('unassign', props.row.id) : emit('assign', props.row.id)
             "
@@ -83,13 +83,14 @@
         </div>
       </q-td>
     </template>
-  </q-table>
+  </managed-table>
 </template>
 
 <script setup lang="ts">
+import ManagedTable, { type ManagedTableBulkAction } from 'src/components/common/ManagedTable.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import type { User } from 'src/models/User';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
@@ -99,6 +100,8 @@ const props = defineProps<{
   currentEducatorId: string | null;
   assignedStudentIds?: string[];
   emptyLabel: string;
+  showAssign?: boolean;
+  showUnassign?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -113,7 +116,14 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const columns = [
-  { name: 'name', required: true, label: t('common.name'), field: 'name', align: 'left' as const },
+  {
+    name: 'name',
+    required: true,
+    label: t('common.name'),
+    field: 'name',
+    align: 'left' as const,
+    noMaxWidth: true,
+  },
   {
     name: 'parents',
     label: t('educator.parents'),
@@ -131,12 +141,54 @@ const columns = [
     align: 'right' as const,
     label: t('common.actions'),
     field: 'actions',
+    isActionColumn: true,
   },
 ];
 
 const rows = computed(() => props.students);
 
 const assignedStudentSet = computed(() => new Set(props.assignedStudentIds ?? []));
+
+const selectedRows = ref<User[]>([]);
+
+const bulkActions = computed<ManagedTableBulkAction[]>(() => {
+  const action: ManagedTableBulkAction[] = [];
+  if (props.showAssign) {
+    action.push({
+      key: 'assign',
+      label: t('educator.assignLabel'),
+      icon: 'person_add',
+      color: 'primary',
+      handler: (rows: unknown[]): void => {
+        (rows as User[]).forEach((student) => {
+          if (!isAssigned(student)) {
+            emit('assign', student.id);
+          }
+        });
+        selectedRows.value = [];
+      },
+      disableWhenEmpty: true,
+    });
+  }
+  if (props.showUnassign) {
+    action.push({
+      key: 'unassign',
+      label: t('educator.unassignLabel'),
+      icon: 'person_remove',
+      color: 'negative',
+      handler: (rows: unknown[]): void => {
+        (rows as User[]).forEach((student) => {
+          if (isAssigned(student)) {
+            emit('unassign', student.id);
+          }
+        });
+        selectedRows.value = [];
+      },
+      disableWhenEmpty: true,
+    });
+  }
+  return action;
+});
 
 function formatRelationNames(
   relations: User[] | undefined,
