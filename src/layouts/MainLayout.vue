@@ -188,7 +188,7 @@
           <essential-link
             :title="t('navigation.admin.users.title')"
             :caption="t('navigation.admin.users.description')"
-            icon="people"
+            icon="admin_panel_settings"
             link="/admin/users"
           />
 

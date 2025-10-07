@@ -255,12 +255,12 @@ function buildQuickActions(role: UserRole | undefined): QuickAction[] {
     case UserRole.EDUCATOR:
       return [
         { label: t('dashboard.actions.manageStudents'), icon: 'groups', to: '/educator/students' },
-        /*{
-          label: t('dashboard.actions.viewAssessments'),
-          icon: 'assignment',
+        {
+          label: t('educator.viewAssessments'),
+          icon: 'assignment_turned_in',
           to: '/educator/assessments',
         },
-        { label: t('dashboard.actions.viewReports'), icon: 'insights', to: '/reports' },*/
+        { label: t('dashboard.actions.viewReports'), icon: 'assignment', to: '/reports' },
       ];
     case UserRole.ADMIN:
       return [
