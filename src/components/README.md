@@ -1,75 +1,149 @@
-# Components Organization
+# Components Directory
 
-This folder contains Vue components organized by their purpose and reusability.
+This folder groups all Vue components used across the application. Components are organised by feature/role to encourage reuse and keep domain logic close to its consumers.
 
-## Structure
+---
 
-### `/ui/` - Generic/Reusable UI Components
+## Top-Level Groups
 
-Components that can be used across different areas of the application:
+### `/common`
 
-- **`StatCard.vue`** - Generic statistics display card with icon, value, and label
-- **`RoleChip.vue`** - Generic role display chip with color coding
-- **`UserAvatar.vue`** - Generic user avatar with automatic initials fallback
-- **`StatusIndicator.vue`** - Generic status display with icons and colors
+Reusable building blocks shared across feature areas.
 
-### `/admin/` - Admin-Specific Components
+- **`BaseCard.vue`** – Lightweight layout wrapper for cards.
+- **`BaseDialog.vue`** – Standard dialog container with header, actions, and slot-based body.
+- **`BreadcrumbHeader.vue`** – Page header with breadcrumb trail and optional action slot.
+- **`FileUploaderField.vue`** – Wrapper around the Amplify uploader providing validation and previews.
+- **`ManagedTable.vue`** – Shared table shell that normalises bulk actions, action columns, and column widths.
+- **`SearchStatusDomainFilters.vue`** – Multi-filter header (search + select inputs) used on list pages.
+- **`UserPicker.vue`** – Async user selector for linking resources to people.
 
-Components specifically designed for admin functionality:
+### `/ui`
 
-- **`UserActions.vue`** - User management action buttons (edit, delete, etc.)
-- **`UserActionBar.vue`** - Admin toolbar for user management
-- **`UserSearchFilters.vue`** - Search and filter controls for user tables
-- **`UserStatsCards.vue`** - Wrapper component for user statistics
-- **`LastActiveCell.vue`** - Table cell component for displaying last active time
+Generic presentation components with no business rules.
 
-### Root Components
+- **`AvatarPicker.vue`** – Allows selecting or randomising avatar images.
+- **`RoleChip.vue`** – Colour-coded role chip with optional icon and i18n label.
+- **`StatCard.vue`** – Compact stat display (icon + value + label).
+- **`StatusIndicator.vue`** – Pill indicator for status/state glyphs.
+- **`UserAvatar.vue`** – Avatar with initials fallback and optional size tweaks.
+- **`UserDetailsDialog.vue`** – Generic user profile preview modal.
 
-- **`EssentialLink.vue`** - Navigation link component
-- **`ExampleComponent.vue`** - Example/demo component
+### `/domain`
 
-## Design Principles
+Domain management feature.
 
-### Reusability
+- **`DomainList.vue`** & **`DomainCard.vue`** – Listing and presentation of domains with search, colour display.
+- **`DomainDialog.vue`** – Create/edit form for domains, including colour picker.
+- **`DomainJsonManager.vue`** – Admin-only import/export controls for domain hierarchies.
 
-- UI components should be generic and accept props for customization
-- Avoid hardcoded business logic in UI components
-- Use clear, semantic prop interfaces
+### `/competency`
 
-### Single Responsibility
+Components related to competencies & sub-competencies.
 
-- Each component should have one clear purpose
-- Keep components focused and small when possible
-- Extract shared logic into composables
+- **`CompetencyList.vue` / `CompetencyCard.vue`** – Domain-level competency browsing.
+- **`CreateCompetencyDialog.vue`** – Modal form for new competencies.
+- **`CompetencyDetailsForm.vue`** – Editable competency details.
+- **`QuickAddSubCompetencyDialog.vue`** – Lightweight sub-competency creation dialog.
+- **`SubCompetencyCard.vue` / `SubCompetencyList.vue`** – Summary cards for sub-competencies.
+- **`SubCompetencyForm.vue`** – Full edit form for sub-competencies.
+- **`StudentProgressBadge.vue`** – Status badge summarising a learner’s progress.
 
-### Naming Convention
+### `/subCompetency`
 
-- Use PascalCase for component names
-- Use descriptive names that indicate component purpose
-- Group related components in appropriate subfolders
+Sub-competency management helpers.
 
-## Usage Guidelines
+- **`SubCompetencyResourceManager.vue`** – CRUD manager for resources with file cleanup.
+- **`SubCompetencyEvaluationManager.vue`** – CRUD manager for evaluations.
+- **`SubCompetencyStudentManager.vue`** – Displays student progress and actions within a sub-competency.
 
-### When to Create a New UI Component
+### `/resource`
 
-- The component could be reused in multiple contexts
-- It represents a common UI pattern
-- It's generic enough to accept props for customization
+Resource-specific UI (link/document/human/location).
 
-### When to Create an Admin-Specific Component
+- **`ResourceTable.vue`** – Tabular listing with actions.
+- **`ResourceFormDialog.vue`** – Create/edit dialog that supports file uploads.
+- **`ResourceCard.vue`** – Card view used in detail views.
 
-- The component contains admin-specific business logic
-- It's tightly coupled to admin workflows
-- It uses admin-specific data structures or APIs
+### `/evaluation`
 
-### Import Paths
+Assessment related components.
 
-```typescript
-// UI components
-import StatCard from 'src/components/ui/StatCard.vue';
-import RoleChip from 'src/components/ui/RoleChip.vue';
+- **`EvaluationCard.vue`** – Summary card with status and actions.
+- **`EvaluationFormDialog.vue`** – Create/edit evaluation form.
+- **`EvaluationTable.vue`** – Manager table for evaluations (student vs manager variants).
 
-// Admin components
-import UserActions from 'src/components/admin/UserActions.vue';
-import UserActionBar from 'src/components/admin/UserActionBar.vue';
-```
+### `/project`
+
+Project submission workflow.
+
+- **`CreateProjectDialog.vue`** – Form for students or educators to add/update projects.
+- **`ProjectCard.vue`** – Summary card with download/validation actions.
+- **`ProjectForm.vue`** – Core form logic reused in dialogs.
+
+### `/educator`
+
+Educator dashboards and tables.
+
+- **`StudentAssignmentsTable.vue`** – ManagedTable wrapper for educator ↔ student assignment with bulk assign/unassign.
+- **`StudentProgressTable.vue`** – ManagedTable variant showing pending validations with bulk unlock/recommend/validate.
+- **`studentProgressTypes.ts`** – Shared types for progress rows.
+
+### `/reports`
+
+Reporting UI used in educator/parent flows.
+
+- **`ReportFilters.vue`** – Filter bar for report generation (period, domain, options).
+- **`ReportActions.vue`** – Action buttons (print/share/export).
+- **`ReportDomainCard.vue`** – Domain summary block with progression indicators.
+- **`ReportSummary.vue`** – Report header with period, summary stats, and metadata.
+
+### `/dashboard`
+
+- **`DashboardStatCard.vue`** – Specialised stat card used on home dashboards.
+
+### `/parent`
+
+- **`ChildCard.vue`** – Parent-facing child summary card.
+
+### `/admin`
+
+Admin-specific management components.
+
+- **`UserActionBar.vue`, `UserActions.vue`, `UserSearchFilters.vue`, `UserStatsCards.vue`, `EditUserDialog.vue`, `LastActiveCell.vue`** – Toolkit for user administration tables.
+
+### `/user`
+
+- **`UserProfileForm.vue`** – Form used inside profile management flows.
+
+### `/utils`
+
+- **`AmplifyUploader.ts`** – Helper for Amplify Storage uploads.
+
+---
+
+## Patterns & Principles
+
+1. **Reusability first** – shared UI (buttons, tables, cards) live under `/ui` or `/common` and accept props/events for configuration.
+2. **Feature isolation** – domain/competency/project/etc. folders encapsulate business logic and visuals for that area.
+3. **Managed tables** – list-based educator screens now share `ManagedTable`, ensuring:
+   - consistent action column widths
+   - aligned icon actions and overflow menus
+   - a standard bulk-action toolbar with disabled state handling
+4. **Lifecycle awareness** – components emitting destructive actions trigger repository methods that cascade cleanup (e.g., removing S3 files).
+
+---
+
+## Usage Tips
+
+- **Import paths** follow the folder structure: `import ManagedTable from 'src/components/common/ManagedTable.vue';`.
+- **Slots & composition:** Many containers (e.g., `ManagedTable`, `BaseDialog`) expose slots to customise headers and actions without cloning logic.
+- **When to create a new component:**
+  - UI pattern appears in more than one feature
+  - A feature needs encapsulated logic (e.g., resource manager)
+  - Table requires consistent actions/bulk behaviour → extend `ManagedTable`
+- **When to keep logic in-place:** If tightly coupled to a single view and unlikely to reuse elsewhere.
+
+---
+
+Keeping this directory curated helps future work move quickly—please update this README when adding notable components or moving modules between folders.
