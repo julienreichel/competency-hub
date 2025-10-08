@@ -23,6 +23,8 @@ const schema = a
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'studentId'),
         evaluationAttempts: a.hasMany('EvaluationAttempt', 'studentId'),
         projects: a.hasMany('Project', 'studentId'),
+        sentMessages: a.hasMany('Message', 'senderId'),
+        receivedMessages: a.hasMany('MessageTarget', 'userId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -177,6 +179,54 @@ const schema = a
         allow.owner().to(['create', 'read', 'update', 'delete']),
         allow.groups(['Educator', 'Admin']).to(['read', 'update']),
         allow.authenticated().to(['read']),
+      ]),
+
+    Message: a
+      .model({
+        senderId: a.id().required(),
+        sender: a.belongsTo('User', 'senderId'),
+
+        parentId: a.id(),
+        parent: a.belongsTo('Message', 'parentId'),
+        replies: a.hasMany('Message', 'parentId'),
+
+        targets: a.hasMany('MessageTarget', 'messageId'),
+
+        title: a.string().required(),
+        body: a.string(),
+
+        kind: a.enum([
+          'Message',
+          'ValidationSubmitted',
+          'ProjectSubmitted',
+          'ProjectApproved',
+          'ProjectRejected',
+        ]),
+
+        subCompetencyId: a.id(),
+        projectId: a.id(),
+      })
+      .authorization((allow) => [
+        allow.owner().to(['create', 'read']),
+        allow.authenticated().to(['read']),
+        allow.groups(['Educator', 'Admin']).to(['create', 'read']),
+      ]),
+
+    MessageTarget: a
+      .model({
+        messageId: a.id().required(),
+        message: a.belongsTo('Message', 'messageId'),
+
+        userId: a.id().required(),
+        user: a.belongsTo('User', 'userId'),
+
+        read: a.boolean().default(false),
+        readDate: a.datetime(),
+        archived: a.boolean().default(false),
+      })
+      .authorization((allow) => [
+        allow.owner().to(['create', 'read', 'update']),
+        allow.authenticated().to(['read', 'update']),
       ]),
 
     addUserToGroup: a
