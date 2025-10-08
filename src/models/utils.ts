@@ -98,3 +98,45 @@ export const extractUserRelation = (value: unknown): User | null => {
 export function isPresent(field: unknown): boolean {
   return typeof field !== 'function' && Boolean(field);
 }
+export function mapRelation<T, T2>(input: unknown, mapper: (value: T2) => T): T | T[] | null {
+  if (!input) {
+    return null;
+  }
+  if (Array.isArray(input)) {
+    return input.map(mapper);
+  }
+
+  if (typeof input === 'object' && 'id' in input) {
+    return mapper(input as T2);
+  }
+
+  return null;
+}
+
+export function mapSingularRelation<T, T2>(input: unknown, mapper: (value: T2) => T): T | null {
+  if (!input) {
+    return null;
+  }
+  if (typeof input !== 'object' || !('id' in input)) {
+    return null;
+  }
+  return mapper(input as T2);
+}
+
+export function mapArrayRelation<T, T2>(input: unknown, mapper: (value: T2) => T): T[] {
+  if (!input) {
+    return [];
+  }
+  if (!Array.isArray(input)) {
+    return [];
+  }
+  return input.map(mapper);
+}
+export function createObject<T, T2>(
+  input: T | T2 | null | undefined,
+  type: new (args: T2) => T,
+): T | null {
+  if (!input) return null;
+  if (input instanceof type) return input;
+  return new type(input as T2);
+}

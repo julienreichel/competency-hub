@@ -2,9 +2,9 @@ import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import type { SubCompetencyInit } from './SubCompetency';
-import { SubCompetency, type AmplifySubCompetency } from './SubCompetency';
+import { SubCompetency } from './SubCompetency';
 import { User, type UserRelationInit } from './User';
-import { isPresent } from './utils';
+import { mapSingularRelation } from './utils';
 
 export type AmplifyProject = NonNullable<Schema['Project']['type']>;
 
@@ -52,19 +52,10 @@ export class Project extends BaseModel {
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyProject): Project {
-    let subCompetency: SubCompetency | null = null;
-    if (isPresent(raw.subCompetency)) {
-      // If already a Competency instance, use as is; otherwise, parse
-      subCompetency =
-        raw.subCompetency instanceof SubCompetency
-          ? raw.subCompetency
-          : SubCompetency.fromAmplify(raw.subCompetency as unknown as AmplifySubCompetency);
-    }
-    let student: UserRelationInit | null = null;
-    if (raw.student && typeof raw.student === 'object' && 'id' in raw.student) {
-      student = raw.student as unknown as UserRelationInit;
-    }
+  static fromAmplify(this: void, raw: AmplifyProject): Project {
+    const subCompetency = mapSingularRelation(raw.subCompetency, SubCompetency.fromAmplify);
+    const student = mapSingularRelation(raw.student, User.fromAmplify);
+
     return new Project({
       id: raw.id,
       studentId: raw.studentId,

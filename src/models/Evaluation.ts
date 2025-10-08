@@ -2,7 +2,7 @@ import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { EvaluationAttempt } from './EvaluationAttempt';
-import { User } from './User';
+import { mapArrayRelation } from './utils';
 
 export enum EvaluationMode {
   SOLO = 'Solo',
@@ -69,16 +69,14 @@ export class Evaluation extends BaseModel {
     this.durationMin = typeof data.durationMin === 'number' ? data.durationMin : null;
     this.url = data.url ?? null;
     this.fileKey = data.fileKey ?? null;
-    this.attempts = Array.isArray(data.attempts)
-      ? data.attempts.map((attempt) =>
-          attempt instanceof EvaluationAttempt ? attempt : EvaluationAttempt.fromAmplify(attempt),
-        )
-      : [];
+    this.attempts = data.attempts || [];
 
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyEvaluation): Evaluation {
+  static fromAmplify(this: void, raw: AmplifyEvaluation): Evaluation {
+    const attempts = mapArrayRelation(raw.attempts, EvaluationAttempt.fromAmplify);
+
     return new Evaluation({
       id: raw.id,
       subCompetencyId: raw.subCompetencyId,
@@ -91,7 +89,7 @@ export class Evaluation extends BaseModel {
       fileKey: raw.fileKey ?? null,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
-      attempts: User.normaliseEvaluationAttempts(raw.attempts),
+      attempts,
     });
   }
 

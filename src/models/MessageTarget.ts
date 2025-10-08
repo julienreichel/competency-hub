@@ -2,6 +2,7 @@ import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { Message, type MessageInit } from './Message';
 import { User, type UserRelationInit } from './User';
+import { createObject, mapSingularRelation } from './utils';
 
 export type AmplifyMessageTarget = NonNullable<Schema['MessageTarget']['type']>;
 
@@ -35,21 +36,14 @@ export class MessageTarget extends BaseModel {
     this.read = data.read ?? false;
     this.readDate = data.readDate ?? null;
     this.archived = data.archived ?? false;
-    this.user = data.user ? User.create(data.user) : null;
+    this.user = createObject(data.user, User);
 
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyMessageTarget): MessageTarget {
-    const user =
-      raw.user && typeof raw.user === 'object' && 'id' in raw.user
-        ? User.fromAmplify(raw.user)
-        : undefined;
-
-    const message =
-      raw.message && typeof raw.message === 'object' && 'id' in raw.message
-        ? Message.fromAmplify(raw.message)
-        : undefined;
+  static fromAmplify(this: void, raw: AmplifyMessageTarget): MessageTarget {
+    const user = mapSingularRelation(raw.user, User.fromAmplify);
+    const message = mapSingularRelation(raw.message, Message.fromAmplify) || undefined;
 
     return new MessageTarget({
       id: raw.id,

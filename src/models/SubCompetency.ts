@@ -1,14 +1,13 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
-import { Competency, type AmplifyCompetency } from './Competency';
-import type { AmplifyResource } from './CompetencyResource';
+import { Competency } from './Competency';
 import { CompetencyResource, type ResourceInit } from './CompetencyResource';
 import { Evaluation } from './Evaluation';
 import { Project, type ProjectInit } from './Project';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { User } from './User';
 import { UserRole } from './User';
-import { isPresent, normaliseCollection } from './utils';
+import { mapArrayRelation, mapSingularRelation } from './utils';
 
 export type AmplifySubCompetency = NonNullable<Schema['SubCompetency']['type']>;
 
@@ -122,49 +121,15 @@ export class SubCompetency extends BaseModel {
     }
   }
 
-  static fromAmplify(raw: AmplifySubCompetency): SubCompetency {
-    const resources = normaliseCollection<AmplifyResource>(raw.resources).map((resource) =>
-      CompetencyResource.fromAmplify(resource),
+  static fromAmplify(this: void, raw: AmplifySubCompetency): SubCompetency {
+    const resources = mapArrayRelation(raw.resources, CompetencyResource.fromAmplify);
+    const competency = mapSingularRelation(raw.competency, Competency.fromAmplify);
+    const studentProgress = mapArrayRelation(
+      raw.studentProgress,
+      StudentSubCompetencyProgress.fromAmplify,
     );
-    let competency: Competency | null = null;
-    if (isPresent(raw.competency)) {
-      // If already a Competency instance, use as is; otherwise, parse
-      competency =
-        raw.competency instanceof Competency
-          ? raw.competency
-          : Competency.fromAmplify(raw.competency as unknown as AmplifyCompetency);
-    }
-    // Parse studentProgress if present
-    let studentProgress: StudentSubCompetencyProgress[] = [];
-    if (raw.studentProgress) {
-      const arr = Array.isArray(raw.studentProgress)
-        ? raw.studentProgress
-        : Array.isArray((raw.studentProgress as { items?: unknown }).items)
-          ? ((raw.studentProgress as { items?: unknown }).items as object[])
-          : [];
-      studentProgress = arr
-        .map((entry) =>
-          entry && typeof entry === 'object' && 'id' in entry
-            ? StudentSubCompetencyProgress.fromAmplify(entry)
-            : null,
-        )
-        .filter((item): item is StudentSubCompetencyProgress => item !== null);
-    }
-    let evaluations: Evaluation[] = [];
-    if (raw.evaluations) {
-      const arr = Array.isArray(raw.evaluations)
-        ? raw.evaluations
-        : Array.isArray((raw.evaluations as { items?: unknown }).items)
-          ? ((raw.evaluations as { items?: unknown }).items as object[])
-          : [];
-      evaluations = arr
-        .map((entry) =>
-          entry && typeof entry === 'object' && 'id' in entry
-            ? Evaluation.fromAmplify(entry)
-            : null,
-        )
-        .filter((item): item is Evaluation => item !== null);
-    }
+    const evaluations = mapArrayRelation(raw.evaluations, Evaluation.fromAmplify);
+
     const projects = SubCompetency.parseProjects(raw.projects);
     return new SubCompetency({
       id: raw.id,

@@ -1,12 +1,12 @@
 // Import getUrl if not already imported
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
-import { CompetencyResource, type AmplifyResource } from './CompetencyResource';
-import { Domain, type AmplifyDomain } from './Domain';
-import { SubCompetency, type AmplifySubCompetency, type SubCompetencyInit } from './SubCompetency';
+
+import { Domain } from './Domain';
+import { SubCompetency, type SubCompetencyInit } from './SubCompetency';
 import type { User } from './User';
 
-import { isPresent, normaliseCollection, type RelationCollection } from './utils';
+import { mapArrayRelation, mapSingularRelation } from './utils';
 
 export type AmplifyCompetency = NonNullable<Schema['Competency']['type']>;
 export interface CompetencyInit {
@@ -68,18 +68,10 @@ export class Competency extends BaseModel {
     this.subCompetencies.forEach((sub) => sub.attachUserProgress(user));
   }
 
-  static fromAmplify(raw: AmplifyCompetency): Competency {
-    const subCompetencies = normaliseCollection<AmplifySubCompetency>(raw.subCompetencies).map(
-      (sub) => SubCompetency.fromAmplify(sub),
-    );
-    let domain: Domain | null = null;
-    if (isPresent(raw.domain)) {
-      // If already a Competency instance, use as is; otherwise, parse
-      domain =
-        raw.domain instanceof Domain
-          ? raw.domain
-          : Domain.fromAmplify(raw.domain as unknown as AmplifyDomain);
-    }
+  static fromAmplify(this: void, raw: AmplifyCompetency): Competency {
+    const domain = mapSingularRelation(raw.domain, Domain.fromAmplify);
+    const subCompetencies = mapArrayRelation(raw.subCompetencies, SubCompetency.fromAmplify);
+
     return new Competency({
       id: raw.id,
       domainId: raw.domainId,
@@ -179,17 +171,3 @@ export class Competency extends BaseModel {
     return (validatedCount / this.subCompetencies.length) * PERCENT;
   }
 }
-export const mapResourcesFromAmplify = (resources: unknown): CompetencyResource[] =>
-  normaliseCollection<AmplifyResource>(resources as RelationCollection<AmplifyResource>).map(
-    (resource) => CompetencyResource.fromAmplify(resource),
-  );
-
-export const mapSubCompetenciesFromAmplify = (subCompetencies: unknown): SubCompetency[] =>
-  normaliseCollection<AmplifySubCompetency>(
-    subCompetencies as RelationCollection<AmplifySubCompetency>,
-  ).map((subCompetency) => SubCompetency.fromAmplify(subCompetency));
-
-export const mapCompetenciesFromAmplify = (competencies: unknown): Competency[] =>
-  normaliseCollection<AmplifyCompetency>(competencies as RelationCollection<AmplifyCompetency>).map(
-    (competency) => Competency.fromAmplify(competency),
-  );

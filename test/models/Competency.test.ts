@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  Competency,
-  mapCompetenciesFromAmplify,
-  mapResourcesFromAmplify,
-  mapSubCompetenciesFromAmplify,
-  type AmplifyCompetency,
-} from '../../src/models/Competency';
+import { Competency, type AmplifyCompetency } from '../../src/models/Competency';
 import { CompetencyResource, ResourceType } from '../../src/models/CompetencyResource';
 import { SubCompetency } from '../../src/models/SubCompetency';
 describe('Competency taxonomy models', () => {
@@ -268,20 +262,6 @@ describe('Competency taxonomy models', () => {
         subCompetencies: [subValidated, subValidated],
       });
       expect(compFull.getProgress()).toBe(100);
-    });
-
-    it('mapResourcesFromAmplify, mapSubCompetenciesFromAmplify, mapCompetenciesFromAmplify handle arrays and null', () => {
-      const resourceArr = [
-        { id: 'r1', subCompetencyId: 's1', type: 'Link', name: 'Doc', url: 'url' },
-      ];
-      const subArr = [{ id: 's1', competencyId: 'c1', name: 'Sub', resources: [] }];
-      const compArr = [{ id: 'c1', domainId: 'd1', name: 'Comp', subCompetencies: [] }];
-      expect(mapResourcesFromAmplify(resourceArr)[0]).toBeInstanceOf(CompetencyResource);
-      expect(mapResourcesFromAmplify(null as unknown)).toEqual([]);
-      expect(mapSubCompetenciesFromAmplify(subArr)[0]).toBeInstanceOf(SubCompetency);
-      expect(mapSubCompetenciesFromAmplify(null as unknown)).toEqual([]);
-      expect(mapCompetenciesFromAmplify(compArr)[0]).toBeInstanceOf(Competency);
-      expect(mapCompetenciesFromAmplify(null as unknown)).toEqual([]);
     });
   });
 

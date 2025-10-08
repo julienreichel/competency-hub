@@ -77,8 +77,8 @@ export class CompetencyResource extends BaseModel {
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyResource): CompetencyResource {
-    const personData = extractUserRelation(raw.person);
+  static fromAmplify(this: void, raw: AmplifyResource): CompetencyResource {
+    const person = extractUserRelation(raw.person);
 
     return new CompetencyResource({
       id: raw.id,
@@ -89,7 +89,7 @@ export class CompetencyResource extends BaseModel {
       url: raw.url ?? null,
       fileKey: raw.fileKey ?? null,
       personUserId: raw.personUserId ?? null,
-      person: personData,
+      person,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });

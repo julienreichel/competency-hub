@@ -1,8 +1,8 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
-import type { EvaluationInit } from './Evaluation';
-import { Evaluation } from './Evaluation';
+import { Evaluation, type EvaluationInit } from './Evaluation';
 import { User, type UserRelationInit } from './User';
+import { mapSingularRelation } from './utils';
 
 export type AmplifyEvaluationAttempt = NonNullable<Schema['EvaluationAttempt']['type']>;
 
@@ -50,13 +50,9 @@ export class EvaluationAttempt extends BaseModel {
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyEvaluationAttempt): EvaluationAttempt {
-    const evaluationRaw =
-      raw.evaluation && typeof raw.evaluation === 'object' ? raw.evaluation : null;
-    let student: UserRelationInit | null = null;
-    if (raw.student && typeof raw.student === 'object' && 'id' in raw.student) {
-      student = raw.student as unknown as UserRelationInit;
-    }
+  static fromAmplify(this: void, raw: AmplifyEvaluationAttempt): EvaluationAttempt {
+    const evaluation = mapSingularRelation(raw.evaluation, Evaluation.fromAmplify);
+    const student = mapSingularRelation(raw.student, User.fromAmplify);
     return new EvaluationAttempt({
       id: raw.id,
       studentId: raw.studentId,
@@ -65,7 +61,7 @@ export class EvaluationAttempt extends BaseModel {
       completionMode: raw.completionMode ?? 'Manual',
       startedAt: raw.startedAt ?? null,
       completedAt: raw.completedAt ?? null,
-      evaluation: evaluationRaw ? (evaluationRaw as EvaluationInit) : null,
+      evaluation,
       student,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),

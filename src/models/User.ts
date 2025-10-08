@@ -1,9 +1,12 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { EvaluationAttempt } from './EvaluationAttempt';
+import { Message } from './Message';
+import { MessageTarget } from './MessageTarget';
 import { Project, type ProjectInit } from './Project';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { SubCompetency } from './SubCompetency';
+import { mapArrayRelation } from './utils';
 
 // Constants
 const MAX_INITIALS = 2;
@@ -69,7 +72,9 @@ export interface UserRelationInit {
   children?: UserRelationInit[];
   studentProgress?: StudentSubCompetencyProgress[];
   evaluationAttempts?: EvaluationAttempt[];
-  projects?: ProjectInit[];
+  projects?: Project[];
+  sentMessages?: Message[];
+  receivedMessages?: MessageTarget[];
 }
 
 type UserInit = UserRelationInit;
@@ -94,6 +99,8 @@ export class User extends BaseModel {
   public studentProgress: StudentSubCompetencyProgress[];
   public evaluationAttempts: EvaluationAttempt[];
   public projects: Project[];
+  public sentMessages: Message[];
+  public receivedMessages: MessageTarget[];
 
   constructor(data: UserInit) {
     super(data);
@@ -109,21 +116,27 @@ export class User extends BaseModel {
     this.students = User.normaliseRelation(data.students);
     this.children = User.normaliseRelation(data.children);
     this.studentProgress = Array.isArray(data.studentProgress) ? data.studentProgress : [];
-    this.evaluationAttempts = Array.isArray(data.evaluationAttempts)
-      ? data.evaluationAttempts.map((attempt) =>
-          attempt instanceof EvaluationAttempt ? attempt : EvaluationAttempt.fromAmplify(attempt),
-        )
-      : [];
-    this.projects = Array.isArray(data.projects)
-      ? data.projects.map((project) =>
-          project instanceof Project ? project : new Project(project),
-        )
-      : [];
+    this.evaluationAttempts = Array.isArray(data.evaluationAttempts) ? data.evaluationAttempts : [];
+    this.projects = Array.isArray(data.projects) ? data.projects : [];
+    this.sentMessages = Array.isArray(data.sentMessages) ? data.sentMessages : [];
+    this.receivedMessages = Array.isArray(data.receivedMessages) ? data.receivedMessages : [];
 
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyUser): User {
+  static fromAmplify(this: void, raw: AmplifyUser): User {
+    const studentProgress = mapArrayRelation(
+      raw.studentProgress,
+      StudentSubCompetencyProgress.fromAmplify,
+    );
+    const evaluationAttempts = mapArrayRelation(
+      raw.evaluationAttempts,
+      EvaluationAttempt.fromAmplify,
+    );
+    const projects = mapArrayRelation(raw.projects, Project.fromAmplify);
+    const sentMessages = mapArrayRelation(raw.sentMessages, Message.fromAmplify);
+    const receivedMessages = mapArrayRelation(raw.receivedMessages, MessageTarget.fromAmplify);
+
     return new User({
       id: raw.id,
       name: raw.name ?? '',
@@ -139,9 +152,11 @@ export class User extends BaseModel {
       parents: User.extractUsersFromEntries(raw.parents, 'parent'),
       students: User.extractUsersFromEntries(raw.students, 'student'),
       children: User.extractUsersFromEntries(raw.children, 'student'),
-      studentProgress: User.normaliseStudentProgress(raw.studentProgress),
-      evaluationAttempts: User.normaliseEvaluationAttempts(raw.evaluationAttempts),
-      projects: User.normaliseProjects(raw.projects),
+      studentProgress,
+      evaluationAttempts,
+      projects,
+      sentMessages,
+      receivedMessages,
     });
   }
   private static normaliseStudentProgress(

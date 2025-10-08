@@ -1,38 +1,9 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
-import { Competency, mapCompetenciesFromAmplify, type CompetencyInit } from './Competency';
+import { Competency, type CompetencyInit } from './Competency';
+import { mapArrayRelation } from './utils';
 
 export type AmplifyDomain = NonNullable<Schema['Domain']['type']>;
-
-type RelationCollection<T> = T | T[] | { items?: T[] } | { toArray?: () => T[] } | null | undefined;
-
-const normaliseCollection = <T>(input: RelationCollection<T>): T[] => {
-  if (!input) {
-    return [];
-  }
-
-  if (Array.isArray(input)) {
-    return input.filter((item): item is T => item !== null && item !== undefined);
-  }
-
-  if (typeof input === 'object') {
-    const items = (input as { items?: unknown }).items;
-    if (Array.isArray(items)) {
-      return items.filter((item): item is T => item !== null && item !== undefined);
-    }
-
-    const toArray = (input as { toArray?: () => unknown }).toArray;
-    if (typeof toArray === 'function') {
-      const array = toArray();
-      if (Array.isArray(array)) {
-        return array.filter((item): item is T => item !== null && item !== undefined);
-      }
-    }
-  }
-
-  return [];
-};
-
 export interface DomainInit extends Record<string, unknown> {
   id: string;
   name: string;
@@ -67,8 +38,8 @@ export class Domain extends BaseModel {
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyDomain): Domain {
-    const competencies = mapCompetenciesFromAmplify(raw.competencies);
+  static fromAmplify(this: void, raw: AmplifyDomain): Domain {
+    const competencies = mapArrayRelation(raw.competencies, Competency.fromAmplify);
 
     return new Domain({
       id: raw.id,
@@ -110,8 +81,3 @@ export class Domain extends BaseModel {
     });
   }
 }
-
-export const mapDomainsFromAmplify = (domains: unknown): Domain[] =>
-  normaliseCollection<AmplifyDomain>(domains as RelationCollection<AmplifyDomain>).map((domain) =>
-    Domain.fromAmplify(domain),
-  );

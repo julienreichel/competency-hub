@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Competency } from '../../src/models/Competency';
-import { Domain, mapDomainsFromAmplify, type AmplifyDomain } from '../../src/models/Domain';
+import { Domain, type AmplifyDomain } from '../../src/models/Domain';
 
 describe('Domain model', () => {
   const domainInit = {
@@ -119,27 +119,5 @@ describe('Domain model', () => {
     expect(d2.competencyCount).toBeNull();
     const d3 = new Domain({ ...domainInit });
     expect(d3.competencyCount).toBe(d3.competencies.length);
-  });
-
-  it('mapDomainsFromAmplify handles array, items, toArray, null, and undefined', () => {
-    const amplify = { id: 'd3', name: 'A', competencies: [] };
-    // Array
-    const arr = [amplify];
-    expect(Array.isArray(arr)).toBe(true);
-    const mappedArr = mapDomainsFromAmplify(arr as unknown as AmplifyDomain[]);
-    expect(mappedArr[0] && mappedArr[0].id).toBe('d3');
-    // Object with items
-    const itemsObj = { items: [amplify] };
-    const mappedItems = mapDomainsFromAmplify(itemsObj as unknown as { items: AmplifyDomain[] });
-    expect(mappedItems[0] && mappedItems[0].id).toBe('d3');
-    // Object with toArray
-    const toArrayObj = { toArray: (): AmplifyDomain[] => [amplify as unknown as AmplifyDomain] };
-    const mappedToArray = mapDomainsFromAmplify(
-      toArrayObj as unknown as { toArray: () => AmplifyDomain[] },
-    );
-    expect(mappedToArray[0] && mappedToArray[0].id).toBe('d3');
-    // Null/undefined
-    expect(mapDomainsFromAmplify(null as unknown as AmplifyDomain[])).toEqual([]);
-    expect(mapDomainsFromAmplify(undefined as unknown as AmplifyDomain[])).toEqual([]);
   });
 });

@@ -3,6 +3,7 @@ import { BaseModel } from './base/BaseModel';
 import type { MessageTargetInit } from './MessageTarget';
 import { MessageTarget } from './MessageTarget';
 import { User, type UserRelationInit } from './User';
+import { mapArrayRelation, mapSingularRelation } from './utils';
 
 export type AmplifyMessage = NonNullable<Schema['Message']['type']>;
 
@@ -71,19 +72,11 @@ export class Message extends BaseModel {
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyMessage): Message {
-    const sender =
-      raw.sender && typeof raw.sender === 'object' && 'id' in raw.sender
-        ? User.fromAmplify(raw.sender)
-        : null;
-    const targets =
-      raw.targets && Array.isArray(raw.targets)
-        ? raw.targets.map((target) => MessageTarget.fromAmplify(target))
-        : [];
-    const replies =
-      raw.replies && Array.isArray(raw.replies)
-        ? raw.replies.map((reply) => Message.fromAmplify(reply))
-        : [];
+  static fromAmplify(this: void, raw: AmplifyMessage): Message {
+    const sender = mapSingularRelation(raw.sender, User.fromAmplify);
+
+    const targets = mapArrayRelation(raw.targets, MessageTarget.fromAmplify);
+    const replies = mapArrayRelation(raw.replies, Message.fromAmplify);
 
     return new Message({
       id: raw.id,

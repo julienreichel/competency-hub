@@ -1,5 +1,6 @@
 import type { Schema } from '../../amplify/data/resource';
 import { User, type UserRelationInit } from './User';
+import { mapSingularRelation } from './utils';
 
 export type AmplifyStudentSubCompetencyProgress = NonNullable<
   Schema['StudentSubCompetencyProgress']['type']
@@ -47,11 +48,12 @@ export class StudentSubCompetencyProgress {
     this.validate();
   }
 
-  static fromAmplify(raw: AmplifyStudentSubCompetencyProgress): StudentSubCompetencyProgress {
-    let student: UserRelationInit | null = null;
-    if (raw.student && typeof raw.student === 'object' && 'id' in raw.student) {
-      student = raw.student as unknown as UserRelationInit;
-    }
+  static fromAmplify(
+    this: void,
+    raw: AmplifyStudentSubCompetencyProgress,
+  ): StudentSubCompetencyProgress {
+    const student = mapSingularRelation(raw.student, User.fromAmplify);
+
     return new StudentSubCompetencyProgress({
       id: raw.id,
       studentId: raw.studentId,
