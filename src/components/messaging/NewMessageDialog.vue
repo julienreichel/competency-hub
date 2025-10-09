@@ -74,7 +74,7 @@ const props = withDefaults(
 const open = defineModel<boolean>({ default: false });
 
 const emit = defineEmits<{
-  (e: 'create', payload: { title: string; body: string; targetIds: string[] }): void;
+  (e: 'create', payload: { title: string; body: string; participantIds: string[] }): void;
 }>();
 
 const { t } = useI18n();
@@ -174,7 +174,7 @@ function handleSubmit(): void {
   emit('create', {
     title: title.value.trim(),
     body: body.value.trim(),
-    targetIds: [...new Set(selectedRecipients.value)],
+    participantIds: [...new Set(selectedRecipients.value)],
   });
   submitting.value = false;
   open.value = false;

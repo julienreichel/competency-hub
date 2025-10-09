@@ -2,10 +2,11 @@ import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { EvaluationAttempt } from './EvaluationAttempt';
 import { Message } from './Message';
-import { MessageTarget } from './MessageTarget';
+import { MessageThread } from './MessageThread';
 import { Project } from './Project';
 import { StudentSubCompetencyProgress } from './StudentSubCompetencyProgress';
 import type { SubCompetency } from './SubCompetency';
+import { ThreadParticipant } from './ThreadParticipant';
 import { mapArrayRelation } from './utils';
 
 // Constants
@@ -74,7 +75,8 @@ export interface UserRelationInit {
   evaluationAttempts?: EvaluationAttempt[];
   projects?: Project[];
   sentMessages?: Message[];
-  receivedMessages?: MessageTarget[];
+  messageThreads?: ThreadParticipant[];
+  createdThreads?: MessageThread[];
 }
 
 type UserInit = UserRelationInit;
@@ -99,8 +101,9 @@ export class User extends BaseModel {
   public studentProgress: StudentSubCompetencyProgress[];
   public evaluationAttempts: EvaluationAttempt[];
   public projects: Project[];
+  public messageThreads: ThreadParticipant[];
+  public createdThreads: MessageThread[];
   public sentMessages: Message[];
-  public receivedMessages: MessageTarget[];
 
   constructor(data: UserInit) {
     super(data);
@@ -118,8 +121,9 @@ export class User extends BaseModel {
     this.studentProgress = Array.isArray(data.studentProgress) ? data.studentProgress : [];
     this.evaluationAttempts = Array.isArray(data.evaluationAttempts) ? data.evaluationAttempts : [];
     this.projects = Array.isArray(data.projects) ? data.projects : [];
+    this.messageThreads = Array.isArray(data.messageThreads) ? data.messageThreads : [];
+    this.createdThreads = Array.isArray(data.createdThreads) ? data.createdThreads : [];
     this.sentMessages = Array.isArray(data.sentMessages) ? data.sentMessages : [];
-    this.receivedMessages = Array.isArray(data.receivedMessages) ? data.receivedMessages : [];
 
     this.validate();
   }
@@ -134,8 +138,9 @@ export class User extends BaseModel {
       EvaluationAttempt.fromAmplify,
     );
     const projects = mapArrayRelation(raw.projects, Project.fromAmplify);
+    const messageThreads = mapArrayRelation(raw.messageThreads, ThreadParticipant.fromAmplify);
+    const createdThreads = mapArrayRelation(raw.createdThreads, MessageThread.fromAmplify);
     const sentMessages = mapArrayRelation(raw.sentMessages, Message.fromAmplify);
-    const receivedMessages = mapArrayRelation(raw.receivedMessages, MessageTarget.fromAmplify);
 
     return new User({
       id: raw.id,
@@ -155,8 +160,9 @@ export class User extends BaseModel {
       studentProgress,
       evaluationAttempts,
       projects,
+      messageThreads,
+      createdThreads,
       sentMessages,
-      receivedMessages,
     });
   }
 
@@ -268,7 +274,6 @@ export class User extends BaseModel {
       evaluationAttempts: this.evaluationAttempts,
       projects: this.projects,
       sentMessages: this.sentMessages,
-      receivedMessages: this.receivedMessages,
     });
   }
 
@@ -298,7 +303,6 @@ export class User extends BaseModel {
       evaluationAttempts: this.evaluationAttempts,
       projects: this.projects,
       sentMessages: this.sentMessages,
-      receivedMessages: this.receivedMessages,
     });
   }
 

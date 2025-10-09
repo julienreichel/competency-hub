@@ -99,50 +99,196 @@ export class GraphQLClient {
     }
   }
 
-  async getUserSentMessages(id: string): Promise<Schema['Message']['type'][]> {
+  async getUserMessageThreads(id: string): Promise<Schema['ThreadParticipant']['type'][]> {
     try {
       const result = await this.client.models.User.get(
         { id },
         {
           authMode: 'userPool',
-          selectionSet: [
-            'id',
-            'sentMessages.*',
-            'sentMessages.targets.*',
-            'sentMessages.targets.user.*',
-          ],
+          selectionSet: ['id', 'messageThreads.*', 'messageThreads.thread.*'],
         },
       );
       if (result.errors || !result.data) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
-      return (result.data.sentMessages as unknown as Schema['Message']['type'][]) || [];
+      return result.data.messageThreads as unknown as Schema['ThreadParticipant']['type'][];
     } catch (error) {
       console.error(`Error getting User with relations id ${id}:`, error);
       throw error;
     }
   }
 
-  async getUserReceivedMessages(id: string): Promise<Schema['MessageTarget']['type'][]> {
+  async createMessageThread(
+    data: Schema['MessageThread']['createType'],
+  ): Promise<Schema['MessageThread']['type'] | null> {
     try {
-      const result = await this.client.models.User.get(
+      const result = await this.client.models.MessageThread.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      console.error('Error creating MessageThread:', error);
+      throw error;
+    }
+  }
+
+  async updateMessageThread(
+    data: Schema['MessageThread']['updateType'],
+  ): Promise<Schema['MessageThread']['type'] | null> {
+    try {
+      const result = await this.client.models.MessageThread.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as Schema['MessageThread']['type'];
+    } catch (error) {
+      console.error('Error updating MessageThread:', error);
+      throw error;
+    }
+  }
+
+  async getMessageThread(id: string): Promise<Schema['MessageThread']['type'] | null> {
+    try {
+      const result = await this.client.models.MessageThread.get(
         { id },
         {
           authMode: 'userPool',
           selectionSet: [
             'id',
-            'receivedMessages.*',
-            'receivedMessages.message.*',
-            'receivedMessages.message.sender.*',
+            'name',
+            'createdById',
+            'createdAt',
+            'updatedAt',
+            'archived',
+            'lastMessageAt',
+            'participants.*',
+            'participants.user.*',
+            'messages.*',
+            'messages.sender.*',
           ],
         },
       );
-      if (result.errors || !result.data) {
+      if (result.errors) {
         throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
       }
-      return (result.data.receivedMessages as unknown as Schema['MessageTarget']['type'][]) || [];
+      return result.data as unknown as Schema['MessageThread']['type'];
     } catch (error) {
-      console.error(`Error getting User with relations id ${id}:`, error);
+      console.error(`Error getting MessageThread with id ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async listMessageThreads(
+    filter?: Record<string, unknown>,
+  ): Promise<Schema['MessageThread']['type'][]> {
+    try {
+      const result = await this.client.models.MessageThread.list({
+        authMode: 'userPool',
+        selectionSet: [
+          'id',
+          'name',
+          'createdById',
+          'createdAt',
+          'updatedAt',
+          'archived',
+          'lastMessageAt',
+          'participants.*',
+          'participants.user.*',
+          'messages.*',
+          'messages.sender.*',
+        ],
+        ...(filter ? { filter } : {}),
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['MessageThread']['type'][];
+    } catch (error) {
+      console.error('Error listing MessageThread:', error);
+      throw error;
+    }
+  }
+
+  async createThreadParticipant(
+    data: Schema['ThreadParticipant']['createType'],
+  ): Promise<Schema['ThreadParticipant']['type']> {
+    try {
+      const result = await this.client.models.ThreadParticipant.create(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as Schema['ThreadParticipant']['type'];
+    } catch (error) {
+      console.error('Error creating ThreadParticipant:', error);
+      throw error;
+    }
+  }
+
+  async updateThreadParticipant(
+    data: Schema['ThreadParticipant']['updateType'],
+  ): Promise<Schema['ThreadParticipant']['type'] | null> {
+    try {
+      const result = await this.client.models.ThreadParticipant.update(data, {
+        authMode: 'userPool',
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as Schema['ThreadParticipant']['type'];
+    } catch (error) {
+      console.error('Error updating ThreadParticipant:', error);
+      throw error;
+    }
+  }
+
+  async listThreadParticipants(
+    filter?: Record<string, unknown>,
+  ): Promise<Schema['ThreadParticipant']['type'][]> {
+    try {
+      const result = await this.client.models.ThreadParticipant.list({
+        authMode: 'userPool',
+        selectionSet: [
+          'id',
+          'threadId',
+          'userId',
+          'lastReadAt',
+          'thread.*',
+          'thread.messages.*',
+          'thread.messages.sender.*',
+        ],
+        ...(filter ? { filter } : {}),
+      });
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as unknown as Schema['ThreadParticipant']['type'][];
+    } catch (error) {
+      console.error('Error listing ThreadParticipant:', error);
+      throw error;
+    }
+  }
+
+  async deleteThreadParticipant(id: string): Promise<Schema['ThreadParticipant']['type'] | null> {
+    try {
+      const result = await this.client.models.ThreadParticipant.delete(
+        { id },
+        {
+          authMode: 'userPool',
+        },
+      );
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data as Schema['ThreadParticipant']['type'];
+    } catch (error) {
+      console.error(`Error deleting ThreadParticipant with id ${id}:`, error);
       throw error;
     }
   }
@@ -1039,97 +1185,19 @@ export class GraphQLClient {
     }
   }
 
-  async getMessageWithReplies(id: string): Promise<Schema['Message']['type'] | null> {
-    try {
-      const result = await this.client.models.Message.get(
-        { id },
-        {
-          authMode: 'userPool',
-          selectionSet: [
-            'id',
-            'title',
-            'body',
-            'kind',
-            'senderId',
-            'parentId',
-            'subCompetencyId',
-            'projectId',
-            'createdAt',
-            'updatedAt',
-            'parent.*',
-            'parent.sender.*',
-            'parent.targets.*',
-            'replies.*',
-            'replies.sender.*',
-            'replies.targets.*',
-            'sender.*',
-            'targets.*',
-          ],
-        },
-      );
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as unknown as Schema['Message']['type'];
-    } catch (error) {
-      console.error(`Error getting Message with id ${id}:`, error);
-      throw error;
-    }
-  }
-
-  async getMessage(id: string): Promise<Schema['Message']['type'] | null> {
-    try {
-      const result = await this.client.models.Message.get(
-        { id },
-        {
-          authMode: 'userPool',
-          selectionSet: [
-            'id',
-            'title',
-            'body',
-            'kind',
-            'senderId',
-            'parentId',
-            'subCompetencyId',
-            'projectId',
-            'createdAt',
-            'updatedAt',
-            'parent.*',
-            'parent.sender.*',
-            'sender.*',
-            'targets.*',
-            'targets.user.*',
-          ],
-        },
-      );
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as unknown as Schema['Message']['type'];
-    } catch (error) {
-      console.error(`Error getting Message with id ${id}:`, error);
-      throw error;
-    }
-  }
-
   async listMessages(filter?: Record<string, unknown>): Promise<Schema['Message']['type'][]> {
     try {
       const result = await this.client.models.Message.list({
         authMode: 'userPool',
         selectionSet: [
           'id',
-          'title',
+          'threadId',
+          'senderId',
           'body',
           'kind',
-          'senderId',
-          'parentId',
-          'subCompetencyId',
-          'projectId',
           'createdAt',
           'updatedAt',
           'sender.*',
-          'targets.*',
-          'targets.user.*',
         ],
         ...(filter ? { filter } : {}),
       });
@@ -1174,116 +1242,6 @@ export class GraphQLClient {
       return result.data as Schema['Message']['type'];
     } catch (error) {
       console.error(`Error deleting Message with id ${id}:`, error);
-      throw error;
-    }
-  }
-
-  async createMessageTarget(
-    data: Schema['MessageTarget']['createType'],
-  ): Promise<Schema['MessageTarget']['type'] | null> {
-    try {
-      const result = await this.client.models.MessageTarget.create(data, {
-        authMode: 'userPool',
-      });
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as Schema['MessageTarget']['type'];
-    } catch (error) {
-      console.error('Error creating MessageTarget:', error);
-      throw error;
-    }
-  }
-
-  async getMessageTarget(id: string): Promise<Schema['MessageTarget']['type'] | null> {
-    try {
-      const result = await this.client.models.MessageTarget.get(
-        { id },
-        {
-          authMode: 'userPool',
-          selectionSet: [
-            'id',
-            'messageId',
-            'userId',
-            'read',
-            'readDate',
-            'archived',
-            'user.*',
-            'message.*',
-            'message.sender.*',
-          ],
-        },
-      );
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as unknown as Schema['MessageTarget']['type'];
-    } catch (error) {
-      console.error(`Error getting MessageTarget with id ${id}:`, error);
-      throw error;
-    }
-  }
-
-  async listMessageTargets(
-    filter?: Record<string, unknown>,
-  ): Promise<Schema['MessageTarget']['type'][]> {
-    try {
-      const result = await this.client.models.MessageTarget.list({
-        authMode: 'userPool',
-        selectionSet: [
-          'id',
-          'messageId',
-          'userId',
-          'read',
-          'readDate',
-          'archived',
-          'user.*',
-          'message.*',
-          'message.sender.*',
-        ],
-        ...(filter ? { filter } : {}),
-      });
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as unknown as Schema['MessageTarget']['type'][];
-    } catch (error) {
-      console.error('Error listing MessageTargets:', error);
-      throw error;
-    }
-  }
-
-  async updateMessageTarget(
-    data: Schema['MessageTarget']['updateType'],
-  ): Promise<Schema['MessageTarget']['type'] | null> {
-    try {
-      const result = await this.client.models.MessageTarget.update(data, {
-        authMode: 'userPool',
-      });
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as Schema['MessageTarget']['type'];
-    } catch (error) {
-      console.error('Error updating MessageTarget:', error);
-      throw error;
-    }
-  }
-
-  async deleteMessageTarget(id: string): Promise<Schema['MessageTarget']['type'] | null> {
-    try {
-      const result = await this.client.models.MessageTarget.delete(
-        { id },
-        {
-          authMode: 'userPool',
-        },
-      );
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
-      }
-      return result.data as Schema['MessageTarget']['type'];
-    } catch (error) {
-      console.error(`Error deleting MessageTarget with id ${id}:`, error);
       throw error;
     }
   }

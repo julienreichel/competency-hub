@@ -1,175 +1,143 @@
-import type { MessageTarget } from 'src/models/MessageTarget';
-import {
-  messageTargetRepository,
-  type MessageTargetFilter,
-  type MessageTargetRepository,
-} from 'src/models/repositories/MessageTargetRepository';
+import type { Schema } from '../../../amplify/data/resource';
 import { graphQLClient } from '../base/GraphQLClient';
 import { Message, type MessageKind } from '../Message';
+import { MessageThread } from '../MessageThread';
+import { ThreadParticipant } from '../ThreadParticipant';
+import { mapArrayRelation } from '../utils';
 
-export interface CreateMessageInput {
+export interface CreateThreadInput {
+  name: string;
+  createdById: string;
+  participantIds: string[];
+}
+
+export interface SendMessageInput {
+  threadId: string;
   senderId: string;
-  title: string;
-  kind: MessageKind;
-  body?: string | null;
-  parentId?: string | null;
-  subCompetencyId?: string | null;
-  projectId?: string | null;
+  body: string;
+  kind?: MessageKind;
 }
 
-export type UpdateMessageInput = Partial<
-  Omit<CreateMessageInput, 'senderId'> & {
-    senderId?: never;
-  }
->;
-
-export interface SendMessageInput extends CreateMessageInput {
-  targetUserIds: string[];
-}
-
-export type MessageFilter = Record<string, unknown>;
-
-export interface InboxThread {
-  root: Message;
-  target: MessageTarget;
+export interface ThreadWithParticipant {
+  thread: MessageThread;
+  participant: ThreadParticipant;
 }
 
 export class MessageRepository {
-  targets: MessageTargetRepository = messageTargetRepository;
+  async createThread(input: CreateThreadInput): Promise<MessageThread> {
+    const uniqueParticipants = Array.from(new Set([input.createdById, ...input.participantIds]));
+
+    const rawThread = await graphQLClient.createMessageThread({
+      name: input.name,
+      createdById: input.createdById,
+    });
+
+    if (!rawThread) {
+      throw new Error('Failed to create message thread');
+    }
+
+    const thread = MessageThread.fromAmplify(rawThread);
+
+    const participants = await Promise.all(
+      uniqueParticipants.map((userId) =>
+        graphQLClient.createThreadParticipant({
+          threadId: thread.id,
+          userId,
+        }),
+      ),
+    );
+    thread.participants = mapArrayRelation(participants, ThreadParticipant.fromAmplify);
+
+    return thread;
+  }
+
+  async listThreadsForUser(userId: string): Promise<ThreadWithParticipant[]> {
+    const participants = await graphQLClient.getUserMessageThreads(userId);
+
+    const enriched = participants.map((raw) => {
+      const participant = ThreadParticipant.fromAmplify(raw);
+      const thread = participant.thread;
+      return thread ? { participant, thread } : null;
+    });
+    return enriched
+      .filter((record): record is ThreadWithParticipant => Boolean(record))
+      .sort((a, b) => {
+        const left = a.thread.lastMessageAt ?? a.thread.updatedAt ?? a.thread.createdAt ?? '';
+        const right = b.thread.lastMessageAt ?? b.thread.updatedAt ?? b.thread.createdAt ?? '';
+        return right.localeCompare(left);
+      });
+  }
+
+  async getThreadById(id: string): Promise<MessageThread | null> {
+    const raw = await graphQLClient.getMessageThread(id);
+    return raw ? MessageThread.fromAmplify(raw) : null;
+  }
+
+  async setThreadArchived(id: string, archived: boolean): Promise<MessageThread> {
+    const raw = await graphQLClient.updateMessageThread({ id, archived });
+    if (!raw) {
+      throw new Error(`Failed to update message thread ${id}`);
+    }
+    return MessageThread.fromAmplify(raw);
+  }
 
   async sendMessage(input: SendMessageInput): Promise<Message> {
-    const { targetUserIds, ...messageData } = input;
-    const message = await this.create(messageData);
-
-    if (targetUserIds.length > 0) {
-      await Promise.all(
-        targetUserIds.map((userId) =>
-          this.targets.create({
-            messageId: message.id,
-            userId,
-          }),
-        ),
-      );
-    }
-    return message;
-  }
-
-  async replyToMessage(parentId: string, input: SendMessageInput): Promise<Message> {
-    return this.sendMessage({
-      ...input,
-      parentId,
+    const raw = await graphQLClient.createMessage({
+      threadId: input.threadId,
+      senderId: input.senderId,
+      body: input.body,
+      kind: (input.kind ?? 'Message') as Schema['Message']['createType']['kind'],
     });
-  }
-  async listTargetsForUser(
-    userId: string,
-    options: { includeArchived?: boolean } = {},
-  ): Promise<MessageTarget[]> {
-    const filter: MessageTargetFilter = {
-      userId: { eq: userId },
-    };
-
-    if (!options.includeArchived) {
-      filter.archived = { eq: false };
-    }
-
-    return this.targets.findAll(filter);
-  }
-
-  async listInbox(
-    userId: string,
-    options: { includeArchived?: boolean } = {},
-  ): Promise<InboxThread[]> {
-    const targets = await this.targets.findAllForUser(userId);
-    if (targets.length === 0) {
-      return [];
-    }
-    return targets
-      .filter((t) => options.includeArchived || !t.archived)
-      .filter((t) => Boolean(t.message))
-      .map((t) => ({
-        target: t,
-        root: t.message as Message,
-      }));
-  }
-
-  async create(data: CreateMessageInput): Promise<Message> {
-    const payload = { ...data };
-    if (!payload.parentId) delete payload.parentId;
-    if (!payload.projectId) delete payload.projectId;
-    if (!payload.subCompetencyId) delete payload.subCompetencyId;
-
-    const raw = await graphQLClient.createMessage(payload);
 
     if (!raw) {
       throw new Error('Failed to create message');
     }
 
-    return Message.fromAmplify(raw);
+    const message = Message.fromAmplify(raw);
+
+    await graphQLClient.updateMessageThread({
+      id: input.threadId,
+      lastMessageAt: message.createdAt ?? new Date().toISOString(),
+    });
+
+    return message;
   }
 
-  async markTargetAsRead(
-    targetId: string,
-    readDate: string | null = new Date().toISOString(),
-  ): Promise<MessageTarget> {
-    return this.targets.update(targetId, { read: true, readDate });
-  }
+  async markThreadAsRead(threadId: string, userId: string, timestamp?: string): Promise<void> {
+    const thread = await this.getThreadById(threadId);
 
-  async markTargetAsUnread(targetId: string): Promise<MessageTarget> {
-    return this.targets.update(targetId, { read: false, readDate: null });
-  }
+    const participant = thread?.participants?.find((p) => p.userId === userId);
 
-  async archiveTarget(targetId: string): Promise<MessageTarget> {
-    return this.targets.update(targetId, { archived: true });
-  }
+    const lastReadAt = timestamp ?? new Date().toISOString();
 
-  async unarchiveTarget(targetId: string): Promise<MessageTarget> {
-    return this.targets.update(targetId, { archived: false });
-  }
-
-  async setThreadArchived(
-    rootMessageId: string,
-    userId: string,
-    archived: boolean,
-  ): Promise<MessageTarget | null> {
-    const target = await this.targets.findByMessageAndUser(rootMessageId, userId);
-    if (!target) {
-      return null;
-    }
-    if (archived) {
-      return this.archiveTarget(target.id);
-    }
-    return this.unarchiveTarget(target.id);
-  }
-
-  async findById(id: string, options: { includeReplies?: boolean } = {}): Promise<Message | null> {
-    const raw = options.includeReplies
-      ? await graphQLClient.getMessageWithReplies(id)
-      : await graphQLClient.getMessage(id);
-
-    return raw ? Message.fromAmplify(raw) : null;
-  }
-
-  async findAll(filter?: MessageFilter): Promise<Message[]> {
-    const messages = await graphQLClient.listMessages(filter);
-    return messages.map((raw) => Message.fromAmplify(raw));
-  }
-
-  async update(id: string, data: UpdateMessageInput): Promise<Message> {
-    const raw = await graphQLClient.updateMessage({ id, ...data });
-    if (!raw) {
-      throw new Error(`Failed to update message ${id}`);
+    if (participant) {
+      await graphQLClient.updateThreadParticipant({ id: participant.id, lastReadAt });
+      return;
     }
 
-    return Message.fromAmplify(raw);
+    await graphQLClient.createThreadParticipant({
+      threadId,
+      userId,
+      lastReadAt,
+    });
   }
 
-  async delete(id: string): Promise<Message> {
-    const raw = await graphQLClient.deleteMessage(id);
-    if (!raw) {
-      throw new Error(`Failed to delete message ${id}`);
-    }
+  async ensureParticipants(threadId: string, participantIds: string[]): Promise<void> {
+    if (!participantIds.length) return;
 
-    return Message.fromAmplify(raw);
+    const thread = await this.getThreadById(threadId);
+
+    const existing = thread?.participants ?? [];
+    const existingIds = new Set(existing.map((item) => item.userId));
+    const newIds = participantIds.filter((id) => !existingIds.has(id));
+    await Promise.all(
+      newIds.map((userId) =>
+        graphQLClient.createThreadParticipant({
+          threadId,
+          userId,
+        }),
+      ),
+    );
   }
 }
 

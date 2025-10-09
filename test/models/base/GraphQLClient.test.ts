@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Schema } from '../../../amplify/data/resource';
 import { GraphQLClient } from '../../../src/models/base/GraphQLClient';
 
 // Mock the Amplify client
@@ -82,7 +83,14 @@ vi.mock('aws-amplify/data', () => ({
         update: vi.fn(),
         delete: vi.fn(),
       },
-      MessageTarget: {
+      MessageThread: {
+        create: vi.fn(),
+        get: vi.fn(),
+        list: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      ThreadParticipant: {
         create: vi.fn(),
         get: vi.fn(),
         list: vi.fn(),
@@ -172,7 +180,14 @@ interface MockAmplifyClient {
       update: ReturnType<typeof vi.fn>;
       delete: ReturnType<typeof vi.fn>;
     };
-    MessageTarget: {
+    MessageThread: {
+      create: ReturnType<typeof vi.fn>;
+      get: ReturnType<typeof vi.fn>;
+      list: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+    ThreadParticipant: {
       create: ReturnType<typeof vi.fn>;
       get: ReturnType<typeof vi.fn>;
       list: ReturnType<typeof vi.fn>;
@@ -436,60 +451,6 @@ describe('GraphQLClient', () => {
           `GraphQL errors: ${JSON.stringify(graphQLErrors)}`,
         );
       });
-    });
-
-    it('retrieves sent messages for a user', async () => {
-      const sentMessages = [{ id: 'message-1' }];
-      mockAmplifyClient.models.User.get.mockResolvedValue({
-        data: { id: 'user-1', sentMessages },
-        errors: null,
-      });
-
-      const result = await graphQLClient.getUserSentMessages('user-1');
-
-      expect(result).toEqual(sentMessages);
-      expect(mockAmplifyClient.models.User.get).toHaveBeenCalledWith(
-        { id: 'user-1' },
-        {
-          authMode: 'userPool',
-          selectionSet: expect.arrayContaining([
-            'id',
-            'sentMessages.*',
-            'sentMessages.targets.*',
-            'sentMessages.targets.user.*',
-          ]),
-        },
-      );
-    });
-
-    it('retrieves received messages for a user with message relation', async () => {
-      const receivedMessages = [
-        {
-          id: 'target-1',
-          messageId: 'message-1',
-          message: { id: 'message-1' },
-        },
-      ];
-      mockAmplifyClient.models.User.get.mockResolvedValue({
-        data: { id: 'user-1', receivedMessages },
-        errors: null,
-      });
-
-      const result = await graphQLClient.getUserReceivedMessages('user-1');
-
-      expect(result).toEqual(receivedMessages);
-      expect(mockAmplifyClient.models.User.get).toHaveBeenCalledWith(
-        { id: 'user-1' },
-        {
-          authMode: 'userPool',
-          selectionSet: expect.arrayContaining([
-            'id',
-            'receivedMessages.*',
-            'receivedMessages.message.*',
-            'receivedMessages.message.sender.*',
-          ]),
-        },
-      );
     });
   });
 
@@ -938,150 +899,113 @@ describe('GraphQLClient', () => {
     });
   });
 
-  describe('Message operations', () => {
-    const rawMessage = {
-      id: 'message-1',
-      senderId: 'user-1',
-      title: 'Hello',
-      body: 'Welcome aboard',
-      kind: 'Message',
-    };
+  describe('MessageThread operations', () => {
+    const rawThread = {
+      id: 'thread-1',
+      name: 'General',
+      createdById: 'user-1',
+      archived: false,
+      lastMessageAt: '2024-01-01T00:00:00.000Z',
+    } as Schema['MessageThread']['type'];
 
-    it('creates and updates messages', async () => {
-      mockAmplifyClient.models.Message.create.mockResolvedValue({
-        data: rawMessage,
+    it('creates and updates threads', async () => {
+      mockAmplifyClient.models.MessageThread.create.mockResolvedValue({
+        data: rawThread,
         errors: null,
       });
-      mockAmplifyClient.models.Message.update.mockResolvedValue({
-        data: rawMessage,
+      mockAmplifyClient.models.MessageThread.update.mockResolvedValue({
+        data: rawThread,
         errors: null,
       });
-      mockAmplifyClient.models.Message.delete.mockResolvedValue({
-        data: rawMessage,
+      mockAmplifyClient.models.MessageThread.list.mockResolvedValue({
+        data: [rawThread],
+        errors: null,
+      });
+      mockAmplifyClient.models.MessageThread.get.mockResolvedValue({
+        data: rawThread,
         errors: null,
       });
 
       await expect(
+        graphQLClient.createMessageThread({ name: 'General', createdById: 'user-1' }),
+      ).resolves.toEqual(rawThread);
+
+      await expect(
+        graphQLClient.updateMessageThread({ id: 'thread-1', archived: true }),
+      ).resolves.toEqual(rawThread);
+
+      await expect(graphQLClient.listMessageThreads()).resolves.toEqual([rawThread]);
+      await expect(graphQLClient.getMessageThread('thread-1')).resolves.toEqual(rawThread);
+    });
+  });
+
+  describe('Thread participant operations', () => {
+    const rawParticipant = {
+      id: 'tp-1',
+      threadId: 'thread-1',
+      userId: 'user-2',
+      lastReadAt: null,
+    } as Schema['ThreadParticipant']['type'];
+
+    it('creates, updates, lists and deletes participants', async () => {
+      mockAmplifyClient.models.ThreadParticipant.create.mockResolvedValue({
+        data: rawParticipant,
+        errors: null,
+      });
+      mockAmplifyClient.models.ThreadParticipant.update.mockResolvedValue({
+        data: rawParticipant,
+        errors: null,
+      });
+      mockAmplifyClient.models.ThreadParticipant.list.mockResolvedValue({
+        data: [rawParticipant],
+        errors: null,
+      });
+      mockAmplifyClient.models.ThreadParticipant.delete.mockResolvedValue({
+        data: rawParticipant,
+        errors: null,
+      });
+
+      await expect(
+        graphQLClient.createThreadParticipant({ threadId: 'thread-1', userId: 'user-2' }),
+      ).resolves.toEqual(rawParticipant);
+
+      await expect(
+        graphQLClient.updateThreadParticipant({
+          id: 'tp-1',
+          lastReadAt: '2024-01-02T00:00:00.000Z',
+        }),
+      ).resolves.toEqual(rawParticipant);
+
+      await expect(graphQLClient.listThreadParticipants()).resolves.toEqual([rawParticipant]);
+      await expect(graphQLClient.deleteThreadParticipant('tp-1')).resolves.toEqual(rawParticipant);
+    });
+  });
+
+  describe('Message operations', () => {
+    const rawMessage = {
+      id: 'message-1',
+      threadId: 'thread-1',
+      senderId: 'user-1',
+      body: 'Hello',
+      kind: 'Message',
+    } as Schema['Message']['type'];
+
+    it('creates and lists messages', async () => {
+      mockAmplifyClient.models.Message.create.mockResolvedValue({ data: rawMessage, errors: null });
+      mockAmplifyClient.models.Message.list.mockResolvedValue({ data: [rawMessage], errors: null });
+
+      await expect(
         graphQLClient.createMessage({
+          threadId: 'thread-1',
           senderId: 'user-1',
-          title: 'Hello',
+          body: 'Hello',
           kind: 'Message',
         }),
       ).resolves.toEqual(rawMessage);
 
-      await expect(
-        graphQLClient.updateMessage({ id: 'message-1', body: 'Updated body' }),
-      ).resolves.toEqual(rawMessage);
-
-      await expect(graphQLClient.deleteMessage('message-1')).resolves.toEqual(rawMessage);
-    });
-
-    it('retrieves messages with and without replies', async () => {
-      mockAmplifyClient.models.Message.get.mockResolvedValue({
-        data: rawMessage,
-        errors: null,
-      });
-
-      await graphQLClient.getMessage('message-1');
-      expect(mockAmplifyClient.models.Message.get).toHaveBeenCalledWith(
-        { id: 'message-1' },
-        expect.objectContaining({
-          selectionSet: expect.arrayContaining(['targets.user.*', 'parent.*']),
-        }),
-      );
-
-      await graphQLClient.getMessageWithReplies('message-1');
-      expect(mockAmplifyClient.models.Message.get).toHaveBeenLastCalledWith(
-        { id: 'message-1' },
-        expect.objectContaining({
-          selectionSet: expect.arrayContaining([
-            'replies.*',
-            'replies.sender.*',
-            'parent.*',
-            'parent.sender.*',
-          ]),
-        }),
-      );
-    });
-
-    it('lists messages with filters', async () => {
-      mockAmplifyClient.models.Message.list.mockResolvedValue({
-        data: [rawMessage],
-        errors: null,
-      });
-
-      const result = await graphQLClient.listMessages({ senderId: { eq: 'user-1' } });
-
-      expect(result).toEqual([rawMessage]);
-      expect(mockAmplifyClient.models.Message.list).toHaveBeenCalledWith({
-        authMode: 'userPool',
-        selectionSet: expect.arrayContaining(['targets.user.*']),
-        filter: { senderId: { eq: 'user-1' } },
-      });
-    });
-  });
-
-  describe('Message target operations', () => {
-    const rawTarget = {
-      id: 'target-1',
-      messageId: 'message-1',
-      userId: 'user-2',
-      read: false,
-      archived: false,
-    };
-
-    it('creates and updates message targets', async () => {
-      mockAmplifyClient.models.MessageTarget.create.mockResolvedValue({
-        data: rawTarget,
-        errors: null,
-      });
-      mockAmplifyClient.models.MessageTarget.update.mockResolvedValue({
-        data: rawTarget,
-        errors: null,
-      });
-      mockAmplifyClient.models.MessageTarget.delete.mockResolvedValue({
-        data: rawTarget,
-        errors: null,
-      });
-
-      await expect(
-        graphQLClient.createMessageTarget({ messageId: 'message-1', userId: 'user-2' }),
-      ).resolves.toEqual(rawTarget);
-
-      await expect(
-        graphQLClient.updateMessageTarget({ id: 'target-1', read: true }),
-      ).resolves.toEqual(rawTarget);
-
-      await expect(graphQLClient.deleteMessageTarget('target-1')).resolves.toEqual(rawTarget);
-    });
-
-    it('retrieves and lists message targets with selection sets', async () => {
-      mockAmplifyClient.models.MessageTarget.get.mockResolvedValue({
-        data: rawTarget,
-        errors: null,
-      });
-
-      await graphQLClient.getMessageTarget('target-1');
-      expect(mockAmplifyClient.models.MessageTarget.get).toHaveBeenCalledWith(
-        { id: 'target-1' },
-        expect.objectContaining({
-          selectionSet: expect.arrayContaining(['user.*', 'message.*']),
-        }),
-      );
-
-      mockAmplifyClient.models.MessageTarget.list.mockResolvedValue({
-        data: [rawTarget],
-        errors: null,
-      });
-
-      const targets = await graphQLClient.listMessageTargets({ userId: { eq: 'user-2' } });
-
-      expect(targets).toEqual([rawTarget]);
-      expect(mockAmplifyClient.models.MessageTarget.list).toHaveBeenCalledWith({
-        authMode: 'userPool',
-        selectionSet: expect.arrayContaining(['user.*', 'message.*']),
-        filter: { userId: { eq: 'user-2' } },
-      });
+      await expect(graphQLClient.listMessages({ threadId: { eq: 'thread-1' } })).resolves.toEqual([
+        rawMessage,
+      ]);
     });
   });
 
@@ -1320,18 +1244,6 @@ describe('GraphQLClient', () => {
       () => graphQLClient.deleteUser('id'),
       [],
       () => mockAmplifyClient.models.User.delete,
-    );
-    testGraphQLErrors(
-      'getUserSentMessages',
-      () => graphQLClient.getUserSentMessages('id'),
-      [],
-      () => mockAmplifyClient.models.User.get,
-    );
-    testGraphQLErrors(
-      'getUserReceivedMessages',
-      () => graphQLClient.getUserReceivedMessages('id'),
-      [],
-      () => mockAmplifyClient.models.User.get,
     );
 
     // TeachingAssignment
@@ -1605,21 +1517,15 @@ describe('GraphQLClient', () => {
     // Message
     testGraphQLErrors(
       'createMessage',
-      () => graphQLClient.createMessage({ senderId: 's', title: 'Hello', kind: 'Message' }),
+      () =>
+        graphQLClient.createMessage({
+          threadId: 't',
+          senderId: 's',
+          body: 'Hello',
+          kind: 'Message',
+        }),
       [],
       () => mockAmplifyClient.models.Message.create,
-    );
-    testGraphQLErrors(
-      'getMessage',
-      () => graphQLClient.getMessage('id'),
-      [],
-      () => mockAmplifyClient.models.Message.get,
-    );
-    testGraphQLErrors(
-      'getMessageWithReplies',
-      () => graphQLClient.getMessageWithReplies('id'),
-      [],
-      () => mockAmplifyClient.models.Message.get,
     );
     testGraphQLErrors(
       'listMessages',
@@ -1629,7 +1535,7 @@ describe('GraphQLClient', () => {
     );
     testGraphQLErrors(
       'updateMessage',
-      () => graphQLClient.updateMessage({ id: 'id', title: 'Updated' }),
+      () => graphQLClient.updateMessage({ id: 'id', body: 'Updated' }),
       [],
       () => mockAmplifyClient.models.Message.update,
     );
@@ -1640,36 +1546,56 @@ describe('GraphQLClient', () => {
       () => mockAmplifyClient.models.Message.delete,
     );
 
-    // MessageTarget
+    // MessageThread
     testGraphQLErrors(
-      'createMessageTarget',
-      () => graphQLClient.createMessageTarget({ messageId: 'm', userId: 'u' }),
+      'createMessageThread',
+      () => graphQLClient.createMessageThread({ name: 'Thread', createdById: 'user-1' }),
       [],
-      () => mockAmplifyClient.models.MessageTarget.create,
+      () => mockAmplifyClient.models.MessageThread.create,
     );
     testGraphQLErrors(
-      'getMessageTarget',
-      () => graphQLClient.getMessageTarget('id'),
+      'getMessageThread',
+      () => graphQLClient.getMessageThread('id'),
       [],
-      () => mockAmplifyClient.models.MessageTarget.get,
+      () => mockAmplifyClient.models.MessageThread.get,
     );
     testGraphQLErrors(
-      'listMessageTargets',
-      () => graphQLClient.listMessageTargets(),
+      'listMessageThreads',
+      () => graphQLClient.listMessageThreads(),
       [],
-      () => mockAmplifyClient.models.MessageTarget.list,
+      () => mockAmplifyClient.models.MessageThread.list,
     );
     testGraphQLErrors(
-      'updateMessageTarget',
-      () => graphQLClient.updateMessageTarget({ id: 'id', read: true }),
+      'updateMessageThread',
+      () => graphQLClient.updateMessageThread({ id: 'id', archived: true }),
       [],
-      () => mockAmplifyClient.models.MessageTarget.update,
+      () => mockAmplifyClient.models.MessageThread.update,
+    );
+
+    // ThreadParticipant
+    testGraphQLErrors(
+      'createThreadParticipant',
+      () => graphQLClient.createThreadParticipant({ threadId: 't', userId: 'u' }),
+      [],
+      () => mockAmplifyClient.models.ThreadParticipant.create,
     );
     testGraphQLErrors(
-      'deleteMessageTarget',
-      () => graphQLClient.deleteMessageTarget('id'),
+      'listThreadParticipants',
+      () => graphQLClient.listThreadParticipants(),
       [],
-      () => mockAmplifyClient.models.MessageTarget.delete,
+      () => mockAmplifyClient.models.ThreadParticipant.list,
+    );
+    testGraphQLErrors(
+      'updateThreadParticipant',
+      () => graphQLClient.updateThreadParticipant({ id: 'tp-1', lastReadAt: 'now' }),
+      [],
+      () => mockAmplifyClient.models.ThreadParticipant.update,
+    );
+    testGraphQLErrors(
+      'deleteThreadParticipant',
+      () => graphQLClient.deleteThreadParticipant('tp-1'),
+      [],
+      () => mockAmplifyClient.models.ThreadParticipant.delete,
     );
   });
 });

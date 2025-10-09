@@ -1,6 +1,11 @@
-import type { Message, MessageKind } from 'src/models/Message';
-import type { MessageTarget } from 'src/models/MessageTarget';
-import { messageRepository } from 'src/models/repositories/MessageRepository';
+import type { MessageKind } from 'src/models/Message';
+import type { MessageThread } from 'src/models/MessageThread';
+import type { ThreadParticipant } from 'src/models/ThreadParticipant';
+import {
+  messageRepository,
+  type ThreadWithParticipant,
+} from 'src/models/repositories/MessageRepository';
+import type { Message } from 'src/models/Message';
 
 export interface InboxItemSummary {
   id: string;
@@ -24,111 +29,89 @@ export interface ConversationMessageView {
   mine: boolean;
   senderId: string;
   senderName: string;
-  message: Message;
 }
 
 export interface ConversationView {
-  root: Message;
-  parent: Message | null;
+  thread: MessageThread;
   messages: ConversationMessageView[];
-  participants: string[];
-  rootTarget: MessageTarget | null;
+  participantIds: string[];
+  participant: ThreadParticipant | null;
 }
 
 const DEFAULT_PREVIEW_LENGTH = 160;
 
-function normaliseTimestamp(message: Message): string {
-  return message.updatedAt ?? message.createdAt ?? '';
-}
-
-function createBodyPreview(body: string | null): string {
-  if (!body) {
-    return '';
-  }
-
-  if (body.length <= DEFAULT_PREVIEW_LENGTH) {
-    return body;
-  }
-
+function createBodyPreview(body: string): string {
+  if (!body) return '';
+  if (body.length <= DEFAULT_PREVIEW_LENGTH) return body;
   return `${body.slice(0, DEFAULT_PREVIEW_LENGTH)}…`;
 }
 
-function collectParticipantIds(root: Message, parent: Message | null): string[] {
-  const identifiers = new Set<string>();
-
-  identifiers.add(root.senderId);
-  root.targets.forEach((target) => identifiers.add(target.userId));
-
-  if (parent) {
-    identifiers.add(parent.senderId);
-    parent.targets.forEach((target) => identifiers.add(target.userId));
+function getDisplayName(message: Message): string {
+  if (
+    message.sender &&
+    typeof (message.sender as unknown as { getDisplayName?: () => string }).getDisplayName ===
+      'function'
+  ) {
+    return (message.sender as unknown as { getDisplayName: () => string }).getDisplayName();
   }
-
-  const stack: Message[] = [...root.replies];
-  while (stack.length > 0) {
-    const current = stack.shift();
-    if (!current) continue;
-    identifiers.add(current.senderId);
-    current.targets.forEach((target) => identifiers.add(target.userId));
-    if (current.replies.length > 0) {
-      stack.push(...current.replies);
-    }
-  }
-
-  return Array.from(identifiers);
+  return message.sender?.name ?? message.senderId;
 }
 
-function formatConversationMessages(
-  parent: Message | null,
-  root: Message,
-  currentUserId: string,
-): ConversationMessageView[] {
-  const sequence: Message[] = [];
-  if (parent) {
-    sequence.push(parent);
-  }
-  sequence.push(root);
-  const replies = [...root.replies].sort((a, b) => {
+function sortMessages(messages: Message[]): Message[] {
+  return [...messages].sort((a, b) => {
     const left = a.createdAt ?? '';
     const right = b.createdAt ?? '';
     return left.localeCompare(right);
   });
-  sequence.push(...replies);
+}
 
-  return sequence.map((message) => ({
-    id: message.id,
-    body: message.body ?? '',
-    createdAt: message.createdAt ?? '',
-    updatedAt: message.updatedAt ?? null,
-    kind: message.kind,
-    mine: message.senderId === currentUserId,
-    senderId: message.senderId,
-    senderName: message.sender?.getDisplayName() ?? '',
-    message,
-  }));
+function resolveLastMessage(thread: MessageThread): {
+  lastMessage: Message | null;
+  lastTimestamp: string;
+} {
+  const messages = sortMessages(thread.messages ?? []);
+  const lastMessage = messages[messages.length - 1] ?? null;
+  const lastTimestamp =
+    lastMessage?.createdAt ?? thread.lastMessageAt ?? thread.updatedAt ?? thread.createdAt ?? '';
+  return { lastMessage, lastTimestamp };
+}
+
+function computeUnreadCount(
+  participant: ThreadParticipant,
+  lastTimestamp: string,
+  hasMessage: boolean,
+): number {
+  if (!hasMessage) {
+    return 0;
+  }
+  if (!participant.lastReadAt) {
+    return 1;
+  }
+  return lastTimestamp > participant.lastReadAt ? 1 : 0;
+}
+
+function toInboxSummary(record: ThreadWithParticipant): InboxItemSummary {
+  const { thread, participant } = record;
+  const { lastMessage, lastTimestamp } = resolveLastMessage(thread);
+  const unread = computeUnreadCount(participant, lastTimestamp, Boolean(lastMessage));
+
+  return {
+    id: thread.id,
+    title: thread.name,
+    kind: lastMessage?.kind ?? 'Message',
+    senderName: lastMessage ? getDisplayName(lastMessage) : thread.createdById,
+    senderId: lastMessage?.senderId ?? thread.createdById,
+    createdAt: thread.createdAt ?? '',
+    updatedAt: lastTimestamp,
+    unreadCount: unread,
+    archived: Boolean(thread.archived),
+    bodyPreview: createBodyPreview(lastMessage?.body ?? ''),
+  };
 }
 
 export async function getInboxSummaries(userId: string): Promise<InboxItemSummary[]> {
-  const threads = await messageRepository.listInbox(userId);
-
-  return threads.map((thread) => {
-    const unreadCount = thread.target.read ? 0 : 1;
-    const archived = Boolean(thread.target.archived);
-    const updatedAt = normaliseTimestamp(thread.root);
-    const senderName = thread.root.sender?.getDisplayName() ?? '';
-    return {
-      id: thread.root.id,
-      title: thread.root.title,
-      kind: thread.root.kind,
-      senderName,
-      senderId: thread.root.senderId,
-      createdAt: thread.root.createdAt ?? '',
-      updatedAt,
-      unreadCount,
-      archived,
-      bodyPreview: createBodyPreview(thread.root.body ?? ''),
-    };
-  });
+  const records = await messageRepository.listThreadsForUser(userId);
+  return records.map(toInboxSummary);
 }
 
 export async function getUnreadCount(userId: string): Promise<number> {
@@ -137,93 +120,91 @@ export async function getUnreadCount(userId: string): Promise<number> {
 }
 
 export async function loadConversation(
-  rootId: string,
+  threadId: string,
   currentUserId: string,
 ): Promise<ConversationView | null> {
-  const root = await messageRepository.findById(rootId, { includeReplies: true });
-  if (!root) {
+  const thread = await messageRepository.getThreadById(threadId);
+  if (!thread) {
     return null;
   }
 
-  const parent = root.parent;
+  const participantRecords = await messageRepository.listThreadsForUser(currentUserId);
+  const currentParticipant =
+    participantRecords.find((record) => record.thread.id === threadId)?.participant ?? null;
 
-  const rootTarget = root.targets.find((t) => t.userId === currentUserId);
-  if (!rootTarget) {
-    return null;
-  }
-  const participants = collectParticipantIds(root, parent ?? null).filter(
-    (id) => id && id !== currentUserId,
-  );
-  const messages = formatConversationMessages(parent, root, currentUserId);
+  const messages = sortMessages(thread.messages ?? []).map((message) => ({
+    id: message.id,
+    body: message.body,
+    createdAt: message.createdAt ?? '',
+    updatedAt: message.updatedAt ?? null,
+    kind: message.kind,
+    mine: message.senderId === currentUserId,
+    senderId: message.senderId,
+    senderName: getDisplayName(message),
+  }));
 
-  await messageRepository.markTargetAsRead(rootTarget.id);
+  const participantIds = (thread.participants ?? [])
+    .map((participant) => participant.userId)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  await messageRepository.markThreadAsRead(thread.id, currentUserId);
 
   return {
-    root,
-    parent,
+    thread,
     messages,
-    participants,
-    rootTarget,
+    participantIds,
+    participant: currentParticipant,
   };
 }
 
 export interface CreateMessagePayload {
   senderId: string;
   title: string;
-  body?: string | null;
+  body: string;
   kind?: MessageKind;
-  targetUserIds: string[];
-  subCompetencyId?: string | null;
-  projectId?: string | null;
+  participantIds: string[];
 }
 
-export async function sendRootMessage(payload: CreateMessagePayload): Promise<Message | null> {
-  const message = await messageRepository.sendMessage({
-    senderId: payload.senderId,
-    title: payload.title,
-    kind: payload.kind ?? 'Message',
-    body: payload.body ?? null,
-    parentId: null,
-    subCompetencyId: payload.subCompetencyId ?? null,
-    projectId: payload.projectId ?? null,
-    targetUserIds: Array.from(new Set(payload.targetUserIds)),
+export async function sendRootMessage(
+  payload: CreateMessagePayload,
+): Promise<MessageThread | null> {
+  const thread = await messageRepository.createThread({
+    name: payload.title,
+    createdById: payload.senderId,
+    participantIds: payload.participantIds,
   });
 
-  return messageRepository.findById(message.id, { includeReplies: true });
+  await messageRepository.sendMessage({
+    threadId: thread.id,
+    senderId: payload.senderId,
+    body: payload.body,
+    kind: payload.kind ?? 'Message',
+  });
+
+  return messageRepository.getThreadById(thread.id);
 }
 
 export async function replyToThread(
-  rootId: string,
-  currentUserId: string,
+  threadId: string,
+  senderId: string,
   body: string,
-): Promise<Message | null> {
-  const thread = await messageRepository.findById(rootId, { includeReplies: true });
-  if (!thread) {
-    return null;
-  }
+  additionalParticipantIds: string[] = [],
+): Promise<MessageThread | null> {
+  await messageRepository.ensureParticipants(threadId, additionalParticipantIds);
 
-  const participantIds = collectParticipantIds(thread, null).filter(
-    (id) => id && id !== currentUserId,
-  );
-
-  const message = await messageRepository.sendMessage({
-    senderId: currentUserId,
-    title: thread.title,
-    kind: 'Message',
+  await messageRepository.sendMessage({
+    threadId,
+    senderId,
     body,
-    parentId: thread.id,
-    subCompetencyId: thread.subCompetencyId ?? null,
-    projectId: thread.projectId ?? null,
-    targetUserIds: Array.from(new Set(participantIds)),
+    kind: 'Message',
   });
 
-  return messageRepository.findById(message.parentId ?? message.id, { includeReplies: true });
+  return messageRepository.getThreadById(threadId);
 }
 
 export async function setConversationArchived(
-  rootId: string,
-  userId: string,
+  threadId: string,
   archived: boolean,
-): Promise<void> {
-  await messageRepository.setThreadArchived(rootId, userId, archived);
+): Promise<MessageThread> {
+  return messageRepository.setThreadArchived(threadId, archived);
 }

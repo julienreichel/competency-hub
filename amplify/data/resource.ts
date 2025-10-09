@@ -23,8 +23,9 @@ const schema = a
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'studentId'),
         evaluationAttempts: a.hasMany('EvaluationAttempt', 'studentId'),
         projects: a.hasMany('Project', 'studentId'),
+        messageThreads: a.hasMany('ThreadParticipant', 'userId'),
+        createdThreads: a.hasMany('MessageThread', 'createdById'),
         sentMessages: a.hasMany('Message', 'senderId'),
-        receivedMessages: a.hasMany('MessageTarget', 'userId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -181,20 +182,29 @@ const schema = a
         allow.authenticated().to(['read']),
       ]),
 
+    MessageThread: a
+      .model({
+        name: a.string().required(),
+        createdById: a.id().required(),
+        createdBy: a.belongsTo('User', 'createdById'),
+        participants: a.hasMany('ThreadParticipant', 'threadId'),
+        messages: a.hasMany('Message', 'threadId'),
+        lastMessageAt: a.datetime(),
+        archived: a.boolean().default(false),
+      })
+      .authorization((allow) => [
+        allow.owner().to(['create', 'read', 'update', 'delete']),
+        allow.authenticated().to(['read']),
+        allow.groups(['Educator', 'Admin']).to(['create', 'read', 'update']),
+      ]),
+
     Message: a
       .model({
+        threadId: a.id().required(),
+        thread: a.belongsTo('MessageThread', 'threadId'),
         senderId: a.id().required(),
         sender: a.belongsTo('User', 'senderId'),
-
-        parentId: a.id(),
-        parent: a.belongsTo('Message', 'parentId'),
-        replies: a.hasMany('Message', 'parentId'),
-
-        targets: a.hasMany('MessageTarget', 'messageId'),
-
-        title: a.string().required(),
-        body: a.string(),
-
+        body: a.string().required(),
         kind: a.enum([
           'Message',
           'ValidationSubmitted',
@@ -202,9 +212,6 @@ const schema = a
           'ProjectApproved',
           'ProjectRejected',
         ]),
-
-        subCompetencyId: a.id(),
-        projectId: a.id(),
       })
       .authorization((allow) => [
         allow.owner().to(['create', 'read']),
@@ -212,20 +219,16 @@ const schema = a
         allow.groups(['Educator', 'Admin']).to(['create', 'read']),
       ]),
 
-    MessageTarget: a
+    ThreadParticipant: a
       .model({
-        messageId: a.id().required(),
-        message: a.belongsTo('Message', 'messageId'),
-
+        threadId: a.id().required(),
+        thread: a.belongsTo('MessageThread', 'threadId'),
         userId: a.id().required(),
         user: a.belongsTo('User', 'userId'),
-
-        read: a.boolean().default(false),
-        readDate: a.datetime(),
-        archived: a.boolean().default(false),
+        lastReadAt: a.datetime(),
       })
       .authorization((allow) => [
-        allow.owner().to(['create', 'read', 'update']),
+        allow.owner().to(['create', 'read', 'update', 'delete']),
         allow.authenticated().to(['read', 'update']),
       ]),
 

@@ -3,21 +3,13 @@
     <div class="row items-center justify-between q-mb-md">
       <div class="column q-gutter-xs">
         <div class="text-h5 text-weight-bold">
-          {{ conversation?.root.title || t('messaging.conversation.titleFallback') }}
+          {{ conversation?.thread.name || t('messaging.conversation.titleFallback') }}
         </div>
         <div class="text-caption text-grey-7" v-if="conversation">
           {{ t('messaging.conversation.participants', { count: participantCount }) }}
         </div>
       </div>
       <div class="row items-center q-gutter-sm">
-        <q-btn
-          v-if="showNavigateButton"
-          outline
-          color="primary"
-          icon="open_in_new"
-          :label="t('messaging.conversation.actions.goToItem')"
-          @click="goToRelatedItem"
-        />
         <q-btn
           outline
           color="grey-7"
@@ -67,7 +59,7 @@
 
     <new-message-dialog
       v-model="newDialogOpen"
-      :initial-targets="conversation?.participants ?? []"
+      :initial-targets="conversation?.participantIds ?? []"
       @create="handleCreateMessage"
     />
   </q-page>
@@ -84,7 +76,6 @@ import {
   setConversationArchived,
   type ConversationView,
 } from 'src/services/messaging';
-import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import { useUsers } from 'src/composables/useUsers';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -103,22 +94,18 @@ const errorMessage = ref<string | null>(null);
 const currentUserId = ref<string | null>(null);
 const newDialogOpen = ref(false);
 
-const participantCount = computed(() => conversation.value?.participants.length ?? 0);
-const isArchived = computed(() => Boolean(conversation.value?.rootTarget?.archived));
-const showNavigateButton = computed(() => {
-  if (!conversation.value) return false;
-  return Boolean(conversation.value.root.projectId || conversation.value.root.subCompetencyId);
-});
+const participantCount = computed(() => conversation.value?.participantIds.length ?? 0);
+const isArchived = computed(() => Boolean(conversation.value?.thread.archived));
 
 async function loadConversationData(): Promise<void> {
   if (!currentUserId.value) return;
-  const rootId = route.params.rootId as string;
-  if (!rootId) return;
+  const threadId = route.params.rootId as string;
+  if (!threadId) return;
 
   loading.value = true;
   errorMessage.value = null;
   try {
-    conversation.value = await loadConversation(rootId, currentUserId.value);
+    conversation.value = await loadConversation(threadId, currentUserId.value);
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : t('messaging.conversation.errors.loadFailed');
@@ -133,7 +120,12 @@ async function handleSend(body: string): Promise<void> {
   }
   sending.value = true;
   try {
-    await replyToThread(conversation.value.root.id, currentUserId.value, body);
+    await replyToThread(
+      conversation.value.thread.id,
+      currentUserId.value,
+      body,
+      conversation.value.participantIds,
+    );
     await loadConversationData();
   } catch (error) {
     errorMessage.value =
@@ -146,19 +138,18 @@ async function handleSend(body: string): Promise<void> {
 async function handleCreateMessage(payload: {
   title: string;
   body: string;
-  targetIds: string[];
+  participantIds: string[];
 }): Promise<void> {
   if (!currentUserId.value) return;
   try {
-    const message = await sendRootMessage({
+    const thread = await sendRootMessage({
       senderId: currentUserId.value,
       title: payload.title,
       body: payload.body,
-      targetUserIds: payload.targetIds,
-      kind: 'Message',
+      participantIds: payload.participantIds,
     });
-    if (message) {
-      void router.push({ path: `/messages/${message.id}` });
+    if (thread) {
+      void router.push({ path: `/messages/${thread.id}` });
     }
   } catch (error) {
     errorMessage.value =
@@ -167,14 +158,10 @@ async function handleCreateMessage(payload: {
 }
 
 async function toggleArchive(): Promise<void> {
-  if (!conversation.value || !currentUserId.value) return;
+  if (!conversation.value) return;
   archiveInProgress.value = true;
   try {
-    await setConversationArchived(
-      conversation.value.root.id,
-      currentUserId.value,
-      !isArchived.value,
-    );
+    await setConversationArchived(conversation.value.thread.id, !isArchived.value);
     await loadConversationData();
   } catch (error) {
     errorMessage.value =
@@ -184,33 +171,14 @@ async function toggleArchive(): Promise<void> {
   }
 }
 
-async function goToRelatedItem(): Promise<void> {
-  if (!conversation.value) return;
-  const { projectId, subCompetencyId } = conversation.value.root;
-  if (projectId) {
-    void router.push({ name: 'project-detail', params: { projectId } });
-    return;
-  }
-
-  if (subCompetencyId) {
-    const sub = await subCompetencyRepository.findById(subCompetencyId);
-    if (sub) {
-      void router.push({
-        name: 'sub-competency',
-        params: { competencyId: sub.competencyId, subId: sub.id },
-      });
-    }
-  }
-}
-
 function openNewMessage(): void {
   newDialogOpen.value = true;
 }
 
 watch(
   () => route.params.rootId,
-  async () => {
-    await loadConversationData();
+  () => {
+    void loadConversationData();
   },
 );
 

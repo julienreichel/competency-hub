@@ -84,20 +84,20 @@ function openNewMessage(): void {
 async function handleCreateMessage(payload: {
   title: string;
   body: string;
-  targetIds: string[];
+  participantIds: string[];
 }): Promise<void> {
   if (!currentUserId.value) return;
   try {
-    const message = await sendRootMessage({
+    const thread = await sendRootMessage({
       senderId: currentUserId.value,
       title: payload.title,
       body: payload.body,
-      targetUserIds: payload.targetIds,
+      participantIds: payload.participantIds,
       kind: 'Message',
     });
     await loadInbox();
-    if (message) {
-      void router.push({ path: `/messages/${message.id}` });
+    if (thread) {
+      void router.push({ path: `/messages/${thread.id}` });
     }
   } catch (error) {
     errorMessage.value =
@@ -110,9 +110,8 @@ function handleSelect(messageId: string): void {
 }
 
 async function handleArchive(messageId: string): Promise<void> {
-  if (!currentUserId.value) return;
   try {
-    await setConversationArchived(messageId, currentUserId.value, true);
+    await setConversationArchived(messageId, true);
     items.value = items.value.filter((item) => item.id !== messageId);
   } catch (error) {
     errorMessage.value =
