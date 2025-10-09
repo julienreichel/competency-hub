@@ -46,6 +46,75 @@
       "manageDomains": "Gérer les domaines"
     }
   },
+  "messaging": {
+    "preview": {
+      "empty": "Aucun contenu de message"
+    },
+    "actions": {
+      "archive": "Archiver"
+    },
+    "kind": {
+      "Message": "Message",
+      "ValidationSubmitted": "Validation envoyée",
+      "ProjectSubmitted": "Projet soumis",
+      "ProjectApproved": "Projet approuvé",
+      "ProjectRejected": "Projet refusé"
+    },
+    "notifications": {
+      "tooltip": "Ouvrir la messagerie"
+    },
+    "inbox": {
+      "title": "Boîte de réception",
+      "subtitle": "Toutes vos conversations et notifications",
+      "actions": {
+        "newMessage": "Nouveau message"
+      },
+      "empty": "Aucun message pour le moment",
+      "errors": {
+        "loadFailed": "Impossible de charger les messages.",
+        "createFailed": "Impossible d'envoyer le message.",
+        "archiveFailed": "Impossible d'archiver la conversation."
+      }
+    },
+    "dialog": {
+      "newMessage": {
+        "title": "Nouveau message",
+        "titlePlaceholder": "Saisis un sujet",
+        "fields": {
+          "title": "Sujet",
+          "recipients": "Destinataires",
+          "body": "Message"
+        },
+        "actions": {
+          "send": "Envoyer"
+        },
+        "errors": {
+          "recipientRequired": "Sélectionne au moins un destinataire.",
+          "generic": "Impossible de créer le message."
+        }
+      }
+    },
+    "composer": {
+      "placeholder": "Écris une réponse (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)",
+      "send": "Envoyer"
+    },
+    "conversation": {
+      "titleFallback": "Conversation",
+      "participants": "Participants : {count}",
+      "actions": {
+        "goToItem": "Ouvrir l'élément associé",
+        "archive": "Archiver",
+        "unarchive": "Désarchiver",
+        "newMessage": "Nouveau message"
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger la conversation.",
+        "sendFailed": "Impossible d'envoyer ta réponse.",
+        "createFailed": "Impossible de démarrer une nouvelle conversation.",
+        "archiveFailed": "Impossible de modifier l'état d'archivage."
+      }
+    }
+  },
   "common": {
     "view": "Voir",
     "edit": "Modifier",
@@ -198,6 +267,10 @@
       "description": "Vue d'ensemble et actions rapides"
     },
     "common": {
+      "messages": {
+        "title": "Messages",
+        "description": "Consulter les conversations et notifications"
+      },
       "domains": {
         "title": "Domaines"
       }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MessageTarget } from '../../src/models/MessageTarget';
 import { graphQLClient } from '../../src/models/base/GraphQLClient';
 import { Message } from '../../src/models/Message';
+import { MessageTarget } from '../../src/models/MessageTarget';
 import { MessageRepository } from '../../src/models/repositories/MessageRepository';
 import type { MessageTargetRepository as MessageTargetRepositoryType } from '../../src/models/repositories/MessageTargetRepository';
 
@@ -44,6 +44,7 @@ describe('MessageRepository', () => {
     create: ReturnType<typeof vi.fn>;
     findAll: ReturnType<typeof vi.fn>;
     findAllForUser: ReturnType<typeof vi.fn>;
+    findByMessageAndUser: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
 
@@ -55,6 +56,7 @@ describe('MessageRepository', () => {
       create: vi.fn(),
       findAll: vi.fn(),
       findAllForUser: vi.fn(),
+      findByMessageAndUser: vi.fn(),
       update: vi.fn(),
     };
     repository.targets = targetsMock as unknown as MessageTargetRepositoryType;
@@ -68,6 +70,13 @@ describe('MessageRepository', () => {
     );
     targetsMock.findAll.mockResolvedValue([]);
     targetsMock.findAllForUser.mockResolvedValue([]);
+    targetsMock.findByMessageAndUser.mockResolvedValue(
+      new MessageTarget({
+        id: 'target-1',
+        messageId: 'message-1',
+        userId: 'user-2',
+      }),
+    );
     targetsMock.update.mockResolvedValue(
       new MessageTarget({
         id: 'target-1',
@@ -263,8 +272,8 @@ describe('MessageRepository', () => {
   });
 
   it('lists inbox entries mapped to messages', async () => {
-    const targetVisible = new MessageTarget({
-      id: 'target-1',
+    const root = new MessageTarget({
+      id: 'target-root',
       messageId: 'message-1',
       userId: 'user-2',
       archived: false,
@@ -273,45 +282,57 @@ describe('MessageRepository', () => {
         senderId: 'user-1',
         title: 'Hello',
         kind: 'Message',
+        parentId: null,
+        createdAt: '2024-01-01T00:00:00.000Z',
       },
     });
-    const targetArchived = new MessageTarget({
-      id: 'target-2',
+    const reply = new MessageTarget({
+      id: 'target-reply',
       messageId: 'message-2',
       userId: 'user-2',
-      archived: true,
+      archived: false,
       message: {
         id: 'message-2',
         senderId: 'user-3',
-        title: 'Update',
+        title: 'Reply',
         kind: 'Message',
+        parentId: 'message-1',
+        createdAt: '2024-01-02T00:00:00.000Z',
       },
     });
-    targetsMock.findAllForUser.mockResolvedValue([targetVisible, targetArchived]);
+    targetsMock.findAllForUser.mockResolvedValue([root, reply]);
 
-    const result = await repository.listInbox('user-2');
+    const inbox = await repository.listInbox('user-2');
 
-    expect(result).toEqual([{ target: targetVisible, message: targetVisible.message }]);
+    expect(inbox).toHaveLength(2);
+    expect(inbox[0]?.root?.id).toBe('message-1');
+    expect(inbox[0]?.target).toEqual(root);
+    expect(inbox[1]?.root?.id).toBe('message-2');
+    expect(inbox[1]?.target).toEqual(reply);
   });
 
   it('includes archived inbox entries when requested', async () => {
-    const targetArchived = new MessageTarget({
-      id: 'target-2',
-      messageId: 'message-2',
+    const archivedRoot = new MessageTarget({
+      id: 'target-archived',
+      messageId: 'message-1',
       userId: 'user-2',
       archived: true,
       message: {
-        id: 'message-2',
+        id: 'message-1',
         senderId: 'user-3',
-        title: 'Update',
+        title: 'Archived',
         kind: 'Message',
+        parentId: null,
       },
     });
-    targetsMock.findAllForUser.mockResolvedValue([targetArchived]);
+    targetsMock.findAllForUser.mockResolvedValue([archivedRoot]);
 
-    const result = await repository.listInbox('user-2', { includeArchived: true });
+    const visible = await repository.listInbox('user-2');
+    expect(visible).toHaveLength(0);
 
-    expect(result).toEqual([{ target: targetArchived, message: targetArchived.message }]);
+    const withArchived = await repository.listInbox('user-2', { includeArchived: true });
+    expect(withArchived).toHaveLength(1);
+    expect(withArchived[0]?.root.id).toBe('message-1');
   });
 
   it('returns empty inbox when no targets found', async () => {
@@ -350,5 +371,22 @@ describe('MessageRepository', () => {
     await repository.unarchiveTarget('target-1');
 
     expect(targetsMock.update).toHaveBeenCalledWith('target-1', { archived: false });
+  });
+
+  it('sets thread archived state', async () => {
+    targetsMock.findByMessageAndUser.mockResolvedValue(
+      new MessageTarget({
+        id: 'target-root',
+        messageId: 'message-1',
+        userId: 'user-2',
+      }),
+    );
+
+    await repository.setThreadArchived('message-1', 'user-2', true);
+    expect(targetsMock.update).toHaveBeenCalledWith('target-root', { archived: true });
+
+    targetsMock.update.mockClear();
+    await repository.setThreadArchived('message-1', 'user-2', false);
+    expect(targetsMock.update).toHaveBeenCalledWith('target-root', { archived: false });
   });
 });

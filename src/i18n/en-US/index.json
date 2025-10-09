@@ -198,6 +198,10 @@
       "description": "Overview and quick actions"
     },
     "common": {
+      "messages": {
+        "title": "Messages",
+        "description": "View conversations and notifications"
+      },
       "domains": {
         "title": "Domains"
       }
@@ -249,6 +253,75 @@
       },
       "domains": {
         "description": "Manage competencies"
+      }
+    }
+  },
+  "messaging": {
+    "preview": {
+      "empty": "No message content"
+    },
+    "actions": {
+      "archive": "Archive"
+    },
+    "kind": {
+      "Message": "Message",
+      "ValidationSubmitted": "Validation submitted",
+      "ProjectSubmitted": "Project submitted",
+      "ProjectApproved": "Project approved",
+      "ProjectRejected": "Project rejected"
+    },
+    "notifications": {
+      "tooltip": "Open your inbox"
+    },
+    "inbox": {
+      "title": "Inbox",
+      "subtitle": "All conversations and notifications",
+      "actions": {
+        "newMessage": "New message"
+      },
+      "empty": "No messages yet",
+      "errors": {
+        "loadFailed": "Unable to load messages.",
+        "createFailed": "Unable to send the message.",
+        "archiveFailed": "Unable to archive the conversation."
+      }
+    },
+    "dialog": {
+      "newMessage": {
+        "title": "Compose message",
+        "titlePlaceholder": "Enter a subject",
+        "fields": {
+          "title": "Subject",
+          "recipients": "Recipients",
+          "body": "Message"
+        },
+        "actions": {
+          "send": "Send"
+        },
+        "errors": {
+          "recipientRequired": "Select at least one recipient.",
+          "generic": "Unable to create the message."
+        }
+      }
+    },
+    "composer": {
+      "placeholder": "Write a reply (Enter to send, Shift+Enter for a new line)",
+      "send": "Send"
+    },
+    "conversation": {
+      "titleFallback": "Conversation",
+      "participants": "Participants: {count}",
+      "actions": {
+        "goToItem": "Open related item",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "newMessage": "New message"
+      },
+      "errors": {
+        "loadFailed": "Unable to load the conversation.",
+        "sendFailed": "Unable to send your reply.",
+        "createFailed": "Unable to start a new conversation.",
+        "archiveFailed": "Unable to change archive state."
       }
     }
   },

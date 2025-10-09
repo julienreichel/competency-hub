@@ -105,7 +105,12 @@ export class GraphQLClient {
         { id },
         {
           authMode: 'userPool',
-          selectionSet: ['id', 'sentMessages.*'],
+          selectionSet: [
+            'id',
+            'sentMessages.*',
+            'sentMessages.targets.*',
+            'sentMessages.targets.user.*',
+          ],
         },
       );
       if (result.errors || !result.data) {
@@ -124,7 +129,12 @@ export class GraphQLClient {
         { id },
         {
           authMode: 'userPool',
-          selectionSet: ['id', 'receivedMessages.*', 'receivedMessages.message.*'],
+          selectionSet: [
+            'id',
+            'receivedMessages.*',
+            'receivedMessages.message.*',
+            'receivedMessages.message.sender.*',
+          ],
         },
       );
       if (result.errors || !result.data) {
@@ -1046,10 +1056,14 @@ export class GraphQLClient {
             'projectId',
             'createdAt',
             'updatedAt',
+            'parent.*',
+            'parent.sender.*',
+            'parent.targets.*',
             'replies.*',
+            'replies.sender.*',
+            'replies.targets.*',
             'sender.*',
             'targets.*',
-            'targets.user.*',
           ],
         },
       );
@@ -1080,6 +1094,8 @@ export class GraphQLClient {
             'projectId',
             'createdAt',
             'updatedAt',
+            'parent.*',
+            'parent.sender.*',
             'sender.*',
             'targets.*',
             'targets.user.*',
@@ -1185,7 +1201,17 @@ export class GraphQLClient {
         { id },
         {
           authMode: 'userPool',
-          selectionSet: ['id', 'messageId', 'userId', 'read', 'readDate', 'archived', 'user.*'],
+          selectionSet: [
+            'id',
+            'messageId',
+            'userId',
+            'read',
+            'readDate',
+            'archived',
+            'user.*',
+            'message.*',
+            'message.sender.*',
+          ],
         },
       );
       if (result.errors) {
@@ -1204,7 +1230,17 @@ export class GraphQLClient {
     try {
       const result = await this.client.models.MessageTarget.list({
         authMode: 'userPool',
-        selectionSet: ['id', 'messageId', 'userId', 'read', 'readDate', 'archived', 'user.*'],
+        selectionSet: [
+          'id',
+          'messageId',
+          'userId',
+          'read',
+          'readDate',
+          'archived',
+          'user.*',
+          'message.*',
+          'message.sender.*',
+        ],
         ...(filter ? { filter } : {}),
       });
       if (result.errors) {

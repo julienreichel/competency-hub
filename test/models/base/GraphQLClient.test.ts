@@ -452,7 +452,12 @@ describe('GraphQLClient', () => {
         { id: 'user-1' },
         {
           authMode: 'userPool',
-          selectionSet: ['id', 'sentMessages.*'],
+          selectionSet: expect.arrayContaining([
+            'id',
+            'sentMessages.*',
+            'sentMessages.targets.*',
+            'sentMessages.targets.user.*',
+          ]),
         },
       );
     });
@@ -477,7 +482,12 @@ describe('GraphQLClient', () => {
         { id: 'user-1' },
         {
           authMode: 'userPool',
-          selectionSet: ['id', 'receivedMessages.*', 'receivedMessages.message.*'],
+          selectionSet: expect.arrayContaining([
+            'id',
+            'receivedMessages.*',
+            'receivedMessages.message.*',
+            'receivedMessages.message.sender.*',
+          ]),
         },
       );
     });
@@ -976,7 +986,7 @@ describe('GraphQLClient', () => {
       expect(mockAmplifyClient.models.Message.get).toHaveBeenCalledWith(
         { id: 'message-1' },
         expect.objectContaining({
-          selectionSet: expect.arrayContaining(['targets.user.*']),
+          selectionSet: expect.arrayContaining(['targets.user.*', 'parent.*']),
         }),
       );
 
@@ -984,7 +994,12 @@ describe('GraphQLClient', () => {
       expect(mockAmplifyClient.models.Message.get).toHaveBeenLastCalledWith(
         { id: 'message-1' },
         expect.objectContaining({
-          selectionSet: expect.arrayContaining(['replies.*', 'targets.user.*']),
+          selectionSet: expect.arrayContaining([
+            'replies.*',
+            'replies.sender.*',
+            'parent.*',
+            'parent.sender.*',
+          ]),
         }),
       );
     });
@@ -1050,7 +1065,7 @@ describe('GraphQLClient', () => {
       expect(mockAmplifyClient.models.MessageTarget.get).toHaveBeenCalledWith(
         { id: 'target-1' },
         expect.objectContaining({
-          selectionSet: expect.arrayContaining(['user.*']),
+          selectionSet: expect.arrayContaining(['user.*', 'message.*']),
         }),
       );
 
@@ -1064,7 +1079,7 @@ describe('GraphQLClient', () => {
       expect(targets).toEqual([rawTarget]);
       expect(mockAmplifyClient.models.MessageTarget.list).toHaveBeenCalledWith({
         authMode: 'userPool',
-        selectionSet: expect.arrayContaining(['user.*']),
+        selectionSet: expect.arrayContaining(['user.*', 'message.*']),
         filter: { userId: { eq: 'user-2' } },
       });
     });

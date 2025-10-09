@@ -3,7 +3,7 @@ import { BaseModel } from './base/BaseModel';
 import type { MessageTargetInit } from './MessageTarget';
 import { MessageTarget } from './MessageTarget';
 import { User, type UserRelationInit } from './User';
-import { mapArrayRelation, mapSingularRelation } from './utils';
+import { createObject, mapArrayRelation, mapSingularRelation } from './utils';
 
 export type AmplifyMessage = NonNullable<Schema['Message']['type']>;
 
@@ -29,6 +29,7 @@ export interface MessageInit extends Record<string, unknown> {
   kind: MessageKind;
   body?: string | null;
   parentId?: string | null;
+  parent?: Message;
   subCompetencyId?: string | null;
   projectId?: string | null;
   sender?: UserRelationInit | User | null;
@@ -49,6 +50,7 @@ export class Message extends BaseModel {
   public readonly sender: User | null;
   public readonly targets: MessageTarget[];
   public readonly replies: Message[];
+  public readonly parent: Message | null;
 
   constructor(data: MessageInit) {
     super(data);
@@ -68,6 +70,7 @@ export class Message extends BaseModel {
     this.replies = Array.isArray(data.replies)
       ? data.replies.map((reply) => (reply instanceof Message ? reply.clone() : new Message(reply)))
       : [];
+    this.parent = createObject(data.parent, Message);
 
     this.validate();
   }
@@ -78,10 +81,13 @@ export class Message extends BaseModel {
     const targets = mapArrayRelation(raw.targets, MessageTarget.fromAmplify);
     const replies = mapArrayRelation(raw.replies, Message.fromAmplify);
 
+    const parent = mapSingularRelation(raw.parent, Message.fromAmplify) || undefined;
+
     return new Message({
       id: raw.id,
       senderId: raw.senderId,
       parentId: raw.parentId ?? null,
+      parent,
       subCompetencyId: raw.subCompetencyId ?? null,
       projectId: raw.projectId ?? null,
       title: raw.title,

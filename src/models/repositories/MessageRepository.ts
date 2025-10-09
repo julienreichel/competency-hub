@@ -29,6 +29,11 @@ export interface SendMessageInput extends CreateMessageInput {
 
 export type MessageFilter = Record<string, unknown>;
 
+export interface InboxThread {
+  root: Message;
+  target: MessageTarget;
+}
+
 export class MessageRepository {
   targets: MessageTargetRepository = messageTargetRepository;
 
@@ -73,24 +78,27 @@ export class MessageRepository {
   async listInbox(
     userId: string,
     options: { includeArchived?: boolean } = {},
-  ): Promise<Array<{ target: MessageTarget; message: Message | null }>> {
+  ): Promise<InboxThread[]> {
     const targets = await this.targets.findAllForUser(userId);
-
     if (targets.length === 0) {
       return [];
     }
     return targets
       .filter((t) => options.includeArchived || !t.archived)
+      .filter((t) => Boolean(t.message))
       .map((t) => ({
         target: t,
-        message: t.message,
+        root: t.message as Message,
       }));
   }
 
   async create(data: CreateMessageInput): Promise<Message> {
-    const raw = await graphQLClient.createMessage({
-      ...data,
-    });
+    const payload = { ...data };
+    if (!payload.parentId) delete payload.parentId;
+    if (!payload.projectId) delete payload.projectId;
+    if (!payload.subCompetencyId) delete payload.subCompetencyId;
+
+    const raw = await graphQLClient.createMessage(payload);
 
     if (!raw) {
       throw new Error('Failed to create message');
@@ -116,6 +124,21 @@ export class MessageRepository {
 
   async unarchiveTarget(targetId: string): Promise<MessageTarget> {
     return this.targets.update(targetId, { archived: false });
+  }
+
+  async setThreadArchived(
+    rootMessageId: string,
+    userId: string,
+    archived: boolean,
+  ): Promise<MessageTarget | null> {
+    const target = await this.targets.findByMessageAndUser(rootMessageId, userId);
+    if (!target) {
+      return null;
+    }
+    if (archived) {
+      return this.archiveTarget(target.id);
+    }
+    return this.unarchiveTarget(target.id);
   }
 
   async findById(id: string, options: { includeReplies?: boolean } = {}): Promise<Message | null> {

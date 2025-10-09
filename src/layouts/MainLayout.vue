@@ -6,6 +6,8 @@
 
         <q-toolbar-title>{{ t('app.title') }}</q-toolbar-title>
 
+        <notification-bell v-if="isAuthenticated" class="q-mr-sm" />
+
         <!-- User Menu -->
         <div v-if="isAuthenticated" class="q-gutter-sm row items-center no-wrap">
           <role-chip :role="displayRole" size="md" class="user-role-chip" />
@@ -92,6 +94,13 @@
           :caption="t('navigation.dashboard.description')"
           icon="dashboard"
           link="/"
+        />
+
+        <essential-link
+          :title="t('navigation.common.messages.title')"
+          :caption="t('navigation.common.messages.description')"
+          icon="mail"
+          link="/messages"
         />
 
         <!-- Role-specific menu items -->
@@ -217,6 +226,7 @@ import EssentialLink from 'components/EssentialLink.vue';
 import { useQuasar } from 'quasar';
 import type { MessageLanguages } from 'src/boot/i18n';
 import RoleChip, { type RoleChipRole } from 'src/components/ui/RoleChip.vue';
+import NotificationBell from 'src/components/messaging/NotificationBell.vue';
 import { useUsers } from 'src/composables/useUsers';
 import type { User } from 'src/models/User';
 import { computed, onMounted, ref, watch } from 'vue';

@@ -96,6 +96,18 @@ describe('MessageTargetRepository', () => {
     expect(result[0]).toBeInstanceOf(MessageTarget);
   });
 
+  it('finds a message target by message and user', async () => {
+    mockGraphQLClient.listMessageTargets.mockResolvedValue([rawTarget]);
+
+    const result = await repository.findByMessageAndUser('message-1', 'user-2');
+
+    expect(mockGraphQLClient.listMessageTargets).toHaveBeenCalledWith({
+      messageId: { eq: 'message-1' },
+      userId: { eq: 'user-2' },
+    });
+    expect(result).toBeInstanceOf(MessageTarget);
+  });
+
   it('retrieves message targets for a user', async () => {
     mockGraphQLClient.getUserReceivedMessages.mockResolvedValue([rawTarget]);
 

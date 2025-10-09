@@ -35,6 +35,14 @@ export class MessageTargetRepository {
     return targets.map((raw) => MessageTarget.fromAmplify(raw));
   }
 
+  async findByMessageAndUser(messageId: string, userId: string): Promise<MessageTarget | null> {
+    const [target] = await this.findAll({
+      messageId: { eq: messageId },
+      userId: { eq: userId },
+    });
+    return target ?? null;
+  }
+
   async findAllForUser(userId: string): Promise<MessageTarget[]> {
     const targets = await graphQLClient.getUserReceivedMessages(userId);
     return targets.map((raw) => MessageTarget.fromAmplify(raw));

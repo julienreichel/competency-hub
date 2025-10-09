@@ -137,6 +137,16 @@ const routes: RouteRecordRaw[] = [
           },
         ],
       },
+      {
+        path: 'messages',
+        name: 'messages-inbox',
+        component: () => import('pages/MessagesInboxPage.vue'),
+      },
+      {
+        path: 'messages/:rootId',
+        name: 'messages-conversation',
+        component: () => import('pages/ConversationPage.vue'),
+      },
     ],
   },
 
