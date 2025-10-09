@@ -69,13 +69,7 @@
 import MessageCard from 'src/components/messaging/MessageCard.vue';
 import MessageComposer from 'src/components/messaging/MessageComposer.vue';
 import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
-import {
-  loadConversation,
-  replyToThread,
-  sendRootMessage,
-  setConversationArchived,
-  type ConversationView,
-} from 'src/services/messaging';
+import { useMessaging, type ConversationView } from 'src/composables/useMessaging';
 import { useUsers } from 'src/composables/useUsers';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -86,6 +80,8 @@ const router = useRouter();
 const { getCurrentUser } = useUsers();
 const { t } = useI18n();
 
+const { loadConversation, replyToThread, sendRootMessage, setConversationArchived } =
+  useMessaging();
 const conversation = ref<ConversationView | null>(null);
 const loading = ref(false);
 const sending = ref(false);

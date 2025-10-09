@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { useUsers } from 'src/composables/useUsers';
-import { getUnreadCount } from 'src/services/messaging';
+import { useMessaging } from 'src/composables/useMessaging';
 import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -30,6 +30,7 @@ const { getCurrentUser } = useUsers();
 const router = useRouter();
 const route = useRoute();
 const { t } = useI18n();
+const { getUnreadCount } = useMessaging();
 
 async function refresh(): Promise<void> {
   if (!currentUserId.value) return;

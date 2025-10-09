@@ -1,4 +1,3 @@
-import type { Schema } from '../../../amplify/data/resource';
 import { graphQLClient } from '../base/GraphQLClient';
 import { Message, type MessageKind } from '../Message';
 import { MessageThread } from '../MessageThread';
@@ -86,7 +85,7 @@ export class MessageRepository {
       threadId: input.threadId,
       senderId: input.senderId,
       body: input.body,
-      kind: (input.kind ?? 'Message') as Schema['Message']['createType']['kind'],
+      kind: input.kind ?? 'Message',
     });
 
     if (!raw) {

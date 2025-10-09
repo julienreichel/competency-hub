@@ -1,11 +1,10 @@
-import type { MessageKind } from 'src/models/Message';
+import type { Message, MessageKind } from 'src/models/Message';
 import type { MessageThread } from 'src/models/MessageThread';
 import type { ThreadParticipant } from 'src/models/ThreadParticipant';
 import {
   messageRepository,
   type ThreadWithParticipant,
 } from 'src/models/repositories/MessageRepository';
-import type { Message } from 'src/models/Message';
 
 export interface InboxItemSummary {
   id: string;
@@ -38,23 +37,41 @@ export interface ConversationView {
   participant: ThreadParticipant | null;
 }
 
-const DEFAULT_PREVIEW_LENGTH = 160;
+interface MessagingApi {
+  getInboxSummaries: (userId: string) => Promise<InboxItemSummary[]>;
+  getUnreadCount: (userId: string) => Promise<number>;
+  loadConversation: (threadId: string, currentUserId: string) => Promise<ConversationView | null>;
+  sendRootMessage: (payload: CreateMessagePayload) => Promise<MessageThread | null>;
+  replyToThread: (
+    threadId: string,
+    senderId: string,
+    body: string,
+    participantIds?: string[],
+  ) => Promise<MessageThread | null>;
+  setConversationArchived: (threadId: string, archived: boolean) => Promise<MessageThread>;
+}
+
+const BODY_PREVIEW_LENGTH = 160;
 
 function createBodyPreview(body: string): string {
-  if (!body) return '';
-  if (body.length <= DEFAULT_PREVIEW_LENGTH) return body;
-  return `${body.slice(0, DEFAULT_PREVIEW_LENGTH)}…`;
+  if (!body) {
+    return '';
+  }
+  if (body.length <= BODY_PREVIEW_LENGTH) {
+    return body;
+  }
+  return `${body.slice(0, BODY_PREVIEW_LENGTH)}…`;
 }
 
 function getDisplayName(message: Message): string {
+  const sender = message.sender;
   if (
-    message.sender &&
-    typeof (message.sender as unknown as { getDisplayName?: () => string }).getDisplayName ===
-      'function'
+    sender &&
+    typeof (sender as unknown as { getDisplayName?: () => string }).getDisplayName === 'function'
   ) {
-    return (message.sender as unknown as { getDisplayName: () => string }).getDisplayName();
+    return (sender as unknown as { getDisplayName: () => string }).getDisplayName();
   }
-  return message.sender?.name ?? message.senderId;
+  return sender?.name ?? message.senderId;
 }
 
 function sortMessages(messages: Message[]): Message[] {
@@ -65,20 +82,17 @@ function sortMessages(messages: Message[]): Message[] {
   });
 }
 
-function resolveLastMessage(thread: MessageThread): {
-  lastMessage: Message | null;
-  lastTimestamp: string;
-} {
-  const messages = sortMessages(thread.messages ?? []);
-  const lastMessage = messages[messages.length - 1] ?? null;
-  const lastTimestamp =
-    lastMessage?.createdAt ?? thread.lastMessageAt ?? thread.updatedAt ?? thread.createdAt ?? '';
-  return { lastMessage, lastTimestamp };
+function resolveLastMessage(thread: MessageThread): { message: Message | null; timestamp: string } {
+  const sorted = sortMessages(thread.messages ?? []);
+  const message = sorted[sorted.length - 1] ?? null;
+  const timestamp =
+    message?.createdAt ?? thread.lastMessageAt ?? thread.updatedAt ?? thread.createdAt ?? '';
+  return { message, timestamp };
 }
 
-function computeUnreadCount(
+function computeUnread(
   participant: ThreadParticipant,
-  lastTimestamp: string,
+  timestamp: string,
   hasMessage: boolean,
 ): number {
   if (!hasMessage) {
@@ -87,13 +101,13 @@ function computeUnreadCount(
   if (!participant.lastReadAt) {
     return 1;
   }
-  return lastTimestamp > participant.lastReadAt ? 1 : 0;
+  return timestamp > participant.lastReadAt ? 1 : 0;
 }
 
 function toInboxSummary(record: ThreadWithParticipant): InboxItemSummary {
   const { thread, participant } = record;
-  const { lastMessage, lastTimestamp } = resolveLastMessage(thread);
-  const unread = computeUnreadCount(participant, lastTimestamp, Boolean(lastMessage));
+  const { message: lastMessage, timestamp } = resolveLastMessage(thread);
+  const unreadCount = computeUnread(participant, timestamp, Boolean(lastMessage));
 
   return {
     id: thread.id,
@@ -102,24 +116,24 @@ function toInboxSummary(record: ThreadWithParticipant): InboxItemSummary {
     senderName: lastMessage ? getDisplayName(lastMessage) : thread.createdById,
     senderId: lastMessage?.senderId ?? thread.createdById,
     createdAt: thread.createdAt ?? '',
-    updatedAt: lastTimestamp,
-    unreadCount: unread,
+    updatedAt: timestamp,
+    unreadCount,
     archived: Boolean(thread.archived),
     bodyPreview: createBodyPreview(lastMessage?.body ?? ''),
   };
 }
 
-export async function getInboxSummaries(userId: string): Promise<InboxItemSummary[]> {
-  const records = await messageRepository.listThreadsForUser(userId);
-  return records.map(toInboxSummary);
+async function getInboxSummaries(userId: string): Promise<InboxItemSummary[]> {
+  const threads = await messageRepository.listThreadsForUser(userId);
+  return threads.map(toInboxSummary);
 }
 
-export async function getUnreadCount(userId: string): Promise<number> {
+async function getUnreadCount(userId: string): Promise<number> {
   const summaries = await getInboxSummaries(userId);
   return summaries.reduce((total, summary) => total + summary.unreadCount, 0);
 }
 
-export async function loadConversation(
+async function loadConversation(
   threadId: string,
   currentUserId: string,
 ): Promise<ConversationView | null> {
@@ -128,9 +142,9 @@ export async function loadConversation(
     return null;
   }
 
-  const participantRecords = await messageRepository.listThreadsForUser(currentUserId);
-  const currentParticipant =
-    participantRecords.find((record) => record.thread.id === threadId)?.participant ?? null;
+  const participants = await messageRepository.listThreadsForUser(currentUserId);
+  const participantEntry =
+    participants.find((entry) => entry.thread.id === threadId)?.participant ?? null;
 
   const messages = sortMessages(thread.messages ?? []).map((message) => ({
     id: message.id,
@@ -153,11 +167,11 @@ export async function loadConversation(
     thread,
     messages,
     participantIds,
-    participant: currentParticipant,
+    participant: participantEntry,
   };
 }
 
-export interface CreateMessagePayload {
+interface CreateMessagePayload {
   senderId: string;
   title: string;
   body: string;
@@ -165,9 +179,7 @@ export interface CreateMessagePayload {
   participantIds: string[];
 }
 
-export async function sendRootMessage(
-  payload: CreateMessagePayload,
-): Promise<MessageThread | null> {
+async function sendRootMessage(payload: CreateMessagePayload): Promise<MessageThread | null> {
   const thread = await messageRepository.createThread({
     name: payload.title,
     createdById: payload.senderId,
@@ -184,27 +196,36 @@ export async function sendRootMessage(
   return messageRepository.getThreadById(thread.id);
 }
 
-export async function replyToThread(
+async function replyToThread(
   threadId: string,
   senderId: string,
   body: string,
-  additionalParticipantIds: string[] = [],
+  participantIds: string[] = [],
 ): Promise<MessageThread | null> {
-  await messageRepository.ensureParticipants(threadId, additionalParticipantIds);
-
+  await messageRepository.ensureParticipants(threadId, participantIds);
   await messageRepository.sendMessage({
     threadId,
     senderId,
     body,
     kind: 'Message',
   });
-
   return messageRepository.getThreadById(threadId);
 }
 
-export async function setConversationArchived(
+async function setConversationArchived(
   threadId: string,
   archived: boolean,
 ): Promise<MessageThread> {
   return messageRepository.setThreadArchived(threadId, archived);
 }
+
+export const useMessaging = (): MessagingApi => ({
+  getInboxSummaries,
+  getUnreadCount,
+  loadConversation,
+  sendRootMessage,
+  replyToThread,
+  setConversationArchived,
+});
+
+export type { CreateMessagePayload };

@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { date } from 'quasar';
-import type { InboxItemSummary } from 'src/services/messaging';
+import type { InboxItemSummary } from 'src/composables/useMessaging';
 import { useI18n } from 'vue-i18n';
 
 defineProps<{

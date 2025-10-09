@@ -42,12 +42,7 @@
 import MessageList from 'src/components/messaging/MessageList.vue';
 import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import { useUsers } from 'src/composables/useUsers';
-import type { InboxItemSummary } from 'src/services/messaging';
-import {
-  getInboxSummaries,
-  sendRootMessage,
-  setConversationArchived,
-} from 'src/services/messaging';
+import { useMessaging, type InboxItemSummary } from 'src/composables/useMessaging';
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -56,6 +51,7 @@ const { getCurrentUser } = useUsers();
 const { t } = useI18n();
 const router = useRouter();
 
+const { getInboxSummaries, sendRootMessage, setConversationArchived } = useMessaging();
 const items = ref<InboxItemSummary[]>([]);
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
