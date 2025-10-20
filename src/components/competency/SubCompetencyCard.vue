@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import BaseCard from 'src/components/common/BaseCard.vue';
+import FormattedText from 'src/components/common/FormattedText.vue';
 import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';

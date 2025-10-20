@@ -20,13 +20,15 @@
 <script setup lang="ts">
 import BaseDialog from 'src/components/common/BaseDialog.vue';
 import SubCompetencyForm from 'src/components/competency/SubCompetencyForm.vue';
+import { type CreateSubCompetencyInput } from 'src/models/SubCompetency';
 import { reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+type SubCompetencyFormModel = Partial<CreateSubCompetencyInput>;
 const open = defineModel<boolean>({ default: false });
 
 const emit = defineEmits<{
-  (e: 'submit', name: string): void;
+  (e: 'submit', value: SubCompetencyFormModel & { name: string }): void;
   (e: 'cancel'): void;
 }>();
 
@@ -45,12 +47,13 @@ async function handleSubmit(): Promise<void> {
   await formRef.value?.submit();
 }
 
-function handleSave(payload: { name?: string | null }): void {
+function handleSave(payload: SubCompetencyFormModel): void {
   const name = payload.name?.trim();
   if (!name) {
     return;
   }
-  emit('submit', name);
+  const { description, objectives } = payload;
+  emit('submit', { name, description, objectives });
   formModel.name = '';
   open.value = false;
 }
@@ -65,6 +68,6 @@ function handleCancel(): void {
 import { defineComponent } from 'vue';
 
 export default defineComponent({
-  name: 'QuickAddSubCompetencyDialog',
+  name: 'CreateSubCompetencyDialog',
 });
 </script>

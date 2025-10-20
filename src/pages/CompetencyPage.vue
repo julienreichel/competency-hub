@@ -61,9 +61,9 @@
       @delete="deleteSubCompetency"
     />
 
-    <quick-add-sub-competency-dialog
+    <create-sub-competency-dialog
       v-model="dialog"
-      @submit="handleQuickAddSubCompetency"
+      @submit="handleCreateSubCompetency"
       @cancel="dialog = false"
     />
   </q-page>
@@ -74,12 +74,12 @@ import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import CompetencyCard from 'src/components/competency/CompetencyCard.vue';
 import CompetencyDetailsForm from 'src/components/competency/CompetencyDetailsForm.vue';
-import QuickAddSubCompetencyDialog from 'src/components/competency/QuickAddSubCompetencyDialog.vue';
+import CreateSubCompetencyDialog from 'src/components/competency/CreateSubCompetencyDialog.vue';
 import SubCompetencyList from 'src/components/competency/SubCompetencyList.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';
 import { type Competency, type UpdateCompetencyInput } from 'src/models/Competency';
-import { type SubCompetency } from 'src/models/SubCompetency';
+import { type CreateSubCompetencyInput, type SubCompetency } from 'src/models/SubCompetency';
 import { competencyRepository } from 'src/models/repositories/CompetencyRepository';
 import { subCompetencyRepository } from 'src/models/repositories/SubCompetencyRepository';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -92,6 +92,8 @@ const route = useRoute();
 const router = useRouter();
 const { hasRole } = useAuth();
 const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
+
+type SubCompetencyFormModel = Partial<CreateSubCompetencyInput> & { name: string };
 
 let domainId = route.params.domainId as string | undefined;
 const domainName = ref<string>(t('domains.title'));
@@ -134,12 +136,12 @@ async function onSaveCompetency(updated: UpdateCompetencyInput): Promise<void> {
   editing.value = false;
 }
 
-async function addSubCompetency(name: string): Promise<void> {
+async function addSubCompetency(payload: SubCompetencyFormModel): Promise<void> {
   const nextOrder = (subs.value[subs.value.length - 1]?.level ?? 0) + 1;
   const created = await subCompetencyRepository.create({
     competencyId,
-    name,
     level: nextOrder,
+    ...payload,
   });
   subs.value.push(created);
   $q.notify({ type: 'positive', message: 'Sub-competency added' });
@@ -167,9 +169,9 @@ function openDialog(): void {
   dialog.value = true;
 }
 
-async function handleQuickAddSubCompetency(name: string): Promise<void> {
-  const trimmed = name.trim();
-  await addSubCompetency(trimmed.length > 0 ? trimmed : t('subCompetencies.name'));
+async function handleCreateSubCompetency(payload: SubCompetencyFormModel): Promise<void> {
+  payload.name = payload.name?.trim() || t('subCompetencies.name');
+  await addSubCompetency(payload);
   dialog.value = false;
 }
 
