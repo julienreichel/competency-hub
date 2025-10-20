@@ -180,7 +180,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
+<style>
 .base-card.cursor-pointer:hover {
   border-color: var(--q-primary);
 }

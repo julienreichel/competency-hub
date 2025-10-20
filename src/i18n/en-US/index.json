@@ -305,7 +305,7 @@
       }
     },
     "composer": {
-      "placeholder": "Write a reply (Enter to send, Shift+Enter for a new line)",
+      "placeholder": "Write a reply",
       "send": "Send"
     },
     "conversation": {

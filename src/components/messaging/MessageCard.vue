@@ -1,15 +1,9 @@
 <template>
-  <div :class="['message-card', mine ? 'message-card--mine' : 'message-card--theirs']">
-    <base-card
-      :card-class="cardClass"
-      :content-class="'q-gutter-xs'"
-      :background-color="mine ? 'primary' : undefined"
-    >
+  <div class="col-11 col-md-10 col-lg-8" :class="[mine ? 'offset-1 offset-md-2 offset-lg-4' : '']">
+    <base-card :card-class="cardClass">
       <template #default>
-        <div class="row items-center q-gutter-sm message-card__meta">
-          <div class="text-caption text-weight-medium" :class="mine ? 'text-white' : 'text-grey-8'">
-            {{ senderName }}
-          </div>
+        <div class="row items-center">
+          <div class="text-caption text-weight-medium">{{ senderName }}</div>
           <q-chip
             v-if="showKindChip"
             dense
@@ -24,7 +18,7 @@
             {{ formattedDate }}
           </div>
         </div>
-        <div class="text-body1 message-card__body" :class="mine ? 'text-white' : 'text-grey-10'">
+        <div class="text-body1">
           {{ body || t('messaging.preview.empty') }}
         </div>
       </template>
@@ -57,7 +51,7 @@ const formattedDate = computed(() => {
   if (Number.isNaN(parsed.getTime())) return props.createdAt;
   return date.formatDate(parsed, 'MMM D, YYYY • HH:mm');
 });
-const cardClass = computed(() => (props.mine ? 'message-card__card--mine' : ''));
+const cardClass = computed(() => (props.mine ? 'col-10 justify-end' : 'col-10 justify-start'));
 </script>
 
 <script lang="ts">
@@ -67,29 +61,3 @@ export default defineComponent({
   name: 'MessageCard',
 });
 </script>
-
-<style scoped>
-.message-card {
-  display: flex;
-}
-
-.message-card--mine {
-  justify-content: flex-end;
-}
-
-.message-card--theirs {
-  justify-content: flex-start;
-}
-
-.message-card__card--mine {
-  color: white;
-}
-
-.message-card__meta {
-  align-items: center;
-}
-
-.message-card__body {
-  white-space: pre-line;
-}
-</style>

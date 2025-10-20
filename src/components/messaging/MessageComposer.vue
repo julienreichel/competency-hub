@@ -8,7 +8,6 @@
       dense
       :disable="disabled"
       :placeholder="t('messaging.composer.placeholder')"
-      @keydown="handleKeydown"
     />
     <div class="row justify-end q-mt-sm">
       <q-btn
@@ -48,19 +47,6 @@ function submit(): void {
   }
   emit('send', draft.value.trim());
   reset();
-}
-
-function handleKeydown(event: KeyboardEvent): void {
-  if (event.key !== 'Enter') {
-    return;
-  }
-
-  if (event.shiftKey) {
-    return;
-  }
-
-  event.preventDefault();
-  submit();
 }
 
 defineExpose({ reset });
