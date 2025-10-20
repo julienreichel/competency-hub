@@ -22,12 +22,12 @@
           <span class="text-subtitle1 q-ml-sm">{{ sub.name }}</span>
         </div>
       </div>
-      <div class="text-caption text-grey-7 q-mt-xs">
-        {{ sub.description || t('subCompetencies.noDescription') }}
-      </div>
-      <div v-if="sub.objectives" class="q-mt-sm">
-        <div class="text-caption">{{ sub.objectives }}</div>
-      </div>
+      <formatted-text
+        :text="sub.description"
+        :default-text="t('subCompetencies.noDescription')"
+        class="text-caption text-grey-7 q-mt-xs"
+      />
+      <formatted-text :text="sub.objectives" class="q-mt-sm" />
     </template>
 
     <template v-if="studentProgress" #aside>

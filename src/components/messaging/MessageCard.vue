@@ -18,9 +18,11 @@
             {{ formattedDate }}
           </div>
         </div>
-        <div class="text-body1">
-          {{ body || t('messaging.preview.empty') }}
-        </div>
+        <formatted-text
+          :text="body"
+          :default-text="t('messaging.preview.empty')"
+          class="text-body1"
+        />
       </template>
     </base-card>
   </div>
@@ -29,6 +31,7 @@
 <script setup lang="ts">
 import { date } from 'quasar';
 import BaseCard from 'src/components/common/BaseCard.vue';
+import FormattedText from 'src/components/common/FormattedText.vue';
 import type { MessageKind } from 'src/models/Message';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';

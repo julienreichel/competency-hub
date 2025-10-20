@@ -15,12 +15,12 @@
         <div class="text-h6">{{ competency.domain.name }}</div>
       </div>
       <div class="text-subtitle1">{{ competency.name }}</div>
-      <div class="text-caption text-grey-7">
-        {{ competency.description || t('competencies.noDescription') }}
-      </div>
-      <div v-if="competency.objectives" class="q-mt-sm">
-        <div class="text-caption">{{ competency.objectives }}</div>
-      </div>
+      <formatted-text
+        :text="competency.description"
+        :default-text="t('competencies.noDescription')"
+        class="text-caption text-grey-7"
+      />
+      <formatted-text :text="competency.objectives" class="q-mt-sm" />
     </template>
 
     <template v-if="progress" #aside>
@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import BaseCard from 'src/components/common/BaseCard.vue';
+import FormattedText from 'src/components/common/FormattedText.vue';
 import type { Competency } from 'src/models/Competency';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
