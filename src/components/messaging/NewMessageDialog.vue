@@ -24,6 +24,9 @@
       <q-select
         v-model="selectedRecipients"
         outlined
+        use-input
+        fill-input
+        input-debounce="200"
         use-chips
         multiple
         emit-value
@@ -33,6 +36,7 @@
         :disable="submitting || recipientsLoading"
         :loading="recipientsLoading"
         :rules="[recipientRule]"
+        @filter="handleRecipientFilter"
       />
 
       <q-input
@@ -93,9 +97,11 @@ const submitting = ref(false);
 const recipientsLoading = ref(false);
 const errorMessage = ref<string | null>(null);
 const rawRecipientOptions = ref<RecipientOption[]>([]);
+const filteredRecipientOptions = ref<RecipientOption[]>([]);
+const filterTerm = ref('');
 
 const placeholderLabel = computed(() => t(props.titlePlaceholderKey));
-const recipientOptions = computed(() => rawRecipientOptions.value);
+const recipientOptions = computed(() => filteredRecipientOptions.value);
 
 watch(
   () => props.initialTargets,
@@ -115,6 +121,10 @@ watch(
   { immediate: true },
 );
 
+watch(rawRecipientOptions, () => {
+  applyRecipientFilter();
+});
+
 function requiredRule(value: string): boolean | string {
   return value.trim().length > 0 || t('validation.required');
 }
@@ -128,6 +138,8 @@ function resetForm(): void {
   body.value = '';
   selectedRecipients.value = [...props.initialTargets];
   errorMessage.value = null;
+  filterTerm.value = '';
+  applyRecipientFilter();
 }
 
 function handleCancel(): void {
@@ -192,9 +204,11 @@ async function loadRecipients(): Promise<void> {
     }
 
     rawRecipientOptions.value = await includeInitialTargets(options);
+    applyRecipientFilter();
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : t('common.unknown');
     rawRecipientOptions.value = await includeInitialTargets([]);
+    applyRecipientFilter();
   } finally {
     recipientsLoading.value = false;
   }
@@ -202,6 +216,7 @@ async function loadRecipients(): Promise<void> {
 
 async function ensureInitialTargetsIncluded(): Promise<void> {
   rawRecipientOptions.value = await includeInitialTargets(rawRecipientOptions.value);
+  applyRecipientFilter();
 }
 
 async function includeInitialTargets(options: RecipientOption[]): Promise<RecipientOption[]> {
@@ -239,6 +254,26 @@ async function resolveParticipantIds(): Promise<string[]> {
   }
 
   return [...participantIds];
+}
+
+function handleRecipientFilter(val: string, update: (callback: () => void) => void): void {
+  filterTerm.value = val;
+  update(() => {
+    applyRecipientFilter();
+  });
+}
+
+function applyRecipientFilter(): void {
+  const needle = filterTerm.value.trim().toLowerCase();
+
+  if (!needle) {
+    filteredRecipientOptions.value = [...rawRecipientOptions.value];
+    return;
+  }
+
+  filteredRecipientOptions.value = rawRecipientOptions.value.filter((option) =>
+    option.label.toLowerCase().includes(needle),
+  );
 }
 
 async function buildRecipientOptionsForUser(user: User): Promise<RecipientOption[]> {
