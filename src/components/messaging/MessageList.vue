@@ -18,10 +18,7 @@
             </div>
           </div>
           <div class="text-caption text-grey-7">
-            {{ item.senderName }}
-          </div>
-          <div class="text-body2 text-grey-8 message-list__preview">
-            {{ item.bodyPreview || t('messaging.preview.empty') }}
+            {{ item.participantsLabel }}
           </div>
         </q-item-section>
 

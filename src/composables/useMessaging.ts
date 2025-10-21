@@ -10,8 +10,8 @@ export interface InboxItemSummary {
   id: string;
   title: string;
   kind: MessageKind;
-  senderName: string;
-  senderId: string;
+  participantNames: string[];
+  participantsLabel: string;
   createdAt: string;
   updatedAt: string;
   unreadCount: number;
@@ -104,17 +104,44 @@ function computeUnread(
   return timestamp > participant.lastReadAt ? 1 : 0;
 }
 
-function toInboxSummary(record: ThreadWithParticipant): InboxItemSummary {
+function extractParticipantNames(thread: MessageThread, currentUserId: string): string[] {
+  const participants = thread.participants ?? [];
+
+  const resolveName = (entry: ThreadParticipant): string => {
+    const userRecord = entry.user;
+    const name =
+      userRecord && typeof userRecord === 'object' && 'name' in userRecord
+        ? String(userRecord.name ?? '').trim()
+        : '';
+    return name.length > 0 ? name : entry.userId;
+  };
+
+  const allNames = participants.map(resolveName).filter((value) => value.length > 0);
+  const withoutCurrentUser = participants
+    .filter((entry) => entry.userId !== currentUserId)
+    .map(resolveName)
+    .filter((value) => value.length > 0);
+
+  const result = withoutCurrentUser.length > 0 ? withoutCurrentUser : allNames;
+  return Array.from(new Set(result));
+}
+
+function formatParticipantsLabel(names: string[]): string {
+  return names.join(', ');
+}
+
+function toInboxSummary(record: ThreadWithParticipant, currentUserId: string): InboxItemSummary {
   const { thread, participant } = record;
   const { message: lastMessage, timestamp } = resolveLastMessage(thread);
   const unreadCount = computeUnread(participant, timestamp, Boolean(lastMessage));
+  const participantNames = extractParticipantNames(thread, currentUserId);
 
   return {
     id: thread.id,
     title: thread.name,
     kind: lastMessage?.kind ?? 'Message',
-    senderName: lastMessage ? getDisplayName(lastMessage) : thread.createdById,
-    senderId: lastMessage?.senderId ?? thread.createdById,
+    participantNames,
+    participantsLabel: formatParticipantsLabel(participantNames),
     createdAt: thread.createdAt ?? '',
     updatedAt: timestamp,
     unreadCount,
@@ -125,7 +152,7 @@ function toInboxSummary(record: ThreadWithParticipant): InboxItemSummary {
 
 async function getInboxSummaries(userId: string): Promise<InboxItemSummary[]> {
   const threads = await messageRepository.listThreadsForUser(userId);
-  return threads.map(toInboxSummary);
+  return threads.map((record) => toInboxSummary(record, userId));
 }
 
 async function getUnreadCount(userId: string): Promise<number> {

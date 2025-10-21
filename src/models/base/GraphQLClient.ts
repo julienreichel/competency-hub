@@ -105,7 +105,13 @@ export class GraphQLClient {
         { id },
         {
           authMode: 'userPool',
-          selectionSet: ['id', 'messageThreads.*', 'messageThreads.thread.*'],
+          selectionSet: [
+            'id',
+            'messageThreads.*',
+            'messageThreads.thread.*',
+            'messageThreads.thread.participants.*',
+            'messageThreads.thread.participants.user.*',
+          ],
         },
       );
       if (result.errors || !result.data) {
