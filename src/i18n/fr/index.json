@@ -71,6 +71,7 @@
         "showArchived": "Afficher les archivés ({count})",
         "hideArchived": "Masquer les archivés"
       },
+      "searchPlaceholder": "Rechercher une conversation ou un participant",
       "archivedIndicator": " (archivé)",
       "empty": "Aucun message pour le moment",
       "errors": {

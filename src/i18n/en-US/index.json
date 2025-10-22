@@ -282,6 +282,7 @@
         "showArchived": "Show archived ({count})",
         "hideArchived": "Hide archived"
       },
+      "searchPlaceholder": "Search conversations or participants",
       "archivedIndicator": " (archived)",
       "empty": "No messages yet",
       "errors": {

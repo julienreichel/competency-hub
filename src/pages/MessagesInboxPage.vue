@@ -1,5 +1,5 @@
 <template>
-  <q-page class="messages-inbox-page q-pa-md">
+  <q-page class="messages-inbox-page q-pa-lg q-gutter-lg">
     <page-header
       :icon="'mail'"
       :title="t('messaging.inbox.title')"
@@ -25,10 +25,23 @@
       />
     </page-header>
 
+    <q-input
+      v-model="searchQuery"
+      outlined
+      debounce="200"
+      clearable
+      class="q-mb-md"
+      :placeholder="t('messaging.inbox.searchPlaceholder')"
+    >
+      <template #prepend>
+        <q-icon name="search" />
+      </template>
+    </q-input>
+
     <q-card bordered>
       <q-inner-loading :showing="loading" />
       <q-card-section>
-        <message-list :items="visibleItems" @select="handleSelect" @archive="handleArchive">
+        <message-list :items="filteredItems" @select="handleSelect" @archive="handleArchive">
           <template #empty>
             <div class="column items-center q-gutter-sm q-pa-xl text-grey-6">
               <q-icon name="mail_outline" size="48px" />
@@ -71,11 +84,23 @@ const errorMessage = ref<string | null>(null);
 const newDialogOpen = ref(false);
 const currentUserId = ref<string | null>(null);
 const showArchived = ref(false);
+const searchQuery = ref('');
 
 const archivedCount = computed(() => items.value.filter((item) => item.archived).length);
-const visibleItems = computed(() =>
+const normalizedSearch = computed(() => searchQuery.value.trim().toLowerCase());
+const filteredByArchive = computed(() =>
   showArchived.value ? items.value : items.value.filter((item) => !item.archived),
 );
+const filteredItems = computed(() => {
+  if (!normalizedSearch.value) {
+    return filteredByArchive.value;
+  }
+  return filteredByArchive.value.filter((item) => {
+    const participantNames = item.participants?.map((participant) => participant.name) ?? [];
+    const haystack = [item.title, ...participantNames].join(' ').toLowerCase();
+    return haystack.includes(normalizedSearch.value);
+  });
+});
 
 async function loadInbox(): Promise<void> {
   if (!currentUserId.value) return;
