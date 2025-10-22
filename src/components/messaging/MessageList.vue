@@ -18,7 +18,18 @@
             </div>
           </div>
           <div class="text-caption text-grey-7">
-            {{ item.participantsLabel }}
+            <template v-for="(participant, index) in item.participants" :key="participant.id">
+              <span
+                :class="{
+                  'message-list__participant--archived':
+                    participant.archived && !participant.isCurrentUser,
+                  'text-grey-5': participant.archived && !participant.isCurrentUser,
+                }"
+              >
+                {{ formatParticipant(participant) }}
+              </span>
+              <span v-if="index < item.participants.length - 1">, </span>
+            </template>
           </div>
         </q-item-section>
 
@@ -36,9 +47,13 @@
             dense
             flat
             round
-            icon="archive"
+            :icon="item.archived ? 'unarchive' : 'archive'"
             color="grey-7"
-            :aria-label="t('messaging.actions.archive')"
+            :aria-label="
+              item.archived
+                ? t('messaging.conversation.actions.unarchive')
+                : t('messaging.actions.archive')
+            "
             @click.stop="() => emitArchive(item.id)"
           />
         </q-item-section>
@@ -68,6 +83,14 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+function formatParticipant(participant: InboxItemSummary['participants'][number]): string {
+  const baseName = participant.name || t('common.unknown');
+  if (participant.archived && !participant.isCurrentUser) {
+    return `${baseName}${t('messaging.inbox.archivedIndicator')}`;
+  }
+  return baseName;
+}
 
 function emitSelect(id: string): void {
   emit('select', id);
@@ -110,5 +133,9 @@ export default defineComponent({
 
 .message-list__badge {
   font-weight: 600;
+}
+
+.message-list__participant--archived {
+  font-style: italic;
 }
 </style>

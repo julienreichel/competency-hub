@@ -5,18 +5,32 @@
         <div class="text-h5 text-weight-bold">{{ t('messaging.inbox.title') }}</div>
         <div class="text-caption text-grey-7">{{ t('messaging.inbox.subtitle') }}</div>
       </div>
-      <q-btn
-        color="primary"
-        icon="add"
-        :label="t('messaging.inbox.actions.newMessage')"
-        @click="openNewMessage"
-      />
+      <div class="row items-center q-gutter-sm">
+        <q-btn
+          flat
+          dense
+          :icon="showArchived ? 'unarchive' : 'inventory_2'"
+          :color="showArchived ? 'primary' : 'grey-7'"
+          :label="
+            showArchived
+              ? t('messaging.inbox.actions.hideArchived')
+              : t('messaging.inbox.actions.showArchived', { count: archivedCount })
+          "
+          @click="toggleShowArchived"
+        />
+        <q-btn
+          color="primary"
+          icon="add"
+          :label="t('messaging.inbox.actions.newMessage')"
+          @click="openNewMessage"
+        />
+      </div>
     </div>
 
     <q-card bordered>
       <q-inner-loading :showing="loading" />
       <q-card-section>
-        <message-list :items="items" @select="handleSelect" @archive="handleArchive">
+        <message-list :items="visibleItems" @select="handleSelect" @archive="handleArchive">
           <template #empty>
             <div class="column items-center q-gutter-sm q-pa-xl text-grey-6">
               <q-icon name="mail_outline" size="48px" />
@@ -41,9 +55,9 @@
 <script setup lang="ts">
 import MessageList from 'src/components/messaging/MessageList.vue';
 import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
-import { useUsers } from 'src/composables/useUsers';
 import { useMessaging, type InboxItemSummary } from 'src/composables/useMessaging';
-import { ref, onMounted } from 'vue';
+import { useUsers } from 'src/composables/useUsers';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -57,6 +71,12 @@ const loading = ref(false);
 const errorMessage = ref<string | null>(null);
 const newDialogOpen = ref(false);
 const currentUserId = ref<string | null>(null);
+const showArchived = ref(false);
+
+const archivedCount = computed(() => items.value.filter((item) => item.archived).length);
+const visibleItems = computed(() =>
+  showArchived.value ? items.value : items.value.filter((item) => !item.archived),
+);
 
 async function loadInbox(): Promise<void> {
   if (!currentUserId.value) return;
@@ -75,6 +95,10 @@ async function loadInbox(): Promise<void> {
 
 function openNewMessage(): void {
   newDialogOpen.value = true;
+}
+
+function toggleShowArchived(): void {
+  showArchived.value = !showArchived.value;
 }
 
 async function handleCreateMessage(payload: {
@@ -106,9 +130,13 @@ function handleSelect(messageId: string): void {
 }
 
 async function handleArchive(messageId: string): Promise<void> {
+  if (!currentUserId.value) return;
+  const target = items.value.find((item) => item.id === messageId);
+  if (!target) return;
+
   try {
-    await setConversationArchived(messageId, true);
-    items.value = items.value.filter((item) => item.id !== messageId);
+    await setConversationArchived(messageId, currentUserId.value, !target.archived);
+    await loadInbox();
   } catch (error) {
     errorMessage.value =
       error instanceof Error ? error.message : t('messaging.inbox.errors.archiveFailed');

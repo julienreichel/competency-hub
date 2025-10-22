@@ -13,6 +13,7 @@ export interface ThreadParticipantInit extends Record<string, unknown> {
   userId: string;
   user?: UserRelationInit | User | null;
   lastReadAt?: string | null;
+  archived?: boolean | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -23,6 +24,7 @@ export class ThreadParticipant extends BaseModel {
   public readonly userId: string;
   public readonly user: UserRelationInit | null;
   public lastReadAt: string | null;
+  public archived: boolean;
 
   constructor(data: ThreadParticipantInit) {
     super(data);
@@ -31,6 +33,7 @@ export class ThreadParticipant extends BaseModel {
     this.userId = data.userId;
     this.user = data.user ?? null;
     this.lastReadAt = data.lastReadAt ?? null;
+    this.archived = Boolean(data.archived);
 
     this.validate();
   }
@@ -45,6 +48,7 @@ export class ThreadParticipant extends BaseModel {
       userId: raw.userId,
       user,
       lastReadAt: raw.lastReadAt ?? null,
+      archived: raw.archived ?? false,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });
@@ -58,6 +62,7 @@ export class ThreadParticipant extends BaseModel {
       userId: this.userId,
       user: this.user,
       lastReadAt: timestamp,
+      archived: this.archived,
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(timestamp
         ? { updatedAt: timestamp }
@@ -84,6 +89,7 @@ export class ThreadParticipant extends BaseModel {
       userId: this.userId,
       user: this.user ? { ...this.user } : null,
       lastReadAt: this.lastReadAt,
+      archived: this.archived,
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
     });
@@ -96,6 +102,7 @@ export class ThreadParticipant extends BaseModel {
       userId: this.userId,
       user: this.user ?? null,
       lastReadAt: this.lastReadAt,
+      archived: this.archived,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

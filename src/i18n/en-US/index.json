@@ -64,7 +64,8 @@
     "clear": "Clear",
     "loading": "Loading...",
     "download": "Download",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "retry": "Retry"
   },
   "app": {
     "title": "Competency Hub"
@@ -277,13 +278,16 @@
       "title": "Inbox",
       "subtitle": "All conversations and notifications",
       "actions": {
-        "newMessage": "New message"
+        "newMessage": "New message",
+        "showArchived": "Show archived ({count})",
+        "hideArchived": "Hide archived"
       },
+      "archivedIndicator": " (archived)",
       "empty": "No messages yet",
       "errors": {
         "loadFailed": "Unable to load messages.",
         "createFailed": "Unable to send the message.",
-        "archiveFailed": "Unable to archive the conversation."
+        "archiveFailed": "Unable to update the archive state."
       }
     },
     "dialog": {

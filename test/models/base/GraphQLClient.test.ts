@@ -904,7 +904,6 @@ describe('GraphQLClient', () => {
       id: 'thread-1',
       name: 'General',
       createdById: 'user-1',
-      archived: false,
       lastMessageAt: '2024-01-01T00:00:00.000Z',
     } as Schema['MessageThread']['type'];
 
@@ -931,7 +930,10 @@ describe('GraphQLClient', () => {
       ).resolves.toEqual(rawThread);
 
       await expect(
-        graphQLClient.updateMessageThread({ id: 'thread-1', archived: true }),
+        graphQLClient.updateMessageThread({
+          id: 'thread-1',
+          lastMessageAt: '2024-02-01T00:00:00.000Z',
+        }),
       ).resolves.toEqual(rawThread);
 
       await expect(graphQLClient.listMessageThreads()).resolves.toEqual([rawThread]);
@@ -945,6 +947,7 @@ describe('GraphQLClient', () => {
       threadId: 'thread-1',
       userId: 'user-2',
       lastReadAt: null,
+      archived: false,
     } as Schema['ThreadParticipant']['type'];
 
     it('creates, updates, lists and deletes participants', async () => {
@@ -1567,7 +1570,7 @@ describe('GraphQLClient', () => {
     );
     testGraphQLErrors(
       'updateMessageThread',
-      () => graphQLClient.updateMessageThread({ id: 'id', archived: true }),
+      () => graphQLClient.updateMessageThread({ id: 'id', lastMessageAt: 'now' }),
       [],
       () => mockAmplifyClient.models.MessageThread.update,
     );

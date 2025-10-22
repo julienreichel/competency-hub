@@ -190,7 +190,6 @@ const schema = a
         participants: a.hasMany('ThreadParticipant', 'threadId'),
         messages: a.hasMany('Message', 'threadId'),
         lastMessageAt: a.datetime(),
-        archived: a.boolean().default(false),
       })
       .authorization((allow) => [
         allow.owner().to(['create', 'read', 'update', 'delete']),
@@ -226,6 +225,7 @@ const schema = a
         userId: a.id().required(),
         user: a.belongsTo('User', 'userId'),
         lastReadAt: a.datetime(),
+        archived: a.boolean().default(false),
       })
       .authorization((allow) => [
         allow.owner().to(['create', 'read', 'update', 'delete']),

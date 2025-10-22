@@ -6,12 +6,18 @@ import {
   type ThreadWithParticipant,
 } from 'src/models/repositories/MessageRepository';
 
+export interface InboxParticipantSummary {
+  id: string;
+  name: string;
+  archived: boolean;
+  isCurrentUser: boolean;
+}
+
 export interface InboxItemSummary {
   id: string;
   title: string;
   kind: MessageKind;
-  participantNames: string[];
-  participantsLabel: string;
+  participants: InboxParticipantSummary[];
   createdAt: string;
   updatedAt: string;
   unreadCount: number;
@@ -35,6 +41,7 @@ export interface ConversationView {
   messages: ConversationMessageView[];
   participantIds: string[];
   participant: ThreadParticipant | null;
+  participants: InboxParticipantSummary[];
 }
 
 interface MessagingApi {
@@ -48,7 +55,7 @@ interface MessagingApi {
     body: string,
     participantIds?: string[],
   ) => Promise<MessageThread | null>;
-  setConversationArchived: (threadId: string, archived: boolean) => Promise<MessageThread>;
+  setConversationArchived: (threadId: string, userId: string, archived: boolean) => Promise<void>;
 }
 
 const BODY_PREVIEW_LENGTH = 160;
@@ -104,48 +111,41 @@ function computeUnread(
   return timestamp > participant.lastReadAt ? 1 : 0;
 }
 
-function extractParticipantNames(thread: MessageThread, currentUserId: string): string[] {
-  const participants = thread.participants ?? [];
-
-  const resolveName = (entry: ThreadParticipant): string => {
-    const userRecord = entry.user;
-    const name =
-      userRecord && typeof userRecord === 'object' && 'name' in userRecord
-        ? String(userRecord.name ?? '').trim()
-        : '';
-    return name.length > 0 ? name : entry.userId;
-  };
-
-  const allNames = participants.map(resolveName).filter((value) => value.length > 0);
-  const withoutCurrentUser = participants
-    .filter((entry) => entry.userId !== currentUserId)
-    .map(resolveName)
-    .filter((value) => value.length > 0);
-
-  const result = withoutCurrentUser.length > 0 ? withoutCurrentUser : allNames;
-  return Array.from(new Set(result));
+function resolveParticipantName(entry: ThreadParticipant): string {
+  const userRecord = entry.user;
+  if (userRecord && typeof userRecord === 'object' && 'name' in userRecord) {
+    const name = String(userRecord.name ?? '').trim();
+    if (name.length > 0) {
+      return name;
+    }
+  }
+  return entry.userId;
 }
 
-function formatParticipantsLabel(names: string[]): string {
-  return names.join(', ');
+function mapParticipants(thread: MessageThread, currentUserId: string): InboxParticipantSummary[] {
+  return (thread.participants ?? []).map((entry) => ({
+    id: entry.userId,
+    name: resolveParticipantName(entry),
+    archived: Boolean(entry.archived),
+    isCurrentUser: entry.userId === currentUserId,
+  }));
 }
 
 function toInboxSummary(record: ThreadWithParticipant, currentUserId: string): InboxItemSummary {
   const { thread, participant } = record;
   const { message: lastMessage, timestamp } = resolveLastMessage(thread);
   const unreadCount = computeUnread(participant, timestamp, Boolean(lastMessage));
-  const participantNames = extractParticipantNames(thread, currentUserId);
+  const participants = mapParticipants(thread, currentUserId);
 
   return {
     id: thread.id,
     title: thread.name,
     kind: lastMessage?.kind ?? 'Message',
-    participantNames,
-    participantsLabel: formatParticipantsLabel(participantNames),
+    participants,
     createdAt: thread.createdAt ?? '',
     updatedAt: timestamp,
     unreadCount,
-    archived: Boolean(thread.archived),
+    archived: Boolean(participant.archived),
     bodyPreview: createBodyPreview(lastMessage?.body ?? ''),
   };
 }
@@ -157,7 +157,9 @@ async function getInboxSummaries(userId: string): Promise<InboxItemSummary[]> {
 
 async function getUnreadCount(userId: string): Promise<number> {
   const summaries = await getInboxSummaries(userId);
-  return summaries.reduce((total, summary) => total + summary.unreadCount, 0);
+  return summaries
+    .filter((summary) => !summary.archived)
+    .reduce((total, summary) => total + summary.unreadCount, 0);
 }
 
 async function loadConversation(
@@ -169,9 +171,9 @@ async function loadConversation(
     return null;
   }
 
-  const participants = await messageRepository.listThreadsForUser(currentUserId);
+  const participantRecords = await messageRepository.listThreadsForUser(currentUserId);
   const participantEntry =
-    participants.find((entry) => entry.thread.id === threadId)?.participant ?? null;
+    participantRecords.find((entry) => entry.thread.id === threadId)?.participant ?? null;
 
   const messages = sortMessages(thread.messages ?? []).map((message) => ({
     id: message.id,
@@ -195,6 +197,7 @@ async function loadConversation(
     messages,
     participantIds,
     participant: participantEntry,
+    participants: mapParticipants(thread, currentUserId),
   };
 }
 
@@ -241,9 +244,10 @@ async function replyToThread(
 
 async function setConversationArchived(
   threadId: string,
+  userId: string,
   archived: boolean,
-): Promise<MessageThread> {
-  return messageRepository.setThreadArchived(threadId, archived);
+): Promise<void> {
+  await messageRepository.setParticipantArchived(threadId, userId, archived);
 }
 
 export const useMessaging = (): MessagingApi => ({

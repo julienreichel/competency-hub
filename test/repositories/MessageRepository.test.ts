@@ -14,6 +14,7 @@ const mockGraphQLClient = graphQLClient as unknown as {
   deleteThreadParticipant: ReturnType<typeof vi.fn>;
   listThreadParticipants: ReturnType<typeof vi.fn>;
   createMessage: ReturnType<typeof vi.fn>;
+  setParticipantArchived?: ReturnType<typeof vi.fn>;
 };
 
 vi.mock('../../src/models/base/GraphQLClient', () => ({
@@ -37,7 +38,6 @@ const rawThread = {
   createdById: 'user-1',
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
-  archived: false,
   lastMessageAt: '2024-01-01T00:00:00.000Z',
   participants: [],
   messages: [],
@@ -59,6 +59,7 @@ describe('MessageRepository (threads)', () => {
       threadId: 'thread-1',
       userId: 'user-1',
       lastReadAt: null,
+      archived: false,
     } as Schema['ThreadParticipant']['type']);
     mockGraphQLClient.createMessage.mockResolvedValue({
       id: 'message-1',
@@ -92,6 +93,7 @@ describe('MessageRepository (threads)', () => {
         threadId: 'thread-1',
         userId: 'user-2',
         lastReadAt: null,
+        archived: false,
         thread: {
           ...rawThread,
           lastMessageAt: '2024-01-02T00:00:00.000Z',
@@ -134,6 +136,7 @@ describe('MessageRepository (threads)', () => {
           threadId: 'thread-1',
           userId: 'user-2',
           lastReadAt: null,
+          archived: false,
         } as Schema['ThreadParticipant']['type'],
       ],
     });
@@ -147,8 +150,6 @@ describe('MessageRepository (threads)', () => {
   });
 
   it('creates participant when marking thread read and record missing', async () => {
-    mockGraphQLClient.listThreadParticipants.mockResolvedValueOnce([]);
-
     await repository.markThreadAsRead('thread-1', 'user-2');
 
     expect(mockGraphQLClient.createThreadParticipant).toHaveBeenCalledWith(
@@ -165,6 +166,7 @@ describe('MessageRepository (threads)', () => {
           threadId: 'thread-1',
           userId: 'user-2',
           lastReadAt: null,
+          archived: false,
         } as Schema['ThreadParticipant']['type'],
       ],
     });
@@ -178,12 +180,25 @@ describe('MessageRepository (threads)', () => {
     });
   });
 
-  it('archives thread', async () => {
-    const thread = await repository.setThreadArchived('thread-1', true);
-    expect(mockGraphQLClient.updateMessageThread).toHaveBeenCalledWith({
-      id: 'thread-1',
+  it('archives participant thread view', async () => {
+    mockGraphQLClient.getMessageThread.mockResolvedValueOnce({
+      ...rawThread,
+      participants: [
+        {
+          id: 'tp-1',
+          threadId: 'thread-1',
+          userId: 'user-1',
+          lastReadAt: null,
+          archived: false,
+        } as Schema['ThreadParticipant']['type'],
+      ],
+    });
+
+    await repository.setParticipantArchived('thread-1', 'user-1', true);
+
+    expect(mockGraphQLClient.updateThreadParticipant).toHaveBeenCalledWith({
+      id: 'tp-1',
       archived: true,
     });
-    expect(thread.id).toBe('thread-1');
   });
 });

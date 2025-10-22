@@ -8,6 +8,20 @@
         <div class="text-caption text-grey-7" v-if="conversation">
           {{ t('messaging.conversation.participants', { count: participantCount }) }}
         </div>
+        <div class="text-caption text-grey-6" v-if="participantSummaries.length">
+          <template v-for="(participant, index) in participantSummaries" :key="participant.id">
+            <span
+              :class="{
+                'conversation-page__participant--archived':
+                  participant.archived && !participant.isCurrentUser,
+                'text-grey-5': participant.archived && !participant.isCurrentUser,
+              }"
+            >
+              {{ formatParticipant(participant) }}
+            </span>
+            <span v-if="index < participantSummaries.length - 1">, </span>
+          </template>
+        </div>
       </div>
       <div class="row items-center q-gutter-sm">
         <q-btn
@@ -72,8 +86,17 @@ const archiveInProgress = ref(false);
 const errorMessage = ref<string | null>(null);
 const currentUserId = ref<string | null>(null);
 
-const participantCount = computed(() => conversation.value?.participantIds.length ?? 0);
-const isArchived = computed(() => Boolean(conversation.value?.thread.archived));
+const participantSummaries = computed(() => conversation.value?.participants ?? []);
+const participantCount = computed(() => participantSummaries.value.length);
+const isArchived = computed(() => Boolean(conversation.value?.participant?.archived));
+
+function formatParticipant(participant: ConversationView['participants'][number]): string {
+  const baseName = participant.name || t('common.unknown');
+  if (participant.archived && !participant.isCurrentUser) {
+    return `${baseName}${t('messaging.inbox.archivedIndicator')}`;
+  }
+  return baseName;
+}
 
 async function loadConversationData(): Promise<void> {
   if (!currentUserId.value) return;
@@ -114,10 +137,14 @@ async function handleSend(body: string): Promise<void> {
 }
 
 async function toggleArchive(): Promise<void> {
-  if (!conversation.value) return;
+  if (!conversation.value || !currentUserId.value) return;
   archiveInProgress.value = true;
   try {
-    await setConversationArchived(conversation.value.thread.id, !isArchived.value);
+    await setConversationArchived(
+      conversation.value.thread.id,
+      currentUserId.value,
+      !isArchived.value,
+    );
     await loadConversationData();
   } catch (error) {
     errorMessage.value =
@@ -140,3 +167,9 @@ onMounted(async () => {
   await loadConversationData();
 });
 </script>
+
+<style scoped>
+.conversation-page__participant--archived {
+  font-style: italic;
+}
+</style>

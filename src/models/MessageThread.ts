@@ -15,7 +15,6 @@ export interface MessageThreadInit extends Record<string, unknown> {
   messages?: Array<Message | MessageInit> | null;
   participants?: Array<ThreadParticipant | ThreadParticipantInit> | null;
   lastMessageAt?: string | null;
-  archived?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -27,7 +26,6 @@ export class MessageThread extends BaseModel {
   public participants: ThreadParticipant[];
   public readonly messages: Message[];
   public lastMessageAt: string | null;
-  public archived: boolean;
 
   constructor(data: MessageThreadInit) {
     super(data);
@@ -45,7 +43,6 @@ export class MessageThread extends BaseModel {
         )
       : [];
     this.lastMessageAt = data.lastMessageAt ?? null;
-    this.archived = data.archived ?? false;
 
     this.validate();
   }
@@ -65,7 +62,6 @@ export class MessageThread extends BaseModel {
       participants,
       messages,
       lastMessageAt: raw.lastMessageAt ?? null,
-      archived: raw.archived ?? false,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });
@@ -89,7 +85,6 @@ export class MessageThread extends BaseModel {
       participants: this.participants.map((participant) => participant.clone()),
       messages: this.messages.map((message) => message.clone()),
       lastMessageAt: this.lastMessageAt,
-      archived: this.archived,
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),
     });
@@ -104,7 +99,6 @@ export class MessageThread extends BaseModel {
       participants: this.participants.map((participant) => participant.toJSON()),
       messages: this.messages.map((message) => message.toJSON()),
       lastMessageAt: this.lastMessageAt,
-      archived: this.archived,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

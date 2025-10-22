@@ -67,13 +67,16 @@
       "title": "Boîte de réception",
       "subtitle": "Toutes vos conversations et notifications",
       "actions": {
-        "newMessage": "Nouveau message"
+        "newMessage": "Nouveau message",
+        "showArchived": "Afficher les archivés ({count})",
+        "hideArchived": "Masquer les archivés"
       },
+      "archivedIndicator": " (archivé)",
       "empty": "Aucun message pour le moment",
       "errors": {
         "loadFailed": "Impossible de charger les messages.",
         "createFailed": "Impossible d'envoyer le message.",
-        "archiveFailed": "Impossible d'archiver la conversation."
+        "archiveFailed": "Impossible de mettre à jour l'état d'archivage."
       }
     },
     "dialog": {
@@ -133,7 +136,8 @@
     "clear": "Effacer",
     "loading": "Chargement...",
     "download": "Télécharger",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "retry": "Réessayer"
   },
   "app": {
     "title": "Competency Hub"

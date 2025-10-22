@@ -72,12 +72,18 @@ export class MessageRepository {
     return raw ? MessageThread.fromAmplify(raw) : null;
   }
 
-  async setThreadArchived(id: string, archived: boolean): Promise<MessageThread> {
-    const raw = await graphQLClient.updateMessageThread({ id, archived });
-    if (!raw) {
-      throw new Error(`Failed to update message thread ${id}`);
+  async setParticipantArchived(threadId: string, userId: string, archived: boolean): Promise<void> {
+    const thread = await this.getThreadById(threadId);
+    if (!thread) {
+      throw new Error(`Thread ${threadId} not found`);
     }
-    return MessageThread.fromAmplify(raw);
+
+    const participant = thread.participants.find((entry) => entry.userId === userId);
+    if (!participant) {
+      throw new Error(`Participant ${userId} not found in thread ${threadId}`);
+    }
+
+    await graphQLClient.updateThreadParticipant({ id: participant.id, archived });
   }
 
   async sendMessage(input: SendMessageInput): Promise<Message> {
