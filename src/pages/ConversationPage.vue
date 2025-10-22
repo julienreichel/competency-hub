@@ -1,41 +1,42 @@
 <template>
   <q-page class="conversation-page q-pa-md">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="column q-gutter-xs">
-        <div class="text-h5 text-weight-bold">
-          {{ conversation?.thread.name || t('messaging.conversation.titleFallback') }}
-        </div>
-        <div class="text-caption text-grey-7" v-if="conversation">
-          {{ t('messaging.conversation.participants', { count: participantCount }) }}
-        </div>
-        <div class="text-caption text-grey-6" v-if="participantSummaries.length">
-          <template v-for="(participant, index) in participantSummaries" :key="participant.id">
-            <span
-              :class="{
-                'conversation-page__participant--archived':
-                  participant.archived && !participant.isCurrentUser,
-                'text-grey-5': participant.archived && !participant.isCurrentUser,
-              }"
-            >
-              {{ formatParticipant(participant) }}
-            </span>
-            <span v-if="index < participantSummaries.length - 1">, </span>
-          </template>
-        </div>
+    <breadcrumb-header
+      :title="conversation?.thread.name || t('messaging.conversation.titleFallback')"
+      :breadcrumbs="breadcrumbs"
+      :loading="loading"
+      :back-target="{ name: 'messages-inbox' }"
+    >
+      <q-btn
+        outline
+        color="grey-7"
+        :icon="isArchived ? 'unarchive' : 'archive'"
+        :label="
+          isArchived
+            ? t('messaging.conversation.actions.unarchive')
+            : t('messaging.conversation.actions.archive')
+        "
+        @click="toggleArchive"
+        :loading="archiveInProgress"
+      />
+    </breadcrumb-header>
+
+    <div class="column q-gutter-xs q-mb-md">
+      <div class="text-caption text-grey-7" v-if="conversation">
+        {{ t('messaging.conversation.participants', { count: participantCount }) }}
       </div>
-      <div class="row items-center q-gutter-sm">
-        <q-btn
-          outline
-          color="grey-7"
-          :icon="isArchived ? 'unarchive' : 'archive'"
-          :label="
-            isArchived
-              ? t('messaging.conversation.actions.unarchive')
-              : t('messaging.conversation.actions.archive')
-          "
-          @click="toggleArchive"
-          :loading="archiveInProgress"
-        />
+      <div class="text-caption text-grey-6" v-if="participantSummaries.length">
+        <template v-for="(participant, index) in participantSummaries" :key="participant.id">
+          <span
+            :class="{
+              'conversation-page__participant--archived':
+                participant.archived && !participant.isCurrentUser,
+              'text-grey-5': participant.archived && !participant.isCurrentUser,
+            }"
+          >
+            {{ formatParticipant(participant) }}
+          </span>
+          <span v-if="index < participantSummaries.length - 1">, </span>
+        </template>
       </div>
     </div>
 
@@ -66,13 +67,14 @@
 </template>
 
 <script setup lang="ts">
+import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
 import MessageCard from 'src/components/messaging/MessageCard.vue';
 import MessageComposer from 'src/components/messaging/MessageComposer.vue';
 import { useMessaging, type ConversationView } from 'src/composables/useMessaging';
 import { useUsers } from 'src/composables/useUsers';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
+import { useRoute, type RouteLocationRaw } from 'vue-router';
 
 const route = useRoute();
 const { getCurrentUser } = useUsers();
@@ -89,6 +91,17 @@ const currentUserId = ref<string | null>(null);
 const participantSummaries = computed(() => conversation.value?.participants ?? []);
 const participantCount = computed(() => participantSummaries.value.length);
 const isArchived = computed(() => Boolean(conversation.value?.participant?.archived));
+
+const breadcrumbs = computed(() => {
+  const list: Array<{ label: string; to?: RouteLocationRaw }> = [
+    { label: t('messaging.inbox.title'), to: { name: 'messages' } },
+  ];
+  const threadName = conversation.value?.thread.name ?? '';
+  list.push({
+    label: threadName || t('messaging.conversation.titleFallback'),
+  });
+  return list;
+});
 
 function formatParticipant(participant: ConversationView['participants'][number]): string {
   const baseName = participant.name || t('common.unknown');
