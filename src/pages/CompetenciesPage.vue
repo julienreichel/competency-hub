@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-      <q-icon name="psychology" />
-      <span>{{ t('competencies.title') }}</span>
-    </div>
+    <page-header :icon="'psychology'" :title="t('competencies.title')" />
 
     <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
       {{ errorMessage }}
@@ -75,6 +72,7 @@ import { UserRole } from 'src/models/User';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import PageHeader from 'src/components/common/PageHeader.vue';
 
 const { t } = useI18n();
 const $q = useQuasar();

@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg">
-      <q-icon name="admin_panel_settings" class="q-mr-sm" />
-      {{ $t('admin.userManagement') }}
-    </div>
+    <page-header :icon="'admin_panel_settings'" :title="t('admin.userManagement')" />
 
     <user-action-bar
       :search="searchQuery"
@@ -90,6 +87,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import EditUserDialog from 'src/components/admin/EditUserDialog.vue';
 import LastActiveCell from 'src/components/admin/LastActiveCell.vue';
 import UserActionBar from 'src/components/admin/UserActionBar.vue';

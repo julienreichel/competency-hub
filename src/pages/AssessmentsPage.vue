@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-      <q-icon name="quiz" />
-      <span>{{ t('assessments.title') }}</span>
-    </div>
+    <page-header :icon="'quiz'" :title="t('assessments.title')" />
 
     <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
       {{ errorMessage }}
@@ -62,6 +59,7 @@
 
 <script setup lang="ts">
 import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import EvaluationTable from 'src/components/evaluation/EvaluationTable.vue';
 import { useEvaluationStudentActions } from 'src/composables/useEvaluationStudentActions';

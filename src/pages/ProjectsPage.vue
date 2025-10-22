@@ -1,11 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="row items-center justify-between q-mb-lg">
-      <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-        <q-icon name="assignment" />
-        <span>{{ t('projects.myProjects') }}</span>
-      </div>
-
+    <page-header :icon="'assignment'" :title="t('projects.myProjects')">
       <q-btn
         color="primary"
         :label="t('projects.newProject')"
@@ -13,7 +8,7 @@
         :loading="loading"
         @click="showProjectDialog = true"
       />
-    </div>
+    </page-header>
     <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
       {{ errorMessage }}
     </q-banner>
@@ -96,6 +91,7 @@
 
 <script setup lang="ts">
 import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import CreateProjectDialog from 'src/components/project/CreateProjectDialog.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';

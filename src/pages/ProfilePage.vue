@@ -3,11 +3,8 @@
     <div class="row justify-center">
       <div class="col-12 col-md-8 col-lg-6">
         <q-card class="q-pa-lg">
-          <q-card-section>
-            <div class="text-h5 q-mb-md">
-              <q-icon name="person" class="q-mr-sm" />
-              {{ t('profile.title') }}
-            </div>
+          <q-card-section class="q-pt-none">
+            <page-header :icon="'person'" :title="t('profile.title')" />
           </q-card-section>
 
           <q-card-section>
@@ -83,6 +80,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import RoleChip from 'src/components/ui/RoleChip.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import UserProfileForm, {

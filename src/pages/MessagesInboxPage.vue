@@ -1,31 +1,29 @@
 <template>
   <q-page class="messages-inbox-page q-pa-md">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="column q-gutter-xs">
-        <div class="text-h5 text-weight-bold">{{ t('messaging.inbox.title') }}</div>
-        <div class="text-caption text-grey-7">{{ t('messaging.inbox.subtitle') }}</div>
-      </div>
-      <div class="row items-center q-gutter-sm">
-        <q-btn
-          flat
-          dense
-          :icon="showArchived ? 'unarchive' : 'inventory_2'"
-          :color="showArchived ? 'primary' : 'grey-7'"
-          :label="
-            showArchived
-              ? t('messaging.inbox.actions.hideArchived')
-              : t('messaging.inbox.actions.showArchived', { count: archivedCount })
-          "
-          @click="toggleShowArchived"
-        />
-        <q-btn
-          color="primary"
-          icon="add"
-          :label="t('messaging.inbox.actions.newMessage')"
-          @click="openNewMessage"
-        />
-      </div>
-    </div>
+    <page-header
+      :icon="'mail'"
+      :title="t('messaging.inbox.title')"
+      :subtitle="t('messaging.inbox.subtitle')"
+    >
+      <q-btn
+        flat
+        dense
+        :icon="showArchived ? 'unarchive' : 'inventory_2'"
+        :color="showArchived ? 'primary' : 'grey-7'"
+        :label="
+          showArchived
+            ? t('messaging.inbox.actions.hideArchived')
+            : t('messaging.inbox.actions.showArchived', { count: archivedCount })
+        "
+        @click="toggleShowArchived"
+      />
+      <q-btn
+        color="primary"
+        icon="add"
+        :label="t('messaging.inbox.actions.newMessage')"
+        @click="openNewMessage"
+      />
+    </page-header>
 
     <q-card bordered>
       <q-inner-loading :showing="loading" />
@@ -53,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import PageHeader from 'src/components/common/PageHeader.vue';
 import MessageList from 'src/components/messaging/MessageList.vue';
 import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import { useMessaging, type InboxItemSummary } from 'src/composables/useMessaging';

@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-      <q-icon name="assignment" />
-      <span>{{ $t('educator.projects.title') }}</span>
-    </div>
+    <page-header :icon="'assignment'" :title="t('educator.projects.title')" />
 
     <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
       {{ errorMessage }}
@@ -156,6 +153,7 @@
 
 <script setup lang="ts">
 import ManagedTable, { type ManagedTableBulkAction } from 'src/components/common/ManagedTable.vue';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project } from 'src/models/Project';

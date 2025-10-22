@@ -1,19 +1,13 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg">
-      <q-icon name="family_restroom" class="q-mr-sm" />
-      {{ t('parents.children.title') }}
-    </div>
-
-    <!-- Add Child Button -->
-    <div class="row justify-end q-mb-lg">
+    <page-header :icon="'family_restroom'" :title="t('parents.children.title')">
       <q-btn
         color="primary"
         icon="add"
         :label="t('parents.children.actions.addChild')"
         @click="showAddChildDialog = true"
       />
-    </div>
+    </page-header>
 
     <!-- Children Cards -->
     <div v-if="!isLoadingChildren" class="row q-gutter-lg">
@@ -115,6 +109,7 @@
 </template>
 
 <script setup lang="ts">
+import PageHeader from 'src/components/common/PageHeader.vue';
 import ChildCard from 'src/components/parent/ChildCard.vue';
 import { useReportData } from 'src/composables/useReportData';
 import { useUsers } from 'src/composables/useUsers';

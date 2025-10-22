@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg row items-center q-gutter-sm print-title">
-      <q-icon name="assessment" class="no-print" />
-      <span>{{ $t('reports.title') }}</span>
-    </div>
+    <page-header class="print-title" icon="assessment" :title="t('reports.title')" />
 
     <q-banner v-if="error" class="bg-negative text-white q-mb-md">
       {{ error }}
@@ -71,6 +68,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import ReportActions from 'src/components/reports/ReportActions.vue';
 import ReportDomainCard from 'src/components/reports/ReportDomainCard.vue';
 import ReportFilters from 'src/components/reports/ReportFilters.vue';

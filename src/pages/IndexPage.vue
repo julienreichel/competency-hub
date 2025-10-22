@@ -1,11 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="row items-center justify-between q-mb-lg">
-      <div>
-        <div class="text-h4">{{ greeting }}</div>
-        <div v-if="subtitle" class="text-subtitle2 text-grey-6">{{ subtitle }}</div>
-      </div>
-    </div>
+    <page-header :icon="'dashboard'" :title="greeting" :subtitle="subtitle" />
 
     <q-inner-loading :showing="pageLoading">
       <q-spinner-tail color="primary" size="64px" />
@@ -73,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+import PageHeader from 'src/components/common/PageHeader.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { useUsers } from 'src/composables/useUsers';

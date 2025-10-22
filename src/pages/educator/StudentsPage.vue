@@ -1,14 +1,11 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-      <q-icon name="groups" />
-      <span>{{ $t('educator.myStudentsTitle') }}</span>
-    </div>
+    <page-header :icon="'groups'" :title="t('educator.myStudentsTitle')" />
 
     <div class="row items-end q-col-gutter-md q-mb-lg">
       <div class="col-12 col-md-10">
         <q-input v-model="searchTerm" :label="$t('educator.searchStudents')" outlined clearable>
-          <template #append>
+          <template #prepend>
             <q-icon name="search" />
           </template>
         </q-input>
@@ -84,6 +81,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import StudentAssignmentsTable from 'src/components/educator/StudentAssignmentsTable.vue';
 import UserDetailsDialog from 'src/components/ui/UserDetailsDialog.vue';
 import { useAuth } from 'src/composables/useAuth';

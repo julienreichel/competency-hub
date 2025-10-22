@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-      <q-icon name="assignment_turned_in" />
-      <span>{{ t('educator.assessments.title') }}</span>
-    </div>
+    <page-header :icon="'assignment_turned_in'" :title="t('educator.assessments.title')" />
 
     <q-banner v-if="errorMessage" class="bg-negative text-white q-mb-md">
       {{ errorMessage }}
@@ -76,6 +73,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import StudentProgressTable from 'src/components/educator/StudentProgressTable.vue';
 import type { StudentProgressRow } from 'src/components/educator/studentProgressTypes';
 import {

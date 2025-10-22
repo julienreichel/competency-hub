@@ -1,19 +1,15 @@
 <template>
-  <q-page class="q-pa-lg column q-gutter-lg">
-    <div class="row items-center justify-between">
-      <div class="text-h4 q-mb-lg row items-center q-gutter-sm">
-        <q-icon name="category" />
-        <span>{{ t('domains.title') }}</span>
-      </div>
+  <q-page class="q-pa-lg q-gutter-lg">
+    <page-header :icon="'category'" :title="t('domains.title')">
       <q-btn
         v-if="hasRole('Admin')"
         color="secondary"
         icon="add"
-        :label="$t('domains.addDomain')"
+        :label="t('domains.addDomain')"
         class="self-end"
         @click="openCreateDialog"
       />
-    </div>
+    </page-header>
 
     <q-input
       v-model="search"
@@ -46,6 +42,7 @@
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
+import PageHeader from 'src/components/common/PageHeader.vue';
 import DomainDialog from 'src/components/domain/DomainDialog.vue';
 import DomainList from 'src/components/domain/DomainList.vue';
 import { useAuth } from 'src/composables/useAuth';
