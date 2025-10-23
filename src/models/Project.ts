@@ -1,6 +1,7 @@
 import { getUrl } from 'aws-amplify/storage';
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
+import { MessageThread } from './MessageThread';
 import type { SubCompetencyInit } from './SubCompetency';
 import { SubCompetency } from './SubCompetency';
 import { User, type UserRelationInit } from './User';
@@ -20,6 +21,7 @@ export interface ProjectInit extends Record<string, unknown> {
   status?: ProjectStatus;
   student?: UserRelationInit | User | null;
   subCompetency?: SubCompetencyInit | SubCompetency | null;
+  thread?: MessageThread | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -33,6 +35,7 @@ export class Project extends BaseModel {
   public status: ProjectStatus;
   public readonly student: User | null;
   public readonly subCompetency: SubCompetency | null;
+  public readonly thread: MessageThread | null;
 
   constructor(data: ProjectInit) {
     super(data);
@@ -49,13 +52,14 @@ export class Project extends BaseModel {
         : new SubCompetency(data.subCompetency)
       : null;
 
+    this.thread = data.thread ?? null;
     this.validate();
   }
 
   static fromAmplify(this: void, raw: AmplifyProject): Project {
     const subCompetency = mapSingularRelation(raw.subCompetency, SubCompetency.fromAmplify);
     const student = mapSingularRelation(raw.student, User.fromAmplify);
-
+    const thread = mapSingularRelation(raw.thread, MessageThread.fromAmplify);
     return new Project({
       id: raw.id,
       studentId: raw.studentId,
@@ -66,6 +70,7 @@ export class Project extends BaseModel {
       status: (raw.status as ProjectStatus) ?? 'Draft',
       student,
       subCompetency,
+      thread,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
     });

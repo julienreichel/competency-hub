@@ -56,6 +56,7 @@ interface MessagingApi {
     participantIds?: string[],
   ) => Promise<MessageThread | null>;
   setConversationArchived: (threadId: string, userId: string, archived: boolean) => Promise<void>;
+  sendSystemMessage: (payload: CreateMessagePayload) => Promise<MessageThread | null>;
 }
 
 const BODY_PREVIEW_LENGTH = 160;
@@ -202,28 +203,39 @@ async function loadConversation(
 }
 
 interface CreateMessagePayload {
+  threadId?: string;
   senderId: string;
   title: string;
   body: string;
   kind?: MessageKind;
   participantIds: string[];
+  projectId?: string;
+  subCompetencyId?: string;
 }
 
 async function sendRootMessage(payload: CreateMessagePayload): Promise<MessageThread | null> {
-  const thread = await messageRepository.createThread({
-    name: payload.title,
-    createdById: payload.senderId,
-    participantIds: payload.participantIds,
-  });
+  let threadId;
+  if (payload.threadId) {
+    threadId = payload.threadId;
+  } else {
+    const thread = await messageRepository.createThread({
+      name: payload.title,
+      createdById: payload.senderId,
+      participantIds: payload.participantIds,
+      projectId: payload.projectId,
+      subCompetencyId: payload.subCompetencyId,
+    });
+    threadId = thread.id;
+  }
 
   await messageRepository.sendMessage({
-    threadId: thread.id,
+    threadId,
     senderId: payload.senderId,
-    body: payload.body,
+    body: payload.body || payload.title,
     kind: payload.kind ?? 'Message',
   });
 
-  return messageRepository.getThreadById(thread.id);
+  return messageRepository.getThreadById(threadId);
 }
 
 async function replyToThread(
@@ -250,6 +262,10 @@ async function setConversationArchived(
   await messageRepository.setParticipantArchived(threadId, userId, archived);
 }
 
+async function sendSystemMessage(payload: CreateMessagePayload): Promise<MessageThread | null> {
+  return sendRootMessage(payload);
+}
+
 export const useMessaging = (): MessagingApi => ({
   getInboxSummaries,
   getUnreadCount,
@@ -257,6 +273,7 @@ export const useMessaging = (): MessagingApi => ({
   sendRootMessage,
   replyToThread,
   setConversationArchived,
+  sendSystemMessage,
 });
 
 export type { CreateMessagePayload };

@@ -8,6 +8,8 @@ export interface CreateThreadInput {
   name: string;
   createdById: string;
   participantIds: string[];
+  projectId?: string;
+  subCompetencyId?: string;
 }
 
 export interface SendMessageInput {
@@ -26,9 +28,12 @@ export class MessageRepository {
   async createThread(input: CreateThreadInput): Promise<MessageThread> {
     const uniqueParticipants = Array.from(new Set([input.createdById, ...input.participantIds]));
 
+    const { name, createdById, projectId, subCompetencyId } = input;
     const rawThread = await graphQLClient.createMessageThread({
-      name: input.name,
-      createdById: input.createdById,
+      name,
+      createdById,
+      projectId,
+      subCompetencyId,
     });
 
     if (!rawThread) {

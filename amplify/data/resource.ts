@@ -89,6 +89,7 @@ const schema = a
         studentProgress: a.hasMany('StudentSubCompetencyProgress', 'subCompetencyId'),
         evaluations: a.hasMany('Evaluation', 'subCompetencyId'),
         projects: a.hasMany('Project', 'subCompetencyId'),
+        threads: a.hasMany('MessageThread', 'subCompetencyId'),
       })
       .authorization((allow) => [
         allow.authenticated().to(['read']),
@@ -175,6 +176,7 @@ const schema = a
         description: a.string(),
         fileKey: a.string(),
         status: a.enum(['Draft', 'Submitted', 'Approved', 'Rejected']),
+        thread: a.hasOne('MessageThread', 'projectId'),
       })
       .authorization((allow) => [
         allow.owner().to(['create', 'read', 'update', 'delete']),
@@ -190,6 +192,10 @@ const schema = a
         participants: a.hasMany('ThreadParticipant', 'threadId'),
         messages: a.hasMany('Message', 'threadId'),
         lastMessageAt: a.datetime(),
+        subCompetencyId: a.id(),
+        subCompetency: a.belongsTo('SubCompetency', 'subCompetencyId'),
+        projectId: a.id(),
+        project: a.belongsTo('Project', 'projectId'),
       })
       .authorization((allow) => [
         allow.owner().to(['create', 'read', 'update', 'delete']),

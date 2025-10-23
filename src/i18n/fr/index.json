@@ -61,7 +61,13 @@
       "ProjectRejected": "Projet refusé"
     },
     "notifications": {
-      "tooltip": "Ouvrir la messagerie"
+      "tooltip": "Ouvrir la messagerie",
+      "validationSubmittedTitle": "Demande de validation",
+      "projectSubmittedTitle": "Projet soumis",
+      "projectApprovedTitle": "Projet approuvé",
+      "projectRejectedTitle": "Projet rejeté",
+      "sentSuccess": "Notification envoyée.",
+      "sentError": "Impossible d'envoyer la notification."
     },
     "inbox": {
       "title": "Boîte de réception",

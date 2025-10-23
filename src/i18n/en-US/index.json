@@ -272,7 +272,13 @@
       "ProjectRejected": "Project rejected"
     },
     "notifications": {
-      "tooltip": "Open your inbox"
+      "tooltip": "Open your inbox",
+      "validationSubmittedTitle": "Validation request",
+      "projectSubmittedTitle": "Project submitted",
+      "projectApprovedTitle": "Project approved",
+      "projectRejectedTitle": "Project rejected",
+      "sentSuccess": "Notification sent.",
+      "sentError": "Unable to send notification."
     },
     "inbox": {
       "title": "Inbox",

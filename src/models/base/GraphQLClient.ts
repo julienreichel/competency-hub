@@ -1269,6 +1269,7 @@ export class GraphQLClient {
             'student.*',
             'subCompetencyId',
             'subCompetency.*',
+            'thread.*',
             'name',
             'description',
             'fileKey',

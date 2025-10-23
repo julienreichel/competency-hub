@@ -63,13 +63,9 @@
           <project-card
             :project="project"
             :show-open="true"
-            :show-actions="Boolean(project.fileKey)"
             class="full-height"
             @view="viewProject"
             @edit="editProject"
-            @submit="submitProject"
-            @approve="approveProject"
-            @reject="rejectProject"
             @delete="deleteProject"
             @download="downloadProjectFile"
           />
@@ -90,8 +86,8 @@
 </template>
 
 <script setup lang="ts">
-import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import PageHeader from 'src/components/common/PageHeader.vue';
+import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
 import CreateProjectDialog from 'src/components/project/CreateProjectDialog.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
@@ -254,42 +250,6 @@ const onProjectSaved = (project: Project): void => {
 
   editingProject.value = null;
   showProjectDialog.value = false;
-};
-
-const submitProject = async (project: Project): Promise<void> => {
-  try {
-    const updatedProject = await projectRepository.update(project.id, { status: 'Submitted' });
-    const index = projects.value.findIndex((entry) => entry.id === project.id);
-    if (index !== -1) {
-      projects.value[index] = updatedProject;
-    }
-  } catch (error) {
-    console.error('Failed to submit project:', error);
-  }
-};
-
-const approveProject = async (project: Project): Promise<void> => {
-  try {
-    const updatedProject = await projectRepository.update(project.id, { status: 'Approved' });
-    const index = projects.value.findIndex((entry) => entry.id === project.id);
-    if (index !== -1) {
-      projects.value[index] = updatedProject;
-    }
-  } catch (error) {
-    console.error('Failed to approve project:', error);
-  }
-};
-
-const rejectProject = async (project: Project): Promise<void> => {
-  try {
-    const updatedProject = await projectRepository.update(project.id, { status: 'Rejected' });
-    const index = projects.value.findIndex((entry) => entry.id === project.id);
-    if (index !== -1) {
-      projects.value[index] = updatedProject;
-    }
-  } catch (error) {
-    console.error('Failed to reject project:', error);
-  }
 };
 
 const deleteProject = async (project: Project): Promise<void> => {

@@ -69,6 +69,7 @@ import MessageList from 'src/components/messaging/MessageList.vue';
 import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import { useMessaging, type InboxItemSummary } from 'src/composables/useMessaging';
 import { useUsers } from 'src/composables/useUsers';
+import type { MessageKind } from 'src/models/Message';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -129,6 +130,7 @@ async function handleCreateMessage(payload: {
   title: string;
   body: string;
   participantIds: string[];
+  kind?: MessageKind;
 }): Promise<void> {
   if (!currentUserId.value) return;
   try {
@@ -137,7 +139,7 @@ async function handleCreateMessage(payload: {
       title: payload.title,
       body: payload.body,
       participantIds: payload.participantIds,
-      kind: 'Message',
+      kind: payload.kind ?? 'Message',
     });
     await loadInbox();
     if (thread) {

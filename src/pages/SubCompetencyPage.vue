@@ -63,13 +63,26 @@
       :initial-evaluations="sub?.evaluations ?? []"
       :student-id="isStudent ? currentStudentId : undefined"
     />
+
+    <new-message-dialog
+      v-if="systemComposerContext"
+      v-model="systemComposerOpen"
+      :initial-targets="systemComposerContext.participantIds"
+      :initial-title="systemComposerContext.title"
+      :kind="systemComposerContext.kind"
+      mode="body-only"
+      @create="handleSystemMessageCreate"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
+import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
+import { useMessaging } from 'src/composables/useMessaging';
 import { useUsers } from 'src/composables/useUsers';
+import type { MessageKind } from 'src/models/Message';
 import {
   type StudentSubCompetencyProgress,
   type StudentSubCompetencyProgressUpdate,
@@ -97,6 +110,7 @@ const route = useRoute();
 const router = useRouter();
 const { hasRole } = useAuth();
 const { getCurrentUser } = useUsers();
+const { sendSystemMessage } = useMessaging();
 
 let domainId = route.params.domainId as string | undefined;
 const competencyId = route.params.competencyId as string;
@@ -114,6 +128,16 @@ const REMEMBER_PROGRESS_PERCENT = 25;
 const EXPLAIN_PROGRESS_PERCENT = 50;
 const APPLY_PROGRESS_PERCENT = 75;
 const FINAL_PROGRESS_PERCENT = 100;
+
+interface SystemMessageComposerContext {
+  senderId: string;
+  title: string;
+  participantIds: string[];
+  kind: MessageKind;
+}
+
+const systemComposerOpen = ref(false);
+const systemComposerContext = ref<SystemMessageComposerContext | null>(null);
 
 const isStudent = computed(() => currentUser.value?.role === UserRole.STUDENT);
 const canManage = computed(() => hasRole('Admin') || hasRole('Educator'));
@@ -334,6 +358,7 @@ async function handleProgressStep(step: ProgressButton): Promise<void> {
 
     if (step.percent === FINAL_PROGRESS_PERCENT) {
       $q.notify({ type: 'positive', message: t('subCompetencies.pendingValidationSuccess') });
+      openValidationRequestComposer();
     } else {
       $q.notify({ type: 'positive', message: t('subCompetencies.progressStepSuccess') });
     }
@@ -343,6 +368,55 @@ async function handleProgressStep(step: ProgressButton): Promise<void> {
   } finally {
     pendingPercent.value = null;
     studentProgressUpdating.value = false;
+  }
+}
+
+function openValidationRequestComposer(): void {
+  if (!currentUser.value) return;
+  const educatorIds = Array.from(
+    new Set(
+      (currentUser.value.educators ?? [])
+        .map((educator) => educator.id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  if (!educatorIds.length) {
+    return;
+  }
+
+  systemComposerContext.value = {
+    senderId: currentUser.value.id,
+    title: t('messaging.notifications.validationSubmittedTitle'),
+    participantIds: educatorIds,
+    kind: 'ValidationSubmitted',
+  };
+  systemComposerOpen.value = true;
+}
+
+async function handleSystemMessageCreate(payload: {
+  title: string;
+  body: string;
+  participantIds: string[];
+  kind?: MessageKind;
+}): Promise<void> {
+  const context = systemComposerContext.value;
+  if (!context) {
+    return;
+  }
+  try {
+    await sendSystemMessage({
+      senderId: context.senderId,
+      title: context.title,
+      body: payload.body.trim(),
+      participantIds: payload.participantIds,
+      kind: payload.kind ?? context.kind,
+      subCompetencyId: sub.value?.id,
+    });
+    $q.notify({ type: 'positive', message: t('messaging.notifications.sentSuccess') });
+    systemComposerContext.value = null;
+  } catch (error) {
+    console.error('Failed to send validation notification', error);
+    $q.notify({ type: 'negative', message: t('messaging.notifications.sentError') });
   }
 }
 
@@ -357,6 +431,12 @@ const TITLE_PART_MAX_LENGTH = 20;
 function truncate(str: string, max: number): string {
   return str.length > max ? str.slice(0, max) + '…' : str;
 }
+
+watch(systemComposerOpen, (isOpen) => {
+  if (!isOpen) {
+    systemComposerContext.value = null;
+  }
+});
 
 watch(
   [domainName, competencyName, sub],

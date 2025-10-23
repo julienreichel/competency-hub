@@ -12,7 +12,16 @@
     @closed="handleClosed"
   >
     <div class="column q-gutter-md">
+      <div v-if="isBodyOnly" class="column q-gutter-xs">
+        <div class="text-caption text-grey-6">
+          {{ t('messaging.dialog.newMessage.fields.title') }}
+        </div>
+        <div class="text-subtitle1 text-weight-medium">
+          {{ displayTitle }}
+        </div>
+      </div>
       <q-input
+        v-else
         v-model="title"
         outlined
         :label="t('messaging.dialog.newMessage.fields.title')"
@@ -21,7 +30,18 @@
         :rules="[requiredRule]"
       />
 
+      <div v-if="isBodyOnly && selectedRecipientLabels.length" class="column q-gutter-xs">
+        <div class="text-caption text-grey-6">
+          {{ t('messaging.dialog.newMessage.fields.recipients') }}
+        </div>
+        <div class="row q-gutter-xs flex-wrap">
+          <q-chip v-for="label in selectedRecipientLabels" :key="label" outline dense>
+            {{ label }}
+          </q-chip>
+        </div>
+      </div>
       <q-select
+        v-else
         v-model="selectedRecipients"
         outlined
         use-input
@@ -58,6 +78,7 @@
 <script setup lang="ts">
 import BaseDialog from 'src/components/common/BaseDialog.vue';
 import { useUsers } from 'src/composables/useUsers';
+import type { MessageKind } from 'src/models/Message';
 import { UserRole, type User } from 'src/models/User';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -74,23 +95,37 @@ const props = withDefaults(
   defineProps<{
     initialTargets?: string[];
     titlePlaceholderKey?: string;
+    initialTitle?: string;
+    mode?: 'full' | 'body-only';
+    kind?: MessageKind;
   }>(),
   {
     initialTargets: () => [],
     titlePlaceholderKey: 'messaging.dialog.newMessage.titlePlaceholder',
+    initialTitle: '',
+    mode: 'full',
+    kind: 'Message',
   },
 );
 
 const open = defineModel<boolean>({ default: false });
 
 const emit = defineEmits<{
-  (e: 'create', payload: { title: string; body: string; participantIds: string[] }): void;
+  (
+    e: 'create',
+    payload: {
+      title: string;
+      body: string;
+      participantIds: string[];
+      kind?: MessageKind;
+    },
+  ): void;
 }>();
 
 const { t } = useI18n();
 const { getCurrentUser, getUsersByIds, fetchUsers } = useUsers();
 
-const title = ref('');
+const title = ref(props.initialTitle ?? '');
 const body = ref('');
 const selectedRecipients = ref<string[]>([...props.initialTargets]);
 const submitting = ref(false);
@@ -102,6 +137,14 @@ const filterTerm = ref('');
 
 const placeholderLabel = computed(() => t(props.titlePlaceholderKey));
 const recipientOptions = computed(() => filteredRecipientOptions.value);
+const isBodyOnly = computed(() => props.mode === 'body-only');
+const displayTitle = computed(() => props.initialTitle || '');
+const selectedRecipientLabels = computed(() => {
+  const map = new Map(rawRecipientOptions.value.map((option) => [option.value, option.label]));
+  return selectedRecipients.value
+    .map((id) => map.get(id) ?? id)
+    .filter((label) => label && label.trim().length > 0);
+});
 
 watch(
   () => props.initialTargets,
@@ -112,10 +155,22 @@ watch(
 );
 
 watch(
+  () => props.initialTitle,
+  (value) => {
+    if (!open.value) {
+      title.value = value ?? '';
+    }
+  },
+);
+
+watch(
   () => open.value,
   (isOpen) => {
     if (isOpen && rawRecipientOptions.value.length === 0) {
       void loadRecipients();
+    }
+    if (isOpen) {
+      title.value = props.initialTitle ?? '';
     }
   },
   { immediate: true },
@@ -134,7 +189,7 @@ function recipientRule(value: string[]): boolean | string {
 }
 
 function resetForm(): void {
-  title.value = '';
+  title.value = props.initialTitle ?? '';
   body.value = '';
   selectedRecipients.value = [...props.initialTargets];
   errorMessage.value = null;
@@ -155,12 +210,16 @@ function handleClosed(): void {
 async function handleSubmit(): Promise<void> {
   errorMessage.value = null;
 
-  if (!title.value.trim()) {
+  if (!isBodyOnly.value && !title.value.trim()) {
     errorMessage.value = t('validation.required');
     return;
   }
   if (!selectedRecipients.value.length) {
     errorMessage.value = t('messaging.dialog.newMessage.errors.recipientRequired');
+    return;
+  }
+  if (!body.value.trim()) {
+    errorMessage.value = t('validation.required');
     return;
   }
 
@@ -173,10 +232,13 @@ async function handleSubmit(): Promise<void> {
       return;
     }
 
+    const titleValue = isBodyOnly.value ? displayTitle.value : title.value.trim();
+
     emit('create', {
-      title: title.value.trim(),
+      title: titleValue,
       body: body.value.trim(),
       participantIds,
+      kind: props.kind,
     });
     open.value = false;
   } catch (error) {
