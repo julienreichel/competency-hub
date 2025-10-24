@@ -8,9 +8,9 @@
             v-if="showKindChip"
             dense
             size="sm"
-            color="secondary"
+            :color="kindColor"
             text-color="white"
-            class="q-ml-none"
+            class="q-ml-md"
           >
             {{ kindLabel }}
           </q-chip>
@@ -48,6 +48,16 @@ const { t } = useI18n();
 
 const showKindChip = computed(() => props.kind !== 'Message');
 const kindLabel = computed(() => t(`messaging.kind.${props.kind}`, props.kind));
+const kindColor = computed(() => {
+  const COLORS: Record<MessageKind, string> = {
+    Message: 'secondary',
+    ValidationSubmitted: 'orange',
+    ProjectSubmitted: 'orange',
+    ProjectApproved: 'green',
+    ProjectRejected: 'red',
+  };
+  return COLORS[props.kind] ?? 'secondary';
+});
 const formattedDate = computed(() => {
   if (!props.createdAt) return '';
   const parsed = new Date(props.createdAt);
