@@ -78,6 +78,8 @@
         "hideArchived": "Masquer les archivés"
       },
       "searchPlaceholder": "Rechercher une conversation ou un participant",
+      "projectContext": "Projet : {name}",
+      "subCompetencyContext": "Sous-compétence : {name}",
       "archivedIndicator": " (archivé)",
       "empty": "Aucun message pour le moment",
       "errors": {

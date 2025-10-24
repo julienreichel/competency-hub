@@ -289,6 +289,8 @@
         "hideArchived": "Hide archived"
       },
       "searchPlaceholder": "Search conversations or participants",
+      "projectContext": "Project: {name}",
+      "subCompetencyContext": "Sub-competency: {name}",
       "archivedIndicator": " (archived)",
       "empty": "No messages yet",
       "errors": {

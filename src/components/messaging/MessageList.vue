@@ -31,6 +31,14 @@
               <span v-if="index < item.participants.length - 1">, </span>
             </template>
           </div>
+          <div v-if="item.projectName || item.subCompetencyName" class="text-caption text-grey-6">
+            <div v-if="item.projectName">
+              {{ t('messaging.inbox.projectContext', { name: item.projectName }) }}
+            </div>
+            <div v-if="item.subCompetencyName">
+              {{ t('messaging.inbox.subCompetencyContext', { name: item.subCompetencyName }) }}
+            </div>
+          </div>
         </q-item-section>
 
         <q-item-section side top class="column items-end q-gutter-sm">

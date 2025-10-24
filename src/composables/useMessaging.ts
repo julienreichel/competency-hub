@@ -18,6 +18,8 @@ export interface InboxItemSummary {
   title: string;
   kind: MessageKind;
   participants: InboxParticipantSummary[];
+  projectName?: string | null;
+  subCompetencyName?: string | null;
   createdAt: string;
   updatedAt: string;
   unreadCount: number;
@@ -137,12 +139,16 @@ function toInboxSummary(record: ThreadWithParticipant, currentUserId: string): I
   const { message: lastMessage, timestamp } = resolveLastMessage(thread);
   const unreadCount = computeUnread(participant, timestamp, Boolean(lastMessage));
   const participants = mapParticipants(thread, currentUserId);
+  const projectName = thread.project?.name ?? null;
+  const subCompetencyName = thread.subCompetency?.name ?? null;
 
   return {
     id: thread.id,
     title: thread.name,
     kind: lastMessage?.kind ?? 'Message',
     participants,
+    projectName,
+    subCompetencyName,
     createdAt: thread.createdAt ?? '',
     updatedAt: timestamp,
     unreadCount,

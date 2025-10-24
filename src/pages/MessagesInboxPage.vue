@@ -98,7 +98,9 @@ const filteredItems = computed(() => {
   }
   return filteredByArchive.value.filter((item) => {
     const participantNames = item.participants?.map((participant) => participant.name) ?? [];
-    const haystack = [item.title, ...participantNames].join(' ').toLowerCase();
+    const project = item.projectName ? [item.projectName] : [];
+    const sub = item.subCompetencyName ? [item.subCompetencyName] : [];
+    const haystack = [item.title, ...participantNames, ...project, ...sub].join(' ').toLowerCase();
     return haystack.includes(normalizedSearch.value);
   });
 });
