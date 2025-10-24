@@ -1,6 +1,8 @@
 import type { Schema } from '../../amplify/data/resource';
 import { BaseModel } from './base/BaseModel';
 import { Message, type MessageInit } from './Message';
+import { Project } from './Project';
+import { SubCompetency } from './SubCompetency';
 import { ThreadParticipant, type ThreadParticipantInit } from './ThreadParticipant';
 import type { UserRelationInit } from './User';
 import { mapArrayRelation, mapSingularRelation } from './utils';
@@ -17,6 +19,8 @@ export interface MessageThreadInit extends Record<string, unknown> {
   lastMessageAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  subCompetency?: SubCompetency | null;
+  project?: Project | null;
 }
 
 export class MessageThread extends BaseModel {
@@ -26,6 +30,8 @@ export class MessageThread extends BaseModel {
   public participants: ThreadParticipant[];
   public readonly messages: Message[];
   public lastMessageAt: string | null;
+  public readonly subCompetency: SubCompetency | null;
+  public readonly project: Project | null;
 
   constructor(data: MessageThreadInit) {
     super(data);
@@ -43,16 +49,18 @@ export class MessageThread extends BaseModel {
         )
       : [];
     this.lastMessageAt = data.lastMessageAt ?? null;
+    this.subCompetency = data.subCompetency ?? null;
+    this.project = data.project ?? null;
 
     this.validate();
   }
 
   static fromAmplify(this: void, raw: AmplifyMessageThread): MessageThread {
     const participants = mapArrayRelation(raw.participants, ThreadParticipant.fromAmplify);
-
     const messages = mapArrayRelation(raw.messages, Message.fromAmplify);
-
     const createdBy = mapSingularRelation(raw.createdBy, (value) => value as UserRelationInit);
+    const subCompetency = mapSingularRelation(raw.subCompetency, SubCompetency.fromAmplify);
+    const project = mapSingularRelation(raw.project, Project.fromAmplify);
 
     return new MessageThread({
       id: raw.id,
@@ -61,6 +69,8 @@ export class MessageThread extends BaseModel {
       createdBy,
       participants,
       messages,
+      subCompetency,
+      project,
       lastMessageAt: raw.lastMessageAt ?? null,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),
@@ -84,6 +94,8 @@ export class MessageThread extends BaseModel {
       createdBy: this.createdBy ? { ...this.createdBy } : null,
       participants: this.participants.map((participant) => participant.clone()),
       messages: this.messages.map((message) => message.clone()),
+      subCompetency: this.subCompetency ? this.subCompetency : null,
+      project: this.project ? this.project : null,
       lastMessageAt: this.lastMessageAt,
       ...(this.createdAt ? { createdAt: this.createdAt } : {}),
       ...(this.updatedAt ? { updatedAt: this.updatedAt } : {}),

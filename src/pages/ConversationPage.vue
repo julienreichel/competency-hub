@@ -20,6 +20,22 @@
       />
     </breadcrumb-header>
 
+    <div v-if="threadProject || threadSubCompetency" class="q-mb-md">
+      <project-card
+        v-if="threadProject"
+        :project="threadProject"
+        show-open
+        @view="openProjectAttachment"
+      />
+      <sub-competency-card
+        v-else-if="threadSubCompetency"
+        :sub="threadSubCompetency"
+        show-open
+        show-context
+        @open="openSubCompetencyAttachment(threadSubCompetency)"
+      />
+    </div>
+
     <div class="column q-gutter-xs q-mb-md">
       <div class="text-caption text-grey-7" v-if="conversation">
         {{ t('messaging.conversation.participants', { count: participantCount }) }}
@@ -68,15 +84,20 @@
 
 <script setup lang="ts">
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
+import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
 import MessageCard from 'src/components/messaging/MessageCard.vue';
 import MessageComposer from 'src/components/messaging/MessageComposer.vue';
+import ProjectCard from 'src/components/project/ProjectCard.vue';
 import { useMessaging, type ConversationView } from 'src/composables/useMessaging';
 import { useUsers } from 'src/composables/useUsers';
+import type { Project } from 'src/models/Project';
+import type { SubCompetency } from 'src/models/SubCompetency';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, type RouteLocationRaw } from 'vue-router';
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const { getCurrentUser } = useUsers();
 const { t } = useI18n();
 
@@ -91,6 +112,10 @@ const currentUserId = ref<string | null>(null);
 const participantSummaries = computed(() => conversation.value?.participants ?? []);
 const participantCount = computed(() => participantSummaries.value.length);
 const isArchived = computed(() => Boolean(conversation.value?.participant?.archived));
+const threadProject = computed<Project | null>(() => conversation.value?.thread.project ?? null);
+const threadSubCompetency = computed<SubCompetency | null>(
+  () => conversation.value?.thread.subCompetency ?? null,
+);
 
 const breadcrumbs = computed(() => {
   const list: Array<{ label: string; to?: RouteLocationRaw }> = [
@@ -102,6 +127,21 @@ const breadcrumbs = computed(() => {
   });
   return list;
 });
+
+function openProjectAttachment(project: Project): void {
+  if (!project?.id) return;
+  void router.push({ name: 'project-detail', params: { projectId: project.id } });
+}
+
+function openSubCompetencyAttachment(sub: SubCompetency): void {
+  const subId = sub?.id;
+  const competencyId = sub.competencyId;
+  if (!competencyId || !subId) return;
+  void router.push({
+    name: 'sub-competency',
+    params: { competencyId, subId },
+  });
+}
 
 function formatParticipant(participant: ConversationView['participants'][number]): string {
   const baseName = participant.name || t('common.unknown');

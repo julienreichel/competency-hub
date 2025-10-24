@@ -111,6 +111,8 @@ export class GraphQLClient {
             'messageThreads.thread.*',
             'messageThreads.thread.participants.*',
             'messageThreads.thread.participants.user.*',
+            'messageThreads.thread.subCompetency.*',
+            'messageThreads.thread.project.*',
           ],
         },
       );
@@ -176,6 +178,8 @@ export class GraphQLClient {
             'participants.user.*',
             'messages.*',
             'messages.sender.*',
+            'subCompetency.*',
+            'project.*',
           ],
         },
       );
@@ -207,6 +211,8 @@ export class GraphQLClient {
           'participants.user.*',
           'messages.*',
           'messages.sender.*',
+          'subCompetency.*',
+          'project.*',
         ],
         ...(filter ? { filter } : {}),
       });
