@@ -63,9 +63,11 @@
           <project-card
             :project="project"
             :show-open="true"
+            :show-actions="Boolean(project.fileKey)"
             class="full-height"
             @view="viewProject"
             @edit="editProject"
+            @submit="handleSubmit"
             @delete="deleteProject"
             @download="downloadProjectFile"
           />
@@ -82,25 +84,46 @@
     <q-inner-loading :showing="loading">
       <q-spinner-tail color="primary" size="64px" />
     </q-inner-loading>
+
+    <new-message-dialog
+      v-if="composerContext"
+      v-model="composerOpen"
+      :initial-targets="composerContext.participantIds"
+      :initial-title="composerContext.title"
+      :kind="composerContext.kind"
+      mode="body-only"
+      @create="handleComposerCreate"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
+import { useQuasar } from 'quasar';
 import PageHeader from 'src/components/common/PageHeader.vue';
 import SearchStatusDomainFilters from 'src/components/common/SearchStatusDomainFilters.vue';
 import DashboardStatCard from 'src/components/dashboard/DashboardStatCard.vue';
+import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import CreateProjectDialog from 'src/components/project/CreateProjectDialog.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useProjectActions } from 'src/composables/useProjectActions';
+import type { MessageKind } from 'src/models/Message';
 import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+const $q = useQuasar();
 const router = useRouter();
 const { userId } = useAuth();
 const { t } = useI18n();
+const {
+  submitProject: submitProjectAction,
+  composerOpen,
+  composerContext,
+  handleNotificationCreate,
+} = useProjectActions();
 
 const projects = ref<Project[]>([]);
 const loading = ref(false);
@@ -238,6 +261,20 @@ const editProject = (project: Project): void => {
   showProjectDialog.value = true;
 };
 
+const handleSubmit = async (project: Project): Promise<void> => {
+  try {
+    const { project: updated } = await submitProjectAction(project);
+    const index = projects.value.findIndex((entry) => entry.id === updated.id);
+    if (index !== -1) {
+      projects.value.splice(index, 1, updated);
+    }
+    $q.notify({ type: 'positive', message: t('projects.messages.submitted') });
+  } catch (error) {
+    console.error('Failed to submit project:', error);
+    $q.notify({ type: 'negative', message: t('projects.messages.submitFailed') });
+  }
+};
+
 const onProjectSaved = (project: Project): void => {
   if (editingProject.value) {
     const index = projects.value.findIndex((entry) => entry.id === project.id);
@@ -282,4 +319,19 @@ const downloadProjectFile = async (project: Project): Promise<void> => {
 onMounted(() => {
   void loadProjects();
 });
+
+const handleComposerCreate = async (payload: {
+  title: string;
+  body: string;
+  participantIds: string[];
+  kind?: MessageKind;
+}): Promise<void> => {
+  try {
+    await handleNotificationCreate(payload);
+    $q.notify({ type: 'positive', message: t('messaging.notifications.sentSuccess') });
+  } catch (error) {
+    console.error('Failed to send project notification', error);
+    $q.notify({ type: 'negative', message: t('messaging.notifications.sentError') });
+  }
+};
 </script>

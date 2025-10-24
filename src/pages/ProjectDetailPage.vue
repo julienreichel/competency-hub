@@ -104,13 +104,13 @@
       </div>
 
       <new-message-dialog
-        v-if="systemComposerContext"
-        v-model="systemComposerOpen"
-        :initial-targets="systemComposerContext.participantIds"
-        :initial-title="systemComposerContext.title"
-        :kind="systemComposerContext.kind"
+        v-if="composerContext"
+        v-model="composerOpen"
+        :initial-targets="composerContext.participantIds"
+        :initial-title="composerContext.title"
+        :kind="composerContext.kind"
         mode="body-only"
-        @create="handleSystemMessageCreate"
+        @create="handleComposerCreate"
       />
     </div>
   </q-page>
@@ -123,13 +123,11 @@ import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
 import ProjectForm, { type ProjectFormValues } from 'src/components/project/ProjectForm.vue';
 import { useAuth } from 'src/composables/useAuth';
-import { useMessaging } from 'src/composables/useMessaging';
-import { useUsers } from 'src/composables/useUsers';
+import { useProjectActions } from 'src/composables/useProjectActions';
 import type { MessageKind } from 'src/models/Message';
 import { type Project, type ProjectStatus } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
-import type { User } from 'src/models/User';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -138,8 +136,14 @@ const router = useRouter();
 const { t } = useI18n();
 const { userId, hasAnyRole } = useAuth();
 const $q = useQuasar();
-const { getCurrentUser } = useUsers();
-const { sendSystemMessage } = useMessaging();
+const {
+  submitProject: submitProjectAction,
+  approveProject: approveProjectAction,
+  rejectProject: rejectProjectAction,
+  composerOpen,
+  composerContext,
+  handleNotificationCreate,
+} = useProjectActions();
 
 const project = ref<Project | null>(null);
 const loading = ref(false);
@@ -154,19 +158,8 @@ const formValues = ref<ProjectFormValues>({
   fileKey: null,
 });
 const formValid = ref(false);
-const systemComposerOpen = ref(false);
-const systemComposerContext = ref<SystemMessageComposerContext | null>(null);
-
 const projectRepository = new ProjectRepository();
 
-interface SystemMessageComposerContext {
-  senderId: string;
-  title: string;
-  participantIds: string[];
-  kind: MessageKind;
-}
-
-const projectId = computed(() => route.params.projectId as string);
 const isEducatorOrAdmin = computed(() => hasAnyRole(['Educator', 'Admin']));
 const projectBackTarget = computed(() =>
   hasAnyRole(['Educator']) ? { name: 'educator-projects' } : { name: 'my-projects' },
@@ -220,28 +213,23 @@ const toFormValues = (source: Project): ProjectFormValues => ({
   fileKey: source.fileKey ?? null,
 });
 
-const getEducatorIds = (student: User | null): string[] => {
-  if (!student?.educators) {
-    return [];
-  }
-  return Array.from(
-    new Set(
-      student.educators.map((educator) => educator.id).filter((id): id is string => Boolean(id)),
-    ),
-  );
-};
-
 const loadProject = async (): Promise<void> => {
+  const id = route.params.projectId as string | undefined;
+  if (!id) {
+    error.value = t('projects.detail.notFound');
+    return;
+  }
+
   loading.value = true;
   error.value = null;
-
   try {
-    const result = await projectRepository.findById(projectId.value);
+    const result = await projectRepository.findById(id);
     if (!result) {
       error.value = t('projects.detail.notFound');
       return;
     }
     project.value = result;
+
     formValues.value = toFormValues(result);
     if (!result.fileKey) {
       editing.value = true;
@@ -296,53 +284,6 @@ const saveEdits = async (): Promise<void> => {
   }
 };
 
-const openProjectSubmissionComposer = async (targetProject: Project): Promise<void> => {
-  const student = await getCurrentUser();
-  if (!student) {
-    return;
-  }
-  const educatorIds = getEducatorIds(student);
-  if (!educatorIds.length) {
-    return;
-  }
-  const titleBase = t('messaging.notifications.projectSubmittedTitle');
-  const title = targetProject.name ? `${titleBase} • ${targetProject.name}` : titleBase;
-  systemComposerContext.value = {
-    senderId: student.id,
-    title,
-    participantIds: educatorIds,
-    kind: 'ProjectSubmitted',
-  };
-  systemComposerOpen.value = true;
-};
-
-const openProjectDecisionComposer = (
-  targetProject: Project,
-  decision: 'Approved' | 'Rejected',
-): void => {
-  const studentId = project.value?.studentId;
-  const educatorId = userId.value ?? null;
-  if (!studentId || !educatorId) {
-    return;
-  }
-
-  const kind: MessageKind = decision === 'Approved' ? 'ProjectApproved' : 'ProjectRejected';
-  const titleKey =
-    decision === 'Approved'
-      ? 'messaging.notifications.projectApprovedTitle'
-      : 'messaging.notifications.projectRejectedTitle';
-  const titleBase = t(titleKey);
-  const title = targetProject.name ? `${titleBase} • ${targetProject.name}` : titleBase;
-
-  systemComposerContext.value = {
-    senderId: educatorId,
-    title,
-    participantIds: [studentId],
-    kind,
-  };
-  systemComposerOpen.value = true;
-};
-
 const submitProject = async (target?: Project): Promise<void> => {
   const currentProject = target ?? project.value;
   if (!currentProject) return;
@@ -350,12 +291,10 @@ const submitProject = async (target?: Project): Promise<void> => {
 
   actionLoading.value = true;
   try {
-    const updatedProject = await projectRepository.update(currentProject.id, {
-      status: 'Submitted',
-    });
+    const { project: updatedProject } = await submitProjectAction(currentProject);
     project.value.status = updatedProject.status;
+    project.value.fileKey = updatedProject.fileKey;
     formValues.value = toFormValues(updatedProject);
-    await openProjectSubmissionComposer(updatedProject);
   } catch (err) {
     console.error('Failed to submit project:', err);
   } finally {
@@ -370,12 +309,9 @@ const approveProject = async (target?: Project): Promise<void> => {
 
   actionLoading.value = true;
   try {
-    const updatedProject = await projectRepository.update(currentProject.id, {
-      status: 'Approved',
-    });
+    const { project: updatedProject } = await approveProjectAction(currentProject);
     project.value.status = updatedProject.status;
     formValues.value = toFormValues(updatedProject);
-    openProjectDecisionComposer(updatedProject, 'Approved');
   } catch (err) {
     console.error('Failed to approve project:', err);
   } finally {
@@ -390,12 +326,9 @@ const rejectProject = async (target?: Project): Promise<void> => {
 
   actionLoading.value = true;
   try {
-    const updatedProject = await projectRepository.update(currentProject.id, {
-      status: 'Rejected',
-    });
+    const { project: updatedProject } = await rejectProjectAction(currentProject);
     project.value.status = updatedProject.status;
     formValues.value = toFormValues(updatedProject);
-    openProjectDecisionComposer(updatedProject, 'Rejected');
   } catch (err) {
     console.error('Failed to reject project:', err);
   } finally {
@@ -451,34 +384,15 @@ const downloadFile = async (target?: Project): Promise<void> => {
   }
 };
 
-watch(systemComposerOpen, (isOpen) => {
-  if (!isOpen) {
-    systemComposerContext.value = null;
-  }
-});
-
-const handleSystemMessageCreate = async (payload: {
+const handleComposerCreate = async (payload: {
   title: string;
   body: string;
   participantIds: string[];
   kind?: MessageKind;
 }): Promise<void> => {
-  const context = systemComposerContext.value;
-  if (!context) {
-    return;
-  }
   try {
-    await sendSystemMessage({
-      threadId: project.value?.thread?.id,
-      senderId: context.senderId,
-      title: context.title,
-      body: payload.body.trim(),
-      participantIds: payload.participantIds,
-      kind: payload.kind ?? context.kind,
-      projectId: project.value?.id,
-    });
+    await handleNotificationCreate(payload);
     $q.notify({ type: 'positive', message: t('messaging.notifications.sentSuccess') });
-    systemComposerContext.value = null;
   } catch (error) {
     console.error('Failed to send project notification', error);
     $q.notify({ type: 'negative', message: t('messaging.notifications.sentError') });

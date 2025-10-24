@@ -879,9 +879,17 @@
       "approve": "Approuver",
       "reject": "Rejeter"
     },
+    "messages": {
+      "submitted": "Projet soumis.",
+      "submitFailed": "Impossible de soumettre le projet.",
+      "approved": "Projet approuvé.",
+      "approveFailed": "Impossible d'approuver le projet.",
+      "rejected": "Projet rejeté.",
+      "rejectFailed": "Impossible de rejeter le projet."
+    },
     "delete": {
       "confirmTitle": "Supprimer le projet",
-      "confirmMessage": "Es-tu sûr de vouloir supprimer « {name} » ? Cette action est irréversible."
+      "confirmMessage": "Es-tu sûr de vouloir supprimer « {name} » ? Cette action est irréversible."
     },
     "detail": {
       "errorTitle": "Projet introuvable",

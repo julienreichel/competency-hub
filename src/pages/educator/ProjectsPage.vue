@@ -148,14 +148,28 @@
     <q-inner-loading :showing="pageLoading">
       <q-spinner-tail color="primary" size="64px" />
     </q-inner-loading>
+
+    <new-message-dialog
+      v-if="composerContext"
+      v-model="composerOpen"
+      :initial-targets="composerContext.participantIds"
+      :initial-title="composerContext.title"
+      :kind="composerContext.kind"
+      mode="body-only"
+      @create="handleComposerCreate"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import ManagedTable, { type ManagedTableBulkAction } from 'src/components/common/ManagedTable.vue';
 import PageHeader from 'src/components/common/PageHeader.vue';
+import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import UserAvatar from 'src/components/ui/UserAvatar.vue';
+import { useQuasar } from 'quasar';
 import { useAuth } from 'src/composables/useAuth';
+import { useProjectActions } from 'src/composables/useProjectActions';
+import type { MessageKind } from 'src/models/Message';
 import { type Project } from 'src/models/Project';
 import { ProjectRepository } from 'src/models/repositories/ProjectRepository';
 import { UserRepository } from 'src/models/repositories/UserRepository';
@@ -164,9 +178,17 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
+const $q = useQuasar();
 const { t, d } = useI18n();
 const router = useRouter();
 const { userId } = useAuth();
+const {
+  approveProject: approveProjectAction,
+  rejectProject: rejectProjectAction,
+  composerOpen,
+  composerContext,
+  handleNotificationCreate,
+} = useProjectActions();
 
 // Repositories
 const projectRepository = new ProjectRepository();
@@ -376,16 +398,18 @@ const viewProject = async (project: Project): Promise<void> => {
 const approveProject = async (project: Project): Promise<void> => {
   actionLoading.value.add(project.id);
   try {
-    await projectRepository.update(project.id, { status: 'Approved' });
+    await approveProjectAction(project);
     const index = projects.value.findIndex((p) => p.id === project.id);
     if (index !== -1) {
       projects.value.splice(index, 1); // Remove from submitted list
     }
     // Remove from selection if selected
     selected.value = selected.value.filter((p) => p.id !== project.id);
+    $q.notify({ type: 'positive', message: t('projects.messages.approved') });
   } catch (error) {
     console.error('Failed to approve project:', error);
     // TODO: Show error notification
+    $q.notify({ type: 'negative', message: t('projects.messages.approveFailed') });
   } finally {
     actionLoading.value.delete(project.id);
   }
@@ -394,16 +418,18 @@ const approveProject = async (project: Project): Promise<void> => {
 const rejectProject = async (project: Project): Promise<void> => {
   actionLoading.value.add(project.id);
   try {
-    await projectRepository.update(project.id, { status: 'Rejected' });
+    await rejectProjectAction(project);
     const index = projects.value.findIndex((p) => p.id === project.id);
     if (index !== -1) {
       projects.value.splice(index, 1); // Remove from submitted list
     }
     // Remove from selection if selected
     selected.value = selected.value.filter((p) => p.id !== project.id);
+    $q.notify({ type: 'positive', message: t('projects.messages.rejected') });
   } catch (error) {
     console.error('Failed to reject project:', error);
     // TODO: Show error notification
+    $q.notify({ type: 'negative', message: t('projects.messages.rejectFailed') });
   } finally {
     actionLoading.value.delete(project.id);
   }
@@ -456,6 +482,21 @@ const formatDate = (dateString?: string): string => {
 onMounted(async () => {
   await loadData();
 });
+
+const handleComposerCreate = async (payload: {
+  title: string;
+  body: string;
+  participantIds: string[];
+  kind?: MessageKind;
+}): Promise<void> => {
+  try {
+    await handleNotificationCreate(payload);
+    $q.notify({ type: 'positive', message: t('messaging.notifications.sentSuccess') });
+  } catch (error) {
+    console.error('Failed to send project notification', error);
+    $q.notify({ type: 'negative', message: t('messaging.notifications.sentError') });
+  }
+};
 </script>
 
 <style scoped>

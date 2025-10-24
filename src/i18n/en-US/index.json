@@ -879,6 +879,14 @@
       "approve": "Approve",
       "reject": "Reject"
     },
+    "messages": {
+      "submitted": "Project submitted.",
+      "submitFailed": "Unable to submit the project.",
+      "approved": "Project approved.",
+      "approveFailed": "Unable to approve the project.",
+      "rejected": "Project rejected.",
+      "rejectFailed": "Unable to reject the project."
+    },
     "delete": {
       "confirmTitle": "Delete Project",
       "confirmMessage": "Are you sure you want to delete \"{name}\"? This action cannot be undone."

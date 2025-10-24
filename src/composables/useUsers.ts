@@ -59,6 +59,9 @@ export function useUsers(): {
   };
 
   const getUserById = async (id: string): Promise<User | null> => {
+    if (currentUser && currentUser.id === id) {
+      return currentUser;
+    }
     loading.value = true;
     error.value = null;
     try {
