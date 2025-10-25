@@ -897,7 +897,9 @@
       "errorTitle": "Projet introuvable",
       "notFound": "Le projet demandé est introuvable",
       "loadError": "Impossible de charger les détails du projet",
-      "updated": "Dernière mise à jour"
+      "updated": "Dernière mise à jour",
+      "discussionTitle": "Discussion",
+      "noDiscussion": "Aucun message pour ce projet pour le moment."
     }
   }
 }

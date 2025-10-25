@@ -897,7 +897,9 @@
       "errorTitle": "Project Not Found",
       "notFound": "The requested project could not be found",
       "loadError": "Failed to load project details",
-      "updated": "Last Updated"
+      "updated": "Last Updated",
+      "discussionTitle": "Discussion",
+      "noDiscussion": "No messages yet for this project."
     }
   }
 }

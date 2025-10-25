@@ -5,6 +5,7 @@ import {
   messageRepository,
   type ThreadWithParticipant,
 } from 'src/models/repositories/MessageRepository';
+import { useI18n } from 'vue-i18n';
 
 export interface InboxParticipantSummary {
   id: string;
@@ -59,6 +60,7 @@ interface MessagingApi {
   ) => Promise<MessageThread | null>;
   setConversationArchived: (threadId: string, userId: string, archived: boolean) => Promise<void>;
   sendSystemMessage: (payload: CreateMessagePayload) => Promise<MessageThread | null>;
+  formatParticipant: (participant: ConversationView['participants'][number]) => string;
 }
 
 const BODY_PREVIEW_LENGTH = 160;
@@ -134,6 +136,41 @@ function mapParticipants(thread: MessageThread, currentUserId: string): InboxPar
   }));
 }
 
+async function buildConversationView(
+  thread: MessageThread,
+  currentUserId: string,
+  participantRecords?: ThreadWithParticipant[],
+): Promise<ConversationView> {
+  const records = participantRecords ?? (await messageRepository.listThreadsForUser(currentUserId));
+  const participantEntry =
+    records.find((entry) => entry.thread.id === thread.id)?.participant ?? null;
+
+  const messages = sortMessages(thread.messages ?? []).map((message) => ({
+    id: message.id,
+    body: message.body,
+    createdAt: message.createdAt ?? '',
+    updatedAt: message.updatedAt ?? null,
+    kind: message.kind,
+    mine: message.senderId === currentUserId,
+    senderId: message.senderId,
+    senderName: getDisplayName(message),
+  }));
+
+  const participantIds = (thread.participants ?? [])
+    .map((participant) => participant.userId)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+  await messageRepository.markThreadAsRead(thread.id, currentUserId);
+
+  return {
+    thread,
+    messages,
+    participantIds,
+    participant: participantEntry,
+    participants: mapParticipants(thread, currentUserId),
+  };
+}
+
 function toInboxSummary(record: ThreadWithParticipant, currentUserId: string): InboxItemSummary {
   const { thread, participant } = record;
   const { message: lastMessage, timestamp } = resolveLastMessage(thread);
@@ -177,35 +214,7 @@ async function loadConversation(
   if (!thread) {
     return null;
   }
-
-  const participantRecords = await messageRepository.listThreadsForUser(currentUserId);
-  const participantEntry =
-    participantRecords.find((entry) => entry.thread.id === threadId)?.participant ?? null;
-
-  const messages = sortMessages(thread.messages ?? []).map((message) => ({
-    id: message.id,
-    body: message.body,
-    createdAt: message.createdAt ?? '',
-    updatedAt: message.updatedAt ?? null,
-    kind: message.kind,
-    mine: message.senderId === currentUserId,
-    senderId: message.senderId,
-    senderName: getDisplayName(message),
-  }));
-
-  const participantIds = (thread.participants ?? [])
-    .map((participant) => participant.userId)
-    .filter((id): id is string => typeof id === 'string' && id.length > 0);
-
-  await messageRepository.markThreadAsRead(thread.id, currentUserId);
-
-  return {
-    thread,
-    messages,
-    participantIds,
-    participant: participantEntry,
-    participants: mapParticipants(thread, currentUserId),
-  };
+  return buildConversationView(thread, currentUserId);
 }
 
 interface CreateMessagePayload {
@@ -272,14 +281,26 @@ async function sendSystemMessage(payload: CreateMessagePayload): Promise<Message
   return sendRootMessage(payload);
 }
 
-export const useMessaging = (): MessagingApi => ({
-  getInboxSummaries,
-  getUnreadCount,
-  loadConversation,
-  sendRootMessage,
-  replyToThread,
-  setConversationArchived,
-  sendSystemMessage,
-});
+export const useMessaging = (): MessagingApi => {
+  const { t } = useI18n();
+
+  const formatParticipant = (participant: ConversationView['participants'][number]): string => {
+    const baseName = participant.name || t('common.unknown');
+    if (participant.archived && !participant.isCurrentUser) {
+      return `${baseName}${t('messaging.inbox.archivedIndicator')}`;
+    }
+    return baseName;
+  };
+  return {
+    getInboxSummaries,
+    getUnreadCount,
+    loadConversation,
+    sendRootMessage,
+    replyToThread,
+    setConversationArchived,
+    sendSystemMessage,
+    formatParticipant,
+  };
+};
 
 export type { CreateMessagePayload };

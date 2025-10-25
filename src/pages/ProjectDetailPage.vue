@@ -101,6 +101,53 @@
             </q-card-section>
           </q-card>
         </transition>
+
+        <q-separator
+          v-if="conversationLoading || conversationError || conversation"
+          class="q-my-lg"
+        />
+
+        <div v-if="conversationLoading" class="row justify-center q-py-md">
+          <q-spinner size="36px" color="primary" />
+        </div>
+
+        <q-banner v-else-if="conversationError" class="bg-negative text-white" inline-actions>
+          {{ conversationError }}
+          <template #action>
+            <q-btn flat dense @click="loadProjectConversationData">{{ t('common.retry') }}</q-btn>
+          </template>
+        </q-banner>
+
+        <div v-else-if="conversation" class="project-detail__conversation q-gutter-md">
+          <div class="column q-gutter-xs">
+            <div class="text-subtitle1 text-weight-medium">
+              {{ t('projects.detail.discussionTitle') }}
+            </div>
+            <conversation-participants
+              :participants="conversationParticipants"
+              :count-label="conversationParticipantLabel"
+            />
+          </div>
+
+          <div v-for="message in conversation.messages" :key="message.id" class="row">
+            <message-card
+              :mine="message.mine"
+              :sender-name="message.senderName"
+              :kind="message.kind"
+              :created-at="message.createdAt"
+              :body="message.body"
+            />
+          </div>
+          <message-composer
+            class="q-mt-lg"
+            :disabled="conversationSending"
+            @send="handleConversationSend"
+          />
+        </div>
+
+        <div v-else class="text-caption text-grey-6">
+          {{ t('projects.detail.noDiscussion') }}
+        </div>
       </div>
 
       <new-message-dialog
@@ -119,10 +166,14 @@
 <script setup lang="ts">
 import { useQuasar } from 'quasar';
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
+import ConversationParticipants from 'src/components/messaging/ConversationParticipants.vue';
+import MessageCard from 'src/components/messaging/MessageCard.vue';
+import MessageComposer from 'src/components/messaging/MessageComposer.vue';
 import NewMessageDialog from 'src/components/messaging/NewMessageDialog.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
 import ProjectForm, { type ProjectFormValues } from 'src/components/project/ProjectForm.vue';
 import { useAuth } from 'src/composables/useAuth';
+import { useMessaging, type ConversationView } from 'src/composables/useMessaging';
 import { useProjectActions } from 'src/composables/useProjectActions';
 import type { MessageKind } from 'src/models/Message';
 import { type Project, type ProjectStatus } from 'src/models/Project';
@@ -144,6 +195,10 @@ const {
   composerContext,
   handleNotificationCreate,
 } = useProjectActions();
+const { loadConversation, replyToThread } = useMessaging();
+defineOptions({
+  components: { ConversationParticipants },
+});
 
 const project = ref<Project | null>(null);
 const loading = ref(false);
@@ -159,6 +214,17 @@ const formValues = ref<ProjectFormValues>({
 });
 const formValid = ref(false);
 const projectRepository = new ProjectRepository();
+const conversation = ref<ConversationView | null>(null);
+const conversationLoading = ref(false);
+const conversationError = ref<string | null>(null);
+const conversationSending = ref(false);
+const conversationParticipants = computed(() => conversation.value?.participants ?? []);
+const conversationParticipantCount = computed(() => conversationParticipants.value.length);
+const conversationParticipantLabel = computed(() =>
+  conversation.value
+    ? t('messaging.conversation.participants', { count: conversationParticipantCount.value })
+    : '',
+);
 
 const isEducatorOrAdmin = computed(() => hasAnyRole(['Educator', 'Admin']));
 const projectBackTarget = computed(() =>
@@ -213,6 +279,26 @@ const toFormValues = (source: Project): ProjectFormValues => ({
   fileKey: source.fileKey ?? null,
 });
 
+const loadProjectConversationData = async (): Promise<void> => {
+  const threadId = project.value?.thread?.id;
+  if (!threadId || !userId.value) {
+    conversation.value = null;
+    return;
+  }
+
+  conversationLoading.value = true;
+  conversationError.value = null;
+  try {
+    conversation.value = await loadConversation(threadId, userId.value);
+  } catch (err) {
+    console.error('Failed to load project conversation:', err);
+    conversationError.value =
+      err instanceof Error ? err.message : t('messaging.conversation.errors.loadFailed');
+  } finally {
+    conversationLoading.value = false;
+  }
+};
+
 const loadProject = async (): Promise<void> => {
   const id = route.params.projectId as string | undefined;
   if (!id) {
@@ -229,11 +315,11 @@ const loadProject = async (): Promise<void> => {
       return;
     }
     project.value = result;
-
     formValues.value = toFormValues(result);
     if (!result.fileKey) {
       editing.value = true;
     }
+    await loadProjectConversationData();
   } catch (err) {
     console.error('Failed to load project:', err);
     error.value = t('projects.detail.loadError');
@@ -286,8 +372,7 @@ const saveEdits = async (): Promise<void> => {
 
 const submitProject = async (target?: Project): Promise<void> => {
   const currentProject = target ?? project.value;
-  if (!currentProject) return;
-  if (currentProject.id !== project.value?.id || !canSubmit.value) return;
+  if (!currentProject || currentProject.id !== project.value?.id || !canSubmit.value) return;
 
   actionLoading.value = true;
   try {
@@ -295,6 +380,7 @@ const submitProject = async (target?: Project): Promise<void> => {
     project.value.status = updatedProject.status;
     project.value.fileKey = updatedProject.fileKey;
     formValues.value = toFormValues(updatedProject);
+    await loadProjectConversationData();
   } catch (err) {
     console.error('Failed to submit project:', err);
   } finally {
@@ -304,14 +390,14 @@ const submitProject = async (target?: Project): Promise<void> => {
 
 const approveProject = async (target?: Project): Promise<void> => {
   const currentProject = target ?? project.value;
-  if (!currentProject) return;
-  if (currentProject.id !== project.value?.id || !canApprove.value) return;
+  if (!currentProject || currentProject.id !== project.value?.id || !canApprove.value) return;
 
   actionLoading.value = true;
   try {
     const { project: updatedProject } = await approveProjectAction(currentProject);
     project.value.status = updatedProject.status;
     formValues.value = toFormValues(updatedProject);
+    await loadProjectConversationData();
   } catch (err) {
     console.error('Failed to approve project:', err);
   } finally {
@@ -321,14 +407,14 @@ const approveProject = async (target?: Project): Promise<void> => {
 
 const rejectProject = async (target?: Project): Promise<void> => {
   const currentProject = target ?? project.value;
-  if (!currentProject) return;
-  if (currentProject.id !== project.value?.id || !canReject.value) return;
+  if (!currentProject || currentProject.id !== project.value?.id || !canReject.value) return;
 
   actionLoading.value = true;
   try {
     const { project: updatedProject } = await rejectProjectAction(currentProject);
     project.value.status = updatedProject.status;
     formValues.value = toFormValues(updatedProject);
+    await loadProjectConversationData();
   } catch (err) {
     console.error('Failed to reject project:', err);
   } finally {
@@ -393,9 +479,32 @@ const handleComposerCreate = async (payload: {
   try {
     await handleNotificationCreate(payload);
     $q.notify({ type: 'positive', message: t('messaging.notifications.sentSuccess') });
+    await loadProjectConversationData();
   } catch (error) {
     console.error('Failed to send project notification', error);
     $q.notify({ type: 'negative', message: t('messaging.notifications.sentError') });
+  }
+};
+
+const handleConversationSend = async (body: string): Promise<void> => {
+  if (!conversation.value || !userId.value) {
+    return;
+  }
+  conversationSending.value = true;
+  try {
+    await replyToThread(
+      conversation.value.thread.id,
+      userId.value,
+      body,
+      conversation.value.participantIds,
+    );
+    await loadProjectConversationData();
+  } catch (error) {
+    console.error('Failed to send message in project conversation', error);
+    conversationError.value =
+      error instanceof Error ? error.message : t('messaging.conversation.errors.sendFailed');
+  } finally {
+    conversationSending.value = false;
   }
 };
 

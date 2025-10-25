@@ -32,29 +32,16 @@
         :sub="threadSubCompetency"
         show-open
         show-context
-        @open="openSubCompetencyAttachment(threadSubCompetency)"
+        @open="openSubCompetencyAttachment"
       />
     </div>
 
-    <div class="column q-gutter-xs q-mb-md">
-      <div class="text-caption text-grey-7" v-if="conversation">
-        {{ t('messaging.conversation.participants', { count: participantCount }) }}
-      </div>
-      <div class="text-caption text-grey-6" v-if="participantSummaries.length">
-        <template v-for="(participant, index) in participantSummaries" :key="participant.id">
-          <span
-            :class="{
-              'conversation-page__participant--archived':
-                participant.archived && !participant.isCurrentUser,
-              'text-grey-5': participant.archived && !participant.isCurrentUser,
-            }"
-          >
-            {{ formatParticipant(participant) }}
-          </span>
-          <span v-if="index < participantSummaries.length - 1">, </span>
-        </template>
-      </div>
-    </div>
+    <conversation-participants
+      v-if="conversation"
+      class="q-mb-md"
+      :participants="participantSummaries"
+      :count-label="participantLabel"
+    />
 
     <q-separator class="q-mb-lg" />
 
@@ -84,10 +71,11 @@
 
 <script setup lang="ts">
 import BreadcrumbHeader from 'src/components/common/BreadcrumbHeader.vue';
-import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
+import ConversationParticipants from 'src/components/messaging/ConversationParticipants.vue';
 import MessageCard from 'src/components/messaging/MessageCard.vue';
 import MessageComposer from 'src/components/messaging/MessageComposer.vue';
 import ProjectCard from 'src/components/project/ProjectCard.vue';
+import SubCompetencyCard from 'src/components/competency/SubCompetencyCard.vue';
 import { useMessaging, type ConversationView } from 'src/composables/useMessaging';
 import { useUsers } from 'src/composables/useUsers';
 import type { Project } from 'src/models/Project';
@@ -111,6 +99,9 @@ const currentUserId = ref<string | null>(null);
 
 const participantSummaries = computed(() => conversation.value?.participants ?? []);
 const participantCount = computed(() => participantSummaries.value.length);
+const participantLabel = computed(() =>
+  t('messaging.conversation.participants', { count: participantCount.value }),
+);
 const isArchived = computed(() => Boolean(conversation.value?.participant?.archived));
 const threadProject = computed<Project | null>(() => conversation.value?.thread.project ?? null);
 const threadSubCompetency = computed<SubCompetency | null>(
@@ -133,22 +124,15 @@ function openProjectAttachment(project: Project): void {
   void router.push({ name: 'project-detail', params: { projectId: project.id } });
 }
 
-function openSubCompetencyAttachment(sub: SubCompetency): void {
-  const subId = sub?.id;
-  const competencyId = sub.competencyId;
+function openSubCompetencyAttachment(target: SubCompetency | string): void {
+  const sub = typeof target === 'string' ? threadSubCompetency.value : target;
+  const subId = typeof target === 'string' ? target : sub?.id;
+  const competencyId = sub?.competencyId ?? sub?.competency?.id;
   if (!competencyId || !subId) return;
   void router.push({
     name: 'sub-competency',
     params: { competencyId, subId },
   });
-}
-
-function formatParticipant(participant: ConversationView['participants'][number]): string {
-  const baseName = participant.name || t('common.unknown');
-  if (participant.archived && !participant.isCurrentUser) {
-    return `${baseName}${t('messaging.inbox.archivedIndicator')}`;
-  }
-  return baseName;
 }
 
 async function loadConversationData(): Promise<void> {
@@ -221,8 +205,4 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-.conversation-page__participant--archived {
-  font-style: italic;
-}
-</style>
+<style scoped></style>
