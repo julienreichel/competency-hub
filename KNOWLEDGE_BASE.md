@@ -12,6 +12,13 @@ This project is a **competency-based learning platform** designed to support thr
 
 The platform provides a **learner-centered environment** with interactive dashboards, resource management, competency tracking, and communication features.
 
+### Latest Release (v0.6.0)
+
+- Thread-based messaging with participant archiving, read receipts, and in-app notifications via `NotificationBell`.
+- Unified page chrome through reusable UI components (`ManagedTable`, `PageHeader`, `FormattedText`) and refreshed layout patterns.
+- Centralised project actions (`useProjectActions`) and system notifications for new messages and project updates.
+- Admin-grade JSON import/export for domain and competency hierarchies with safer merging and validation.
+
 ---
 
 ## 2. Main Object Types
@@ -108,14 +115,35 @@ The platform provides a **learner-centered environment** with interactive dashbo
   - Real-time progress delta calculations
   - Competency validation status tracking (NotStarted, InProgress, PendingValidation, Validated)
 
-### **2.11 Messaging**
+### **2.11 MessageThread**
 
-- **Attributes:** ID, sender, receiver, message body, attachments, read status.
+- **Attributes:** id, subject, lastMessageAt, createdByUserId, createdAt, projectContextId (optional).
 - **Relations:**
-  - Between Educator ↔ Parent
-  - Between Educator ↔ Team
+  - participants (hasMany MessageParticipant, threadId)
+  - messages (hasMany Message, threadId)
 
-### **2.12 School Life**
+### **2.12 MessageParticipant**
+
+- **Attributes:** id, threadId (required), userId (required), role (Educator, Parent, Admin), lastReadAt, archivedAt, muted.
+- **Relations:**
+  - thread (belongsTo MessageThread, threadId)
+  - user (belongsTo User, userId)
+
+### **2.13 Message**
+
+- **Attributes:** id, threadId (required), senderId (required), body, attachments, sentAt, replyToMessageId.
+- **Relations:**
+  - thread (belongsTo MessageThread, threadId)
+  - sender (belongsTo User, senderId)
+
+### **2.14 Notification**
+
+- **Attributes:** id, userId (required), type (`MessageThreadUpdated`, `ProjectStatusChanged`, `SystemAlert`), payload (threadId/projectId), createdAt, readAt.
+- **Relations:**
+  - user (belongsTo User, userId)
+  - optionally links to MessageThread or Project records for context
+
+### **2.15 School Life**
 
 - **Attributes:** ID, type (news, event, photo gallery), description, comments.
 - **Relations:**
@@ -132,7 +160,8 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - **Resource persons** (educators, peers, external adults) are linked directly to competencies and displayed with name & photo.
 - **Learners** can add their own resources to competencies.
 - **Progress tracking** is visual (color codes, pictograms, % progress, blocked-but-visible states).
-- **Messaging** ensures communication across all stakeholders.
+- **Thread-based messaging** routes conversations across stakeholders with participant-level archiving and read receipts.
+- **Notifications** surface message, project, and system updates through the global notification bell.
 - **Reports** consolidate data for monitoring and communication.
 
 ---
@@ -148,6 +177,7 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - Access, reserve, or add resources
 - Attempt evaluations (self/peer/educator)
 - Request competency validation
+- Manage conversations through threaded inbox with contextual notifications
 
 ### For Educators
 
@@ -157,14 +187,16 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - Upload proofs of acquisition
 - Generate reports with aggregated data
 - Publish school life news & events
-- Messaging with team & parents
+- Thread-based messaging with team & parents (participant archiving, read receipts)
+- Use centralized project actions and system notifications for follow-ups
 
 ### For Parents
 
 - View child’s progress (domain, competency, sub-competency)
-- Messaging with educators
+- Threaded messaging with educators, with per-conversation archiving
 - Book meetings with time slot flexibility
 - Access school life events, workshops, photo galleries
+- Receive notifications for new messages and project updates
 
 ---
 
@@ -172,6 +204,8 @@ The platform provides a **learner-centered environment** with interactive dashbo
 
 - **Frontend:** Vue3 + Quasar for responsive UI and component-based architecture.
 - **Backend:** Amplify v2 (GraphQL API, Cognito auth, DynamoDB storage).
+- **Reusable UI library:** Shared components (`ManagedTable`, `PageHeader`, `FormattedText`, `NotificationBell`, messaging suite) keep layouts and accessibility consistent.
+- **Data tooling:** JSON import/export scripts for domains and competencies with schema validation and safe merge strategies.
 - **Testing:** Vitest for unit, integration, and component testing with coverage reporting.
 - **CI/CD:** GitHub Actions for build, linting, testing, coverage, and deploy pipelines.
 - **Quality gates:** automated PR checks, linting rules, and coverage thresholds.
@@ -205,16 +239,18 @@ The platform provides a **learner-centered environment** with interactive dashbo
 
 ### **Phase 4: Communication & Reporting (Month 7-8)**
 
-- [ ] Messaging (Educator ↔ Parents, Educator ↔ Team)
+- [x] Messaging (thread-based inbox, participant archiving, read receipts)
 - [ ] School life (events, news, photo galleries with comments)
 - [x] Report generation (per child, period filtering, domain summaries, print-ready)
+- [x] System notifications & notification bell (in-app alerts for messaging/projects)
 
 ### **Phase 5: Polishing & Scalability (Month 9+)**
 
 - [~] Improve UX with child-friendly visuals (icons, pictograms, blocked-but-visible indicators) (Ongoing)
-- [ ] Notifications (email, in-app)
+- [~] Notifications (email delivery outstanding; in-app bell live)
 - [~] Role-based dashboards (Student, Educator, Parent) (Ongoing)
 - [~] Continuous optimization & scaling via Amplify (Ongoing)
+- [x] Domain & competency hierarchy import/export (validated JSON merge tooling)
 
 # 7. Status Summary
 
@@ -223,20 +259,26 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - Amplify backend, user management, dashboards
 - Competency, sub-competency, resource, evaluation models
 - Educator validation, parent progress view
-- Robust test and CI infrastructure
+- Thread-based messaging suite with participant archiving, read receipts, and NotificationBell alerts
+- Unified UI components (`ManagedTable`, `PageHeader`, `FormattedText`) and refreshed layouts
+- Domain & competency JSON import/export with validation and safer merging
+- Centralised project actions composables with system notifications for messaging/project updates
+- Robust test and CI infrastructure (470+ BDD specs, >90% coverage on critical logic)
 - Report generation system with period filtering and domain progress summaries
 
 ## In Progress
 
-- UX and UI improvements (badges, tables, error handling)
+- Learning focus definition & validation workflow
+- Competency proof upload experience
+- Resource reservations (booking windows, availability rules)
+- School life module (events, news, galleries)
+- Email notification channel and cross-device delivery
+- UX polish with child-friendly visuals (icons, pictograms)
 
 ## Planned
 
-- Reservation model
-- Learning focus flow & competency proof upload
-- Messaging, school life modules
-- Notifications, advanced scaling
 - Parent/educator collaboration tooling (meetings, shared notes)
+- Advanced scaling & automation via Amplify
 
 ## 8. Application Pages & Feature Coverage
 
@@ -258,6 +300,7 @@ The platform provides a **learner-centered environment** with interactive dashbo
 | `ProjectsPage.vue` (educator)    | Educator                 | ManagedTable view of student projects with bulk approve/reject, filters.                   |
 | `AssessmentsPage.vue` (educator) | Educator                 | Pending validation overview with ManagedTable, bulk student progress actions.              |
 | `StudentsPage.vue` (educator)    | Educator                 | Student roster, assignment management using ManagedTable bulk actions.                     |
+| `MessagesInboxPage.vue`          | Educator, Parent         | Thread-based inbox with MessageList/MessageCard, participant archiving, and filters.       |
 | `admin/UsersPage.vue`            | Admin                    | Admin user management, bulk role actions, stats, Modals.                                   |
 
-These screens consume the component/composable layers outlined earlier, ensuring the data model cascades (Domain → Competency → Sub-competency → Resource/Evaluation/Project) are reflected in the UX.
+These screens consume the component/composable layers outlined earlier, ensuring the data model cascades (Domain → Competency → Sub-competency → Resource/Evaluation/Project) are reflected in the UX. Messaging-specific surfaces reuse `MessageList`, `MessageCard`, `ConversationParticipants`, and `NewMessageDialog`, while global alerts flow through `NotificationBell`. Shared layout primitives (`ManagedTable`, `PageHeader`, `FormattedText`) keep the experience cohesive and accessible.
