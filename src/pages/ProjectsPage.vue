@@ -64,6 +64,7 @@
             :project="project"
             :show-open="true"
             :show-actions="Boolean(project.fileKey)"
+            short-description
             class="full-height"
             @view="viewProject"
             @edit="editProject"

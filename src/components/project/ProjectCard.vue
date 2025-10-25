@@ -17,9 +17,12 @@
       <div class="text-subtitle1 text-weight-medium text-truncate">
         {{ project.name }}
       </div>
-      <div class="text-caption text-grey-7 line-clamp-2">
-        {{ project.description || $t('projects.noDescription') }}
-      </div>
+      <formatted-text
+        :text="project.description"
+        :default-text="$t('projects.noDescription')"
+        class="text-caption text-grey-7"
+        :clamp="shortDescription"
+      />
       <div v-if="subCompetencyName" class="text-caption text-grey-6">
         {{ $t('projects.subCompetency') }}: {{ subCompetencyName }}
       </div>
@@ -89,6 +92,7 @@
 <script setup lang="ts">
 import { date } from 'quasar';
 import BaseCard from 'src/components/common/BaseCard.vue';
+import FormattedText from 'src/components/common/FormattedText.vue';
 import { useAuth } from 'src/composables/useAuth';
 import { type Project, type ProjectStatus } from 'src/models/Project';
 import { computed } from 'vue';
@@ -100,6 +104,7 @@ const props = defineProps<{
   showActions?: boolean;
   showDelete?: boolean;
   showDownload?: boolean;
+  shortDescription?: boolean;
 }>();
 
 defineEmits<{
@@ -181,12 +186,4 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
+<style scoped></style>
