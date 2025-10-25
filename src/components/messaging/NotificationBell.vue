@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { useUsers } from 'src/composables/useUsers';
 import { useMessaging } from 'src/composables/useMessaging';
+import { useUsers } from 'src/composables/useUsers';
 import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -33,6 +33,7 @@ const { t } = useI18n();
 const { getUnreadCount } = useMessaging();
 
 async function refresh(): Promise<void> {
+  console.log('refresh');
   if (!currentUserId.value) return;
   loading.value = true;
   try {
@@ -55,11 +56,12 @@ function goToInbox(): void {
 onMounted(() => {
   void initialise();
 });
-
+const WAITING_TIME = 5000;
 watch(
   () => route.fullPath,
   () => {
-    void refresh();
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    setTimeout(refresh, WAITING_TIME);
   },
 );
 

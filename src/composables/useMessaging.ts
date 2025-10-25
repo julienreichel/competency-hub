@@ -102,18 +102,14 @@ function resolveLastMessage(thread: MessageThread): { message: Message | null; t
   return { message, timestamp };
 }
 
-function computeUnread(
-  participant: ThreadParticipant,
-  timestamp: string,
-  hasMessage: boolean,
-): number {
-  if (!hasMessage) {
-    return 0;
+function computeUnread(participant: ThreadParticipant, timestamp: string): boolean {
+  if (!timestamp) {
+    return false;
   }
   if (!participant.lastReadAt) {
-    return 1;
+    return true;
   }
-  return timestamp > participant.lastReadAt ? 1 : 0;
+  return timestamp > participant.lastReadAt;
 }
 
 function resolveParticipantName(entry: ThreadParticipant): string {
@@ -174,7 +170,7 @@ async function buildConversationView(
 function toInboxSummary(record: ThreadWithParticipant, currentUserId: string): InboxItemSummary {
   const { thread, participant } = record;
   const { message: lastMessage, timestamp } = resolveLastMessage(thread);
-  const unreadCount = computeUnread(participant, timestamp, Boolean(lastMessage));
+  const hasUnread = computeUnread(participant, timestamp);
   const participants = mapParticipants(thread, currentUserId);
   const projectName = thread.project?.name ?? null;
   const subCompetencyName = thread.subCompetency?.name ?? null;
@@ -188,7 +184,7 @@ function toInboxSummary(record: ThreadWithParticipant, currentUserId: string): I
     subCompetencyName,
     createdAt: thread.createdAt ?? '',
     updatedAt: timestamp,
-    unreadCount,
+    unreadCount: hasUnread ? 1 : 0,
     archived: Boolean(participant.archived),
     bodyPreview: createBodyPreview(lastMessage?.body ?? ''),
   };

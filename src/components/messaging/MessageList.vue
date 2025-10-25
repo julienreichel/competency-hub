@@ -49,7 +49,7 @@
             rounded
             class="message-list__badge"
           >
-            {{ item.unreadCount }}
+            {{ $t('messaging.inbox.unread') }}
           </q-badge>
           <q-btn
             dense

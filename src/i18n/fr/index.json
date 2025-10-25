@@ -82,6 +82,7 @@
       "subCompetencyContext": "Sous-compétence : {name}",
       "archivedIndicator": " (archivé)",
       "empty": "Aucun message pour le moment",
+      "unread": "Non lus",
       "errors": {
         "loadFailed": "Impossible de charger les messages.",
         "createFailed": "Impossible d'envoyer le message.",
