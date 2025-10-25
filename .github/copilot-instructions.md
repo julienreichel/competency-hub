@@ -705,3 +705,48 @@ Remember: **Quality over quantity**. It's better to write less code that is well
 - **Use flexible matching** for implementation details
 
 **This ensures tests provide better regression protection and survive codebase evolution.**
+
+## 🚀 Release
+
+**Goal:** Perform a full release automatically. Copilot MUST execute the following commands in order, fail fast on errors, and output a `RELEASE-NOTES.md` file **without committing it**.
+
+### 1) Collect changes that will be included
+
+> Compare commits present on `dev` that are not on `main`.
+
+```bash
+git log origin/main..origin/dev
+```
+
+### 2) Merge `dev` → `main`
+
+```bash
+git checkout main
+git pull origin main
+git merge dev -m "Merge dev into main for release"
+```
+
+### 3) Version bump + tag (npm)
+
+```bash
+npm version <patch|minor|major>
+VERSION=$(node -p "require('./package.json').version")
+TAG="v${VERSION}"
+```
+
+### 4) Push branch and tags
+
+```bash
+git push
+git push --tags
+
+```
+
+### 5) Generate release notes (do NOT commit)
+
+Generate a human readable `RELEASE-NOTES.md` which can be copy pasted in githum by the user
+
+### Error handling rules
+
+- If any command fails, stop immediately (`set -euo pipefail` behavior).
+- On merge conflicts, stop and report: `Manual conflict resolution required.`

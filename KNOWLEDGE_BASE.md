@@ -12,13 +12,6 @@ This project is a **competency-based learning platform** designed to support thr
 
 The platform provides a **learner-centered environment** with interactive dashboards, resource management, competency tracking, and communication features.
 
-### Latest Release (v0.6.0)
-
-- Thread-based messaging with participant archiving, read receipts, and in-app notifications via `NotificationBell`.
-- Unified page chrome through reusable UI components (`ManagedTable`, `PageHeader`, `FormattedText`) and refreshed layout patterns.
-- Centralised project actions (`useProjectActions`) and system notifications for new messages and project updates.
-- Admin-grade JSON import/export for domain and competency hierarchies with safer merging and validation.
-
 ---
 
 ## 2. Main Object Types
@@ -204,8 +197,7 @@ The platform provides a **learner-centered environment** with interactive dashbo
 
 - **Frontend:** Vue3 + Quasar for responsive UI and component-based architecture.
 - **Backend:** Amplify v2 (GraphQL API, Cognito auth, DynamoDB storage).
-- **Reusable UI library:** Shared components (`ManagedTable`, `PageHeader`, `FormattedText`, `NotificationBell`, messaging suite) keep layouts and accessibility consistent.
-- **Data tooling:** JSON import/export scripts for domains and competencies with schema validation and safe merge strategies.
+- **Reusable UI library:** Shared components keep layouts and accessibility consistent.
 - **Testing:** Vitest for unit, integration, and component testing with coverage reporting.
 - **CI/CD:** GitHub Actions for build, linting, testing, coverage, and deploy pipelines.
 - **Quality gates:** automated PR checks, linting rules, and coverage thresholds.
@@ -260,13 +252,10 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - Competency, sub-competency, resource, evaluation models
 - Educator validation, parent progress view
 - Thread-based messaging suite with participant archiving, read receipts, and NotificationBell alerts
-- Unified UI components (`ManagedTable`, `PageHeader`, `FormattedText`) and refreshed layouts
-- Domain & competency JSON import/export with validation and safer merging
-- Centralised project actions composables with system notifications for messaging/project updates
 - Robust test and CI infrastructure (470+ BDD specs, >90% coverage on critical logic)
 - Report generation system with period filtering and domain progress summaries
 
-## In Progress
+## Planned
 
 - Learning focus definition & validation workflow
 - Competency proof upload experience
@@ -274,11 +263,7 @@ The platform provides a **learner-centered environment** with interactive dashbo
 - School life module (events, news, galleries)
 - Email notification channel and cross-device delivery
 - UX polish with child-friendly visuals (icons, pictograms)
-
-## Planned
-
 - Parent/educator collaboration tooling (meetings, shared notes)
-- Advanced scaling & automation via Amplify
 
 ## 8. Application Pages & Feature Coverage
 
@@ -303,4 +288,4 @@ The platform provides a **learner-centered environment** with interactive dashbo
 | `MessagesInboxPage.vue`          | Educator, Parent         | Thread-based inbox with MessageList/MessageCard, participant archiving, and filters.       |
 | `admin/UsersPage.vue`            | Admin                    | Admin user management, bulk role actions, stats, Modals.                                   |
 
-These screens consume the component/composable layers outlined earlier, ensuring the data model cascades (Domain → Competency → Sub-competency → Resource/Evaluation/Project) are reflected in the UX. Messaging-specific surfaces reuse `MessageList`, `MessageCard`, `ConversationParticipants`, and `NewMessageDialog`, while global alerts flow through `NotificationBell`. Shared layout primitives (`ManagedTable`, `PageHeader`, `FormattedText`) keep the experience cohesive and accessible.
+These screens consume the component/composable layers outlined earlier, ensuring the data model cascades (Domain → Competency → Sub-competency → Resource/Evaluation/Project) are reflected in the UX. Shared layout primitives (`ManagedTable`, `PageHeader`, `FormattedText`, `BaseCard`, ...) keep the experience cohesive and accessible.
